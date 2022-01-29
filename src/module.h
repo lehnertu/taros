@@ -15,6 +15,11 @@
     Insertion into the queue happens immediately while the consumption
     depends on the scheduling of the recever module.
 */
+
+#pragma once
+
+#include <cstddef>
+
 class Module;
 
 /*

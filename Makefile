@@ -103,7 +103,7 @@ INCLUDE         = -I$(USR_SRC) -I$(CORE_SRC)
 # Rules:
 #******************************************************************************
 
-.PHONY: all upload clean
+.PHONY: all upload clean usr_clean
 
 all: $(TARGET).hex
 
@@ -128,6 +128,11 @@ upload:
 
 clean:
 	rm -f $(USR_BIN)/*.o $(USR_BIN)/*.d
+	rm -f $(TARGET).hex
+	@echo "cleaned from binaries of user code."
+
+dist_clean:
+	rm -f $(USR_BIN)/*.o $(USR_BIN)/*.d
 	rm -f $(CORE_BIN)/*.o $(CORE_BIN)/*.d
 	rm -f $(TARGET).elf $(TARGET).hex
 	@echo "cleaning done."
@@ -143,8 +148,8 @@ $(USR_BIN)/%.o: $(USR_SRC)/%.cpp
 
 # Linking ---------------------------------------------------------------------
 $(TARGET).elf: $(CORE_OBJ) $(LIB_OBJ) $(USR_OBJ)
-	@echo [linking] @$(CC) $(LD_FLAGS) -o "$@" $(USR_OBJ) $(CORE_OBJ)
-	@$(CC) $(LD_FLAGS) -o "$@" $(USR_OBJ) $(CORE_OBJ)
+	@echo [linking] @$(CC) $(LD_FLAGS) -o "$@" $(USR_OBJ) $(CORE_OBJ) $(LIBS)
+	@$(CC) $(LD_FLAGS) -o "$@" $(USR_OBJ) $(CORE_OBJ) $(LIBS)
 
 %.hex: %.elf
 	@echo [HEX] $(SIZE) "$<"

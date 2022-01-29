@@ -3,10 +3,14 @@
  * Copyright (c) 2017 PJRC.COM, LLC.
  */
 #include <Arduino.h>
-#include <stdlib.h>
-#include <vector>
+
+#include <cstdlib>
+#include <cstdint>
+#include <list>
 
 #include "module.h"
+#include "message.h"
+#include "system.h"
 
 // counting the miliseconds within one second
 volatile uint16_t ms_count;
@@ -37,13 +41,15 @@ extern "C" int main(void)
 
     // system-wide initializations
 	pinMode(13, OUTPUT);
-	
-    // create all needed modules
-    // all extended initializations have to be handled my the modules as tasks
-    
+
     // all modules are registered in a list
-    std::vector<Module> module_list;
+    std::list<Module*> module_list;
     
+    // now create and wire all modules and add them to the list
+    // all extended initializations are not yet done but
+    // have to be handled my the modules as tasks
+    build_system(&module_list);
+
     // bend the systick ISR to our own
     _VectorsRam[15] = &modified_systick_isr;
 
