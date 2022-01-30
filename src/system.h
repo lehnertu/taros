@@ -11,6 +11,6 @@
     inserted into the list. The connections between modules are defined
     and registered along with the message type.
 */
-void build_system(
+void FC_build_system(
     std::list<Module*> *module_list
 );

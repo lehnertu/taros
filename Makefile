@@ -131,7 +131,7 @@ clean:
 	rm -f $(TARGET).hex
 	@echo "cleaned from binaries of user code."
 
-dist_clean:
+distclean:
 	rm -f $(USR_BIN)/*.o $(USR_BIN)/*.d
 	rm -f $(CORE_BIN)/*.o $(CORE_BIN)/*.d
 	rm -f $(TARGET).elf $(TARGET).hex

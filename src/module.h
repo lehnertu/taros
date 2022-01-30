@@ -20,40 +20,26 @@
 
 #include <cstddef>
 
-class Module;
-
 /*
-    This is a task descriptor
+    This is a generic Module class.
+    
+    All components of the flight stack are represented as modules
+    that communicate among each other sending and receiving messages.
+    
+    Modules sit in the background and are periodically queried by the scheduler
+    whether they have some work to do. They will decide based on the
+    system clock, on received messages or hardware generated events.
 */
-struct Task 
-{
-    // the module which has started this task
-    Module* module;
-    // the system time at which the task has been started
-    uint32_t schedule_time;
-};
-
-struct Message
-{
-    // the sender of the message
-    Module* sender;
-    // the receiver of the message
-    Module* receiver;
-    // an arbitrary data block
-    // the data memory is allocated by the sender
-    // and released by the receiver after handling
-    // TODO: can there be a problem with lost messages ?
-    size_t data_size;
-    void* data;
-};
-
-// TODO:
-// we probably need a socket where to send the messages
-// describing the queue where the message is stored
-// a module can have several queues
-
 class Module
 {
+
 public:
-private:
+
+    // The module is queried by the scheduler every millisecond whether it needs to run.
+    // If the overall workload is low this can also happen much more often.
+    // This method needs to answer and return immediately.
+    virtual bool have_work() = 0;
+    
+    // This is the worker routine that gets executed by the taskmanager.
+    virtual void run() = 0;
 };
