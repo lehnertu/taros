@@ -6,9 +6,15 @@
 # 25.01.2022  Ulf Lehnert
 #******************************************************************************
 
-HOME                = /home/ulf
+# on fwl78
+# HOME                = /home/ulf
+# PROJECT_HOME        = $(HOME)/Programming/TeensyFlightController
+# ARDUINO_HOME        = $(HOME)/Elektronik/Arduino/arduino-1.8.13
+
+# on fwl56
+HOME                = /home/lehnertu
 PROJECT_HOME        = $(HOME)/Programming/TeensyFlightController
-ARDUINO_HOME        = $(HOME)/Elektronik/Arduino/arduino-1.8.13
+ARDUINO_HOME        = $(HOME)/Programming/arduino-1.8.19
 
 TARGET              = FlightController
 BOARD_ID            = TEENSY41
@@ -103,7 +109,7 @@ INCLUDE         = -I$(USR_SRC) -I$(CORE_SRC)
 # Rules:
 #******************************************************************************
 
-.PHONY: all upload clean usr_clean
+.PHONY: all upload clean distclean
 
 all: $(TARGET).hex
 
