@@ -9,6 +9,10 @@ DummyGPS::DummyGPS(float rate)
     gps_rate = rate;
     // we assume at this time was the last transmission
     last_transmission = FC_systick_millis_count;
+    // home position
+    lat = 51.04943;
+    lon = 13.89053;
+    alt = 285.0;
 }
 
 bool DummyGPS::have_work()
@@ -21,12 +25,17 @@ bool DummyGPS::have_work()
     // this breaks the rule that no action should be performed in have_work()
     if (elapsed>10)
 		digitalWriteFast(13, LOW);
-        
+
     return (elapsed*gps_rate >= 1000.0);
 }
 
 void DummyGPS::run()
 {
+
+    // int32_t random(void);
+    // delivers positive numbers running 0...2147483647
+    
+
     last_transmission = FC_systick_millis_count;
     // TODO: send message
     // switch on the LED

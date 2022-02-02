@@ -7,16 +7,16 @@
 #include "port.h"
 
 /*  
-    This is a module simulating a GPS sensor.
-    It can send MESSAGE_GPS_POSITION at regular intervals (10 Hz).
+    This is a module simulating a telemetry transmission channel.
+    It outputs all received messages to the USB serial connection.
 */
-class DummyGPS : public Module
+class DummyTelemetry : public Module
 {
 
 public:
 
-    // constructor sets the rate
-    DummyGPS(float rate);
+    // constructor
+    DummyTelemetry(uint32_t baud);
     
     // The module is queried by the scheduler every millisecond whether it needs to run.
     // This will return true, when a new dataset from the GPS has been received.
@@ -27,15 +27,10 @@ public:
     virtual void run();
 
     // port over which position data is sent out at requested rate
-    SenderPort<MESSAGE_GPS_POSITION> output;
+    ReceiverPort<MESSAGE_TELEMETRY> output;
     
 private:
 
-    float       lat; 		// latitude in degree (north positive)
-    float       lon;		// longitude in degree (east positive)
-    float       alt;		// altitude in m
-
-    float       gps_rate;
     uint32_t    last_transmission;
     
 };

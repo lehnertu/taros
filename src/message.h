@@ -31,3 +31,7 @@ struct MESSAGE_GPS_POSITION {
 struct MESSAGE_LOGGING {
     
 };
+
+struct MESSAGE_TELEMETRY {
+    
+};

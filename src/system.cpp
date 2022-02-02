@@ -1,6 +1,7 @@
 #include "system.h"
 #include <Arduino.h>
 #include "dummy_gps.h"
+#include "dummy_telemetry.h"
 
 void FC_build_system(
     std::list<Module*> *module_list

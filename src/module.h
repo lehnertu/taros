@@ -13,7 +13,7 @@
     A sent message will be stored in the input queue of the receiver module
     until the receiver is able to handle it with an own task.
     Insertion into the queue happens immediately while the consumption
-    depends on the scheduling of the recever module.
+    depends on the scheduling of the receiver module.
 */
 
 #pragma once
@@ -38,8 +38,18 @@ public:
     // The module is queried by the scheduler every millisecond whether it needs to run.
     // If the overall workload is low this can also happen much more often.
     // This method needs to answer and return immediately.
+    // No actual work should be performed here,
+    // just determined if there is something that needs to be done.
     virtual bool have_work() = 0;
     
     // This is the worker routine that gets executed by the taskmanager.
+    // Here all the work of the module should be done.
+    // Every call should return in well below a millisecond.
+    // If necessary, larger amounts of work need to be distributed into
+    // several chunks, that means several calls of run()
     virtual void run() = 0;
+    
+    // All message ports, that a module may have should be declared public
+    // so they can be wired easily during system build
+    
 };
