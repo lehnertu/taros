@@ -19,9 +19,10 @@ DummyGPS::DummyGPS(
     vy = 0.0;
     vz = 3.0;
     // send a status message that we are ready to run
-    status_out->transmit(
+    status_out.transmit(
         MESSAGE_TEXT { .sender_module = id, .text="running OK." }
     );
+    Serial.println("DummyGPS setup done.");
 }
 
 bool DummyGPS::have_work()
@@ -45,6 +46,7 @@ bool DummyGPS::have_work()
 
 void DummyGPS::run()
 {
+    // Serial.println("DummyGPS run()");
 
     // time in seconds
     float elapsed = 0.001*(FC_systick_millis_count - last_transmission);

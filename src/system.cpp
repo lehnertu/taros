@@ -14,15 +14,18 @@ void FC_build_system(
     usb->text_in.receive(
         MESSAGE_TEXT { .sender_module = "SYSTEM", .text="running setup." } );
 
-    // Serial.println("FC_build_system");
-    DummyGPS *gps = new DummyGPS("DGPS_1", 2.0);
-    gps->status_out->set_receiver(&(usb->text_in));
+    DummyGPS *gps = new DummyGPS("GPS_1", 2.0);
+    ReceiverPort<MESSAGE_TEXT> *port_in = &(usb->text_in);
+    Serial.println((uint64_t)port_in);
+    gps->status_out.set_receiver(port_in);
     module_list->push_back(gps);
     
     // All messages are still just queued in the USB_serial module.
     // They will get sent now, when the scheduler and taskmanager pick up their work.
     usb->text_in.receive(
         MESSAGE_TEXT { .sender_module = "SYSTEM", .text="setup complete." } );
+
+    Serial.println("build_system() done.");
     
 }
 

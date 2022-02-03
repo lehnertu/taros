@@ -77,6 +77,8 @@ extern "C" int main(void)
 	                    .schedule_time = FC_systick_millis_count
 	                    };
 	                task_list.push_back(task);
+	                // Serial.print("scheduling Module at ");
+	                // Serial.println((uint64_t)task.module);
 	            }
 	        };
 	        
@@ -90,10 +92,8 @@ extern "C" int main(void)
             Task task = task_list.front();
             // remove it from the list
             task_list.pop_front();
-            /*
-                Serial.print("calling Module at ");
-                Serial.println((uint64_t)task.module);
-            */
+            // Serial.print("calling Module at ");
+            // Serial.println((uint64_t)task.module);
             // execute the task
             task.module->run();
         }

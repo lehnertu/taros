@@ -1,4 +1,5 @@
 #include "port.h"
+#include <Arduino.h>
 
 template <typename msg_type>
 void SenderPort<msg_type>::set_receiver(ReceiverPort<msg_type> *receiver)
@@ -9,6 +10,8 @@ void SenderPort<msg_type>::set_receiver(ReceiverPort<msg_type> *receiver)
 template <typename msg_type>
 void SenderPort<msg_type>::transmit(msg_type message)
 {
+    // Serial.println("SenderPort::transmit()");
+    // TODO: do actually send
 };
 
 // we have to instantiate the class for every possible message type
@@ -22,6 +25,7 @@ template class SenderPort<MESSAGE_TELEMETRY>;
 template <typename msg_type>
 void ReceiverPort<msg_type>::receive(msg_type message)
 {
+    // Serial.println("ReceiverPort::receive()");
     queue.push_back(message);
 };
 
@@ -34,6 +38,7 @@ uint16_t ReceiverPort<msg_type>::count()
 template <typename msg_type>
 msg_type ReceiverPort<msg_type>::fetch()
 {
+    // Serial.println("ReceiverPort::fetch()");
     // get the first message
     msg_type msg = queue.front();
     // remove it from the list
