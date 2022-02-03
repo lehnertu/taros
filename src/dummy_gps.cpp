@@ -13,6 +13,9 @@ DummyGPS::DummyGPS(float rate)
     lat = 51.04943;
     lon = 13.89053;
     alt = 285.0;
+    vx = 0.0;
+    vy = 0.0;
+    vz = 3.0;
 }
 
 bool DummyGPS::have_work()
@@ -29,15 +32,33 @@ bool DummyGPS::have_work()
     return (elapsed*gps_rate >= 1000.0);
 }
 
+#define DEGREE_PER_METER 9e-6
+// int32_t random(void);
+// delivers positive numbers running 0...2147483647
+#define MAX_RANDOM 2147483648.0
+
 void DummyGPS::run()
 {
 
-    // int32_t random(void);
-    // delivers positive numbers running 0...2147483647
-    
+    // time in seconds
+    float elapsed = 0.001*(FC_systick_millis_count - last_transmission);
+    // velocity damping
+    vx -= 0.2 * vx * elapsed;
+    vy -= 0.2 * vy * elapsed;
+    vz -= 0.5 * vz * elapsed;
+    // random velocity change
+    vx += 0.5 * elapsed * random()/MAX_RANDOM;
+    vy += 0.5 * elapsed * random()/MAX_RANDOM;
+    vz += 1.0 * elapsed * random()/MAX_RANDOM;
+    // position change
+    lat += vy * elapsed * DEGREE_PER_METER;
+    lon += vx * elapsed * DEGREE_PER_METER;
+    alt += vz * elapsed;
 
-    last_transmission = FC_systick_millis_count;
     // TODO: send message
+    
+    last_transmission = FC_systick_millis_count;
+
     // switch on the LED
     digitalWriteFast(13, HIGH);
 }

@@ -6,6 +6,7 @@
 #include "message.h"
 #include "port.h"
 
+
 /*  
     This is a module simulating a GPS sensor.
     It can send MESSAGE_GPS_POSITION at regular intervals (10 Hz).
@@ -34,6 +35,10 @@ private:
     float       lat; 		// latitude in degree (north positive)
     float       lon;		// longitude in degree (east positive)
     float       alt;		// altitude in m
+
+    float       vx;         // simulated velocity in east direction [m/s]
+    float       vy;         // simulated velocity in north direction [m/s]
+    float       vz;         // simulated velocity in up direction [m/s]
 
     float       gps_rate;
     uint32_t    last_transmission;
