@@ -28,8 +28,9 @@ struct MESSAGE_GPS_POSITION {
     double  altitude;       // meters above MSL
 };
 
-struct MESSAGE_LOGGING {
-    
+struct MESSAGE_TEXT {
+    char const *sender_module;
+    char const *text;
 };
 
 struct MESSAGE_TELEMETRY {

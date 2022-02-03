@@ -52,4 +52,11 @@ public:
     // All message ports, that a module may have should be declared public
     // so they can be wired easily during system build
     
+protected:
+    
+    // All modules have a short name which is used to reference the modules
+    // when sending messages (telemetry for instance)
+    // This should be a zero terminated string with 8 characters at max.
+    char id[9];
+    
 };

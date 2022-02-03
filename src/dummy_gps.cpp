@@ -1,11 +1,13 @@
 #include "dummy_gps.h"
 #include <Arduino.h>
 
-// raise a flag for the main loop to trigger scheduler/taskmanager execution
-extern volatile uint8_t systick_flag;
-
-DummyGPS::DummyGPS(float rate)
+DummyGPS::DummyGPS(
+    char const *name,
+    float rate )
 {
+    // copy the name
+    strncpy(id,name,8);
+    id[8] = 0;
     gps_rate = rate;
     // we assume at this time was the last transmission
     last_transmission = FC_systick_millis_count;
@@ -16,6 +18,10 @@ DummyGPS::DummyGPS(float rate)
     vx = 0.0;
     vy = 0.0;
     vz = 3.0;
+    // send a status message that we are ready to run
+    status_out->transmit(
+        MESSAGE_TEXT { .sender_module = id, .text="running OK." }
+    );
 }
 
 bool DummyGPS::have_work()

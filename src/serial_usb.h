@@ -10,27 +10,30 @@
     This is a module simulating a telemetry transmission channel.
     It outputs all received messages to the USB serial connection.
 */
-class DummyTelemetry : public Module
+class USB_Serial : public Module
 {
 
 public:
 
     // constructor
-    DummyTelemetry(uint32_t baud);
+    USB_Serial(
+        char const *name,
+        uint32_t baud_rate);
     
     // The module is queried by the scheduler every millisecond whether it needs to run.
     // This will return true, when a new dataset from the GPS has been received.
     virtual bool have_work();
 
     // This is the worker function being executed by the taskmanager.
-    // It switches on the LED and sends a message to all registered receivers.
+    // It writes all pending messages to the bus unless a limit of execution time is exceeded.
     virtual void run();
 
-    // port over which position data is sent out at requested rate
-    ReceiverPort<MESSAGE_TELEMETRY> output;
-    
-private:
+    // port at which messages are received to be sent over the USB serial connection
+    ReceiverPort<MESSAGE_TEXT> text_in;
 
-    uint32_t    last_transmission;
+private :
+
+    // output buffer
+    char buffer[256];
     
 };

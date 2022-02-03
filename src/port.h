@@ -17,6 +17,12 @@
 template <typename msg_type>
 class ReceiverPort;
 
+/*
+ * This port is intended for asynchronous communication.
+ * The sender transmits one message and does not care about it anymore.
+ * The message gets stored in the input queue of the connected receivers
+ * and sits there until it is processed by the receiver module
+ */
 template <typename msg_type>
 class SenderPort {
     public:
@@ -25,10 +31,15 @@ class SenderPort {
         void set_receiver(ReceiverPort<msg_type> *receiver);
         void transmit(msg_type message);
     private:
-        msg_type message;
+        std::list<ReceiverPort<msg_type>*> list_of_receivers;
 };
 
-
+/*
+ * This port is intended for asynchronous communication.
+ * Whenever the connected sender decides to send a message it gets stored
+ * in the input queue associated with this port.
+ * It sits there until it is processed by the module owning this port.
+ */
 template <typename msg_type>
 class ReceiverPort {
     public:

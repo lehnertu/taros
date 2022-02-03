@@ -17,7 +17,9 @@ class DummyGPS : public Module
 public:
 
     // constructor sets the rate
-    DummyGPS(float rate);
+    DummyGPS(
+        char const *name,
+        float rate);
     
     // The module is queried by the scheduler every millisecond whether it needs to run.
     // This will return true, when a new dataset from the GPS has been received.
@@ -28,8 +30,11 @@ public:
     virtual void run();
 
     // port over which position data is sent out at requested rate
-    SenderPort<MESSAGE_GPS_POSITION> output;
+    SenderPort<MESSAGE_GPS_POSITION> *output;
     
+    // port over which status messages are sent
+    SenderPort<MESSAGE_TEXT> *status_out;
+
 private:
 
     float       lat; 		// latitude in degree (north positive)

@@ -30,7 +30,6 @@ extern "C" int main(void)
 
     // system-wide initializations
 	pinMode(13, OUTPUT);
-    Serial.begin(9600);
     
     // all modules are registered in a list
     std::list<Module*> module_list;
