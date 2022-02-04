@@ -106,3 +106,6 @@ DWT - data watchpoint and trace unit
     DWT registers are described in the Arm®v7-M Architecture Reference Manual.
 ARM_DWT_CYCCNT is a 32-bit unsigned counter for processor cycles (600 MHz), defined in imxrt.h
 
+testing
+-----------
+minicom -D /dev/ttyACM0 -b 9600

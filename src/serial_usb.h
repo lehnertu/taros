@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "global.h"
 #include "module.h"
 #include "message.h"
@@ -17,7 +19,7 @@ public:
 
     // constructor
     USB_Serial(
-        char const *name,
+        std::string name,
         uint32_t baud_rate);
     
     // The module is queried by the scheduler every millisecond whether it needs to run.

@@ -8,16 +8,15 @@ void FC_build_system(
 )
 {
     // create the USB serial output channel
-    USB_Serial *usb = new USB_Serial("USB_1", 9600);
+    USB_Serial *usb = new USB_Serial(std::string("USB_1"), 9600);
     module_list->push_back(usb);
     // send a message to it
     usb->text_in.receive(
         MESSAGE_TEXT { .sender_module = "SYSTEM", .text="running setup." } );
 
-    DummyGPS *gps = new DummyGPS("GPS_1", 2.0);
-    ReceiverPort<MESSAGE_TEXT> *port_in = &(usb->text_in);
-    Serial.println((uint64_t)port_in);
-    gps->status_out.set_receiver(port_in);
+    DummyGPS *gps = new DummyGPS(std::string("GPS_1"), 5.0, 2.0);
+    gps->status_out.set_receiver(&(usb->text_in));
+    gps->tm_out.set_receiver(&(usb->text_in));
     module_list->push_back(gps);
     
     // All messages are still just queued in the USB_serial module.
@@ -25,7 +24,5 @@ void FC_build_system(
     usb->text_in.receive(
         MESSAGE_TEXT { .sender_module = "SYSTEM", .text="setup complete." } );
 
-    Serial.println("build_system() done.");
-    
 }
 

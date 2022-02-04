@@ -19,6 +19,7 @@
 #pragma once
 
 #include <cstddef>
+#include <string>
 
 /*
     This is a generic Module class.
@@ -56,7 +57,7 @@ protected:
     
     // All modules have a short name which is used to reference the modules
     // when sending messages (telemetry for instance)
-    // This should be a zero terminated string with 8 characters at max.
-    char id[9];
+    // should have 8 characters at max.
+    std::string id;
     
 };

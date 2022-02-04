@@ -1,14 +1,12 @@
 #include "serial_usb.h"
 #include <Arduino.h>
-#include <string>
 
 USB_Serial::USB_Serial(
-    char const *name,
+    std::string name,
     uint32_t baud_rate )
 {
     // copy the name
-    strncpy(id,name,8);
-    id[8] = 0;
+    id = name;
     // open the connection
     Serial.begin(baud_rate);
     Serial.println("\n\n  Teensy Flight Controller.");
@@ -39,7 +37,14 @@ void USB_Serial::run()
     buffer += std::string(" : ");
     // message text
     buffer += msg.text;
-    buffer += std::string("\n");
+    buffer += std::string("\r\n");
     // write out
+    // the write is buffered and returns immediately
+    // TODO probably we should check the buffer availability
+    // uint32_t usec_start = micros();
     Serial.write(buffer.c_str(), buffer.size());
+    // uint32_t usec_stop = micros();
+    // Serial.print("transmission took ");
+    // Serial.print(usec_stop-usec_start);
+    // Serial.println(" us");
 }

@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "global.h"
 #include "module.h"
 #include "message.h"
@@ -18,8 +20,10 @@ public:
 
     // constructor sets the rate
     DummyGPS(
-        char const *name,
-        float rate);
+        std::string name,    // the ID of the module
+        float rate,          // the GPS update rate
+        float tm_rate        // the rate at which telemetry messages are sent
+            );
     
     // The module is queried by the scheduler every millisecond whether it needs to run.
     // This will return true, when a new dataset from the GPS has been received.
@@ -32,6 +36,9 @@ public:
     // port over which position data is sent out at requested rate
     SenderPort<MESSAGE_GPS_POSITION> output;
     
+    // port over which telemetry messages are sent
+    SenderPort<MESSAGE_TEXT> tm_out;
+
     // port over which status messages are sent
     SenderPort<MESSAGE_TEXT> status_out;
 
@@ -46,6 +53,13 @@ private:
     float       vz;         // simulated velocity in up direction [m/s]
 
     float       gps_rate;
-    uint32_t    last_transmission;
+    uint32_t    last_update;
+    float       telemetry_rate;
+    uint32_t    last_telemetry;
+    
+    // here are some flags indicating which work is due
+    bool        flag_state_change;
+    bool        flag_update_pending;
+    bool        flag_telemetry_pending;
     
 };

@@ -1,16 +1,22 @@
 #include "dummy_gps.h"
 #include <Arduino.h>
+// we only need that for the LED blinking test
+// TODO remove <Arduino.h>
 
 DummyGPS::DummyGPS(
-    char const *name,
-    float rate )
+    std::string name,
+    float rate,
+    float tm_rate )
 {
     // copy the name
-    strncpy(id,name,8);
-    id[8] = 0;
+    id = name;
     gps_rate = rate;
-    // we assume at this time was the last transmission
-    last_transmission = FC_systick_millis_count;
+    telemetry_rate = tm_rate;
+    flag_state_change = true;
+    flag_update_pending = false;
+    last_update = FC_systick_millis_count;
+    flag_telemetry_pending = false;
+    last_telemetry = FC_systick_millis_count;
     // home position
     lat = 51.04943;
     lon = 13.89053;
@@ -18,25 +24,24 @@ DummyGPS::DummyGPS(
     vx = 0.0;
     vy = 0.0;
     vz = 3.0;
-    // send a status message that we are ready to run
-    status_out.transmit(
-        MESSAGE_TEXT { .sender_module = id, .text="running OK." }
-    );
-    Serial.println("DummyGPS setup done.");
+    // we cannot send a status message that we are ready to run
+    // because the port is not yet wired to any receiver
 }
 
 bool DummyGPS::have_work()
 {
-    // Serial.println("DummyGPS check");
-    float elapsed = FC_systick_millis_count - last_transmission;
+    float elapsed = FC_systick_millis_count - last_update;
+    flag_update_pending = (elapsed*gps_rate >= 1000.0);
     
+    elapsed = FC_systick_millis_count - last_telemetry;
+    flag_telemetry_pending = (elapsed*telemetry_rate >= 1000.0);
     // TODO: test code - remove
     // after 50 ms switch off the LED
     // this breaks the rule that no action should be performed in have_work()
     if (elapsed>10)
-		digitalWriteFast(13, LOW);
+        digitalWriteFast(13, LOW);
 
-    return (elapsed*gps_rate >= 1000.0);
+    return flag_state_change | flag_update_pending | flag_telemetry_pending;
 }
 
 #define DEGREE_PER_METER 9e-6
@@ -46,28 +51,49 @@ bool DummyGPS::have_work()
 
 void DummyGPS::run()
 {
-    // Serial.println("DummyGPS run()");
-
-    // time in seconds
-    float elapsed = 0.001*(FC_systick_millis_count - last_transmission);
-    // velocity damping
-    vx -= 0.2 * vx * elapsed;
-    vy -= 0.2 * vy * elapsed;
-    vz -= 0.5 * vz * elapsed;
-    // random velocity change
-    vx += 0.5 * elapsed * random()/MAX_RANDOM;
-    vy += 0.5 * elapsed * random()/MAX_RANDOM;
-    vz += 1.0 * elapsed * random()/MAX_RANDOM;
-    // position change
-    lat += vy * elapsed * DEGREE_PER_METER;
-    lon += vx * elapsed * DEGREE_PER_METER;
-    alt += vz * elapsed;
-
-    // TODO: send message
     
-    last_transmission = FC_systick_millis_count;
+    if (flag_update_pending)
+    {
+        // time in seconds
+        float elapsed = 0.001*(FC_systick_millis_count - last_update);
+        // velocity damping
+        vx -= 0.2 * vx * elapsed;
+        vy -= 0.2 * vy * elapsed;
+        vz -= 0.5 * vz * elapsed;
+        // random velocity change
+        vx += 0.5 * elapsed * random()/MAX_RANDOM;
+        vy += 0.5 * elapsed * random()/MAX_RANDOM;
+        vz += 1.0 * elapsed * random()/MAX_RANDOM;
+        // position change
+        lat += vy * elapsed * DEGREE_PER_METER;
+        lon += vx * elapsed * DEGREE_PER_METER;
+        alt += vz * elapsed;
 
-    // switch on the LED
-    digitalWriteFast(13, HIGH);
+        // TODO: send message
+        
+        last_update = FC_systick_millis_count;
+        flag_update_pending = false;
+    };
+
+    if (flag_telemetry_pending)
+    {
+        // TODO: test code - remove
+        // switch on the LED
+        digitalWriteFast(13, HIGH);
+        tm_out.transmit(
+            MESSAGE_TEXT { .sender_module = id, .text="ping." }
+        );
+        last_telemetry = FC_systick_millis_count;
+        flag_telemetry_pending = false;
+    };
+ 
+    if (flag_state_change)
+    {
+        status_out.transmit(
+            MESSAGE_TEXT { .sender_module = id, .text="running OK." }
+        );
+        flag_state_change = false;
+    };
+    
 }
 

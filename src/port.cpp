@@ -11,7 +11,10 @@ template <typename msg_type>
 void SenderPort<msg_type>::transmit(msg_type message)
 {
     // Serial.println("SenderPort::transmit()");
-    // TODO: do actually send
+    // std::list<ReceiverPort<msg_type>*> list_of_receivers;
+    for (auto const& port : list_of_receivers) {
+        port->receive(message);
+    }
 };
 
 // we have to instantiate the class for every possible message type
