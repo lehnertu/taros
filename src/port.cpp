@@ -1,5 +1,4 @@
 #include "port.h"
-#include <Arduino.h>
 
 template <typename msg_type>
 void SenderPort<msg_type>::set_receiver(ReceiverPort<msg_type> *receiver)

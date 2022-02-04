@@ -1,3 +1,5 @@
+#include <cstdio>
+
 #include "dummy_gps.h"
 #include <Arduino.h>
 // we only need that for the LED blinking test
@@ -80,9 +82,35 @@ void DummyGPS::run()
         // TODO: test code - remove
         // switch on the LED
         digitalWriteFast(13, HIGH);
+        
+        char buffer[16];
+        int n = snprintf(buffer, 15, "%.6f", lat);
+        buffer[n] = '\0';
         tm_out.transmit(
-            MESSAGE_TEXT { .sender_module = id, .text="ping." }
+            MESSAGE_TELEMETRY {
+                .sender_module = id,
+                .variable = "LAT",
+                .value = std::string(buffer,n) }
         );
+
+        n = snprintf(buffer, 15, "%.6f", lon);
+        buffer[n] = '\0';
+        tm_out.transmit(
+            MESSAGE_TELEMETRY {
+                .sender_module = id,
+                .variable = "LON",
+                .value = std::string(buffer,n) }
+        );
+
+        n = snprintf(buffer, 15, "%.2f", alt);
+        buffer[n] = '\0';
+        tm_out.transmit(
+            MESSAGE_TELEMETRY {
+                .sender_module = id,
+                .variable = "ALT",
+                .value = std::string(buffer,n) }
+        );
+
         last_telemetry = FC_systick_millis_count;
         flag_telemetry_pending = false;
     };

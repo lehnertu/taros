@@ -35,5 +35,7 @@ struct MESSAGE_TEXT {
 };
 
 struct MESSAGE_TELEMETRY {
-    
+    std::string sender_module;
+    std::string variable;
+    std::string value;
 };

@@ -37,7 +37,7 @@ public:
     SenderPort<MESSAGE_GPS_POSITION> output;
     
     // port over which telemetry messages are sent
-    SenderPort<MESSAGE_TEXT> tm_out;
+    SenderPort<MESSAGE_TELEMETRY> tm_out;
 
     // port over which status messages are sent
     SenderPort<MESSAGE_TEXT> status_out;

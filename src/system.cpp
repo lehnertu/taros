@@ -16,7 +16,7 @@ void FC_build_system(
 
     DummyGPS *gps = new DummyGPS(std::string("GPS_1"), 5.0, 2.0);
     gps->status_out.set_receiver(&(usb->text_in));
-    gps->tm_out.set_receiver(&(usb->text_in));
+    gps->tm_out.set_receiver(&(usb->telemetry_in));
     module_list->push_back(gps);
     
     // All messages are still just queued in the USB_serial module.
