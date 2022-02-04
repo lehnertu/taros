@@ -24,6 +24,7 @@ USR_BIN             = $(USR_SRC)
 
 CORE_SRC            = $(PROJECT_HOME)/core
 CORE_BIN            = $(CORE_SRC)
+CORE_LIB            = $(BOARD_ID)_lib.a
 
 # libraries not yet handled
 LIBS_SHARED_BASE    = $(ARDUINO_HOME)/libraries
@@ -58,7 +59,7 @@ FLAGS_S     = -x assembler-with-cpp
 FLAGS_LD    = -Wl,--gc-sections,--relax -T$(MCU_LD)
 
 # standard libraries
-LIBS        = -larm_cortexM7lfsp_math -lm -lstdc++
+LIBS        = $(CORE_BIN)/$(CORE_LIB) -larm_cortexM7lfsp_math -lm -lstdc++
 
 #************************************************************************
 # Settings below this point usually do not need to be edited
@@ -75,13 +76,14 @@ C_FLAGS     = $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_COM) $(DEFINES) $(FLAGS_C)
 LD_FLAGS    := $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_LD)
 
 # additional libraries to link
-LIBS = -larm_cortexM7lfsp_math -lm -lstdc++
+# LIBS +=
 
 # names for the compiler programs
 CC = $(COMPILERPATH)/arm-none-eabi-gcc
 CXX = $(COMPILERPATH)/arm-none-eabi-g++
 OBJCOPY = $(COMPILERPATH)/arm-none-eabi-objcopy
 SIZE = $(COMPILERPATH)/arm-none-eabi-size
+AR = $(COMPILERPATH)/arm-none-eabi-gcc-ar
 
 #******************************************************************************
 # Source and Include Files
@@ -113,7 +115,7 @@ INCLUDE         = -I$(USR_SRC) -I$(CORE_SRC)
 
 all: $(TARGET).hex
 
-$(TARGET).elf: $(CORE_OBJ) $(USR_OBJ)
+$(TARGET).elf: $(CORE_LIB) $(USR_OBJ)
 
 # Core library ----------------------------------------------------------------
 $(CORE_BIN)/%.o: $(CORE_SRC)/%.S
@@ -128,19 +130,24 @@ $(CORE_BIN)/%.o: $(CORE_SRC)/%.cpp
 	@echo [compile] $(CXX) $(CPP_FLAGS) $(INCLUDE) -o $@ -c $<
 	@"$(CXX)" $(CPP_FLAGS) $(INCLUDE) -o $@ -c $<
 
+$(CORE_LIB): $(CORE_OBJ)
+	@echo [assembling core library] $(AR) rcs $(CORE_BIN)/$(CORE_LIB) $(CORE_OBJ)
+	@$(AR) rcs $(CORE_BIN)/$(CORE_LIB) $(CORE_OBJ)
+	
 upload:
 	$(TOOLSPATH)/teensy_post_compile -file=$(TARGET) -path=$(shell pwd) -tools=$(TOOLSPATH)
 	-$(TOOLSPATH)/teensy_reboot
 
 clean:
 	rm -f $(USR_BIN)/*.o $(USR_BIN)/*.d
-	rm -f $(TARGET).hex
+	rm -f $(CORE_BIN)/*.o $(CORE_BIN)/*.d
+	rm -f $(TARGET).elf
 	@echo "cleaned from binaries of user code."
 
 distclean:
 	rm -f $(USR_BIN)/*.o $(USR_BIN)/*.d
-	rm -f $(CORE_BIN)/*.o $(CORE_BIN)/*.d
-	rm -f $(TARGET).elf $(TARGET).hex
+	rm -f $(CORE_BIN)/*.o $(CORE_BIN)/*.d $(CORE_BIN)/$(CORE_LIB)
+	rm -f $(TARGET).elf $(TARGET).hex 
 	@echo "cleaning done."
 
 # Handle user sources ---------------------------------------------------------
@@ -153,9 +160,9 @@ $(USR_BIN)/%.o: $(USR_SRC)/%.cpp
 	@"$(CXX)" $(CPP_FLAGS) $(INCLUDE) -o "$@" -c $<
 
 # Linking ---------------------------------------------------------------------
-$(TARGET).elf: $(CORE_OBJ) $(LIB_OBJ) $(USR_OBJ)
-	@echo [linking] @$(CC) $(LD_FLAGS) -o "$@" $(USR_OBJ) $(CORE_OBJ) $(LIBS)
-	@$(CC) $(LD_FLAGS) -o "$@" $(USR_OBJ) $(CORE_OBJ) $(LIBS)
+$(TARGET).elf: $(CORE_LIB) $(LIB_OBJ) $(USR_OBJ)
+	@echo [linking] $(CC) $(LD_FLAGS) -o "$@" $(USR_OBJ) $(LIBS)
+	@$(CC) $(LD_FLAGS) -o "$@" $(USR_OBJ) $(LIBS)
 
 %.hex: %.elf
 	@echo [HEX] $(SIZE) "$<"
