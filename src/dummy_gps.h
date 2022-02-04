@@ -30,10 +30,10 @@ public:
     virtual void run();
 
     // port over which position data is sent out at requested rate
-    SenderPort<MESSAGE_GPS_POSITION> *output;
+    SenderPort<MESSAGE_GPS_POSITION> output;
     
     // port over which status messages are sent
-    SenderPort<MESSAGE_TEXT> *status_out;
+    SenderPort<MESSAGE_TEXT> status_out;
 
 private:
 
