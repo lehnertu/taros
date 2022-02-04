@@ -21,6 +21,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 
 struct MESSAGE_GPS_POSITION {
     double  latitude;       // degree north
@@ -29,8 +30,8 @@ struct MESSAGE_GPS_POSITION {
 };
 
 struct MESSAGE_TEXT {
-    char const *sender_module;
-    char const *text;
+    std::string sender_module;
+    std::string text;
 };
 
 struct MESSAGE_TELEMETRY {

@@ -31,9 +31,4 @@ public:
     // port at which messages are received to be sent over the USB serial connection
     ReceiverPort<MESSAGE_TEXT> text_in;
 
-private :
-
-    // output buffer
-    char buffer[256];
-    
 };

@@ -1,5 +1,6 @@
 #include "serial_usb.h"
 #include <Arduino.h>
+#include <string>
 
 USB_Serial::USB_Serial(
     char const *name,
@@ -25,19 +26,20 @@ void USB_Serial::run()
 {
     // Serial.println("USB_Serial run()");
     MESSAGE_TEXT msg = text_in.fetch();
-    strncpy(buffer, msg.sender_module, 8);
-    size_t count = strlen(msg.sender_module);
-    char *bp = buffer + count;
-    // fill with spaces
-    while (count<8)
+    std::string buffer = msg.sender_module;
+    // pad with spaces to 8 characters
+    size_t len = buffer.size();
+    if (len<8)
     {
-        *bp++ = ' ';
-        count++;
+        std::string space(8-len, ' ');
+        buffer += space;
     };
-    *bp++ = ':';
-    *bp++ = ' ';
-    // we have used 10 characters, 245 remaining plus the terminating zero
-    strncpy(bp, msg.text, 245);
+    buffer = buffer.substr(0, 8);
+    // separator
+    buffer += std::string(" : ");
+    // message text
+    buffer += msg.text;
+    buffer += std::string("\n");
     // write out
-    Serial.println(buffer);
+    Serial.write(buffer.c_str(), buffer.size());
 }
