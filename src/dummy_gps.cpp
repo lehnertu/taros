@@ -1,9 +1,7 @@
 #include <cstdio>
 
+#include "global.h"
 #include "dummy_gps.h"
-#include <Arduino.h>
-// we only need that for the LED blinking test
-// TODO remove <Arduino.h>
 
 DummyGPS::DummyGPS(
     std::string name,
@@ -37,11 +35,6 @@ bool DummyGPS::have_work()
     
     elapsed = FC_systick_millis_count - last_telemetry;
     flag_telemetry_pending = (elapsed*telemetry_rate >= 1000.0);
-    // TODO: test code - remove
-    // after 50 ms switch off the LED
-    // this breaks the rule that no action should be performed in have_work()
-    if (elapsed>10)
-        digitalWriteFast(13, LOW);
 
     return flag_state_change | flag_update_pending | flag_telemetry_pending;
 }
@@ -79,10 +72,6 @@ void DummyGPS::run()
 
     if (flag_telemetry_pending)
     {
-        // TODO: test code - remove
-        // switch on the LED
-        digitalWriteFast(13, HIGH);
-        
         char buffer[16];
         int n = snprintf(buffer, 15, "%.6f", lat);
         buffer[n] = '\0';
@@ -117,9 +106,11 @@ void DummyGPS::run()
  
     if (flag_state_change)
     {
-        status_out.transmit(
-            MESSAGE_TEXT { .sender_module = id, .text="running OK." }
-        );
+        system_log.system_in.receive(
+            MESSAGE_SYSTEM {
+                .sender_module = id,
+                .severity_level = MSG_LEVEL_STATE_CHANGE,
+                .text="up and running." } );
         flag_state_change = false;
     };
     

@@ -38,10 +38,6 @@ public:
 
 private:
 
-    // how to print the different message types
-    std::string serialize_text_message(MESSAGE_TEXT msg);
-    std::string serialize_telemetry_message(MESSAGE_TELEMETRY msg);
-    
     // here are some flags indicating which work is due
     bool  flag_text_pending;
     bool  flag_telemetry_pending;

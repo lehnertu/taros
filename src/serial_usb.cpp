@@ -9,10 +9,15 @@ USB_Serial::USB_Serial(
     id = name;
     // open the connection
     Serial.begin(baud_rate);
-    Serial.println("\n\n  Teensy Flight Controller.");
-    Serial.println("USB_Serial setup done.");
+    // Serial.println("USB_Serial setup done.");
     flag_text_pending = false;
     flag_telemetry_pending = false;
+    // send a message to the system_log
+    system_log.system_in.receive(
+        MESSAGE_SYSTEM {
+            .sender_module = id,
+            .severity_level = MSG_LEVEL_STATE_CHANGE,
+            .text="USB_Serial setup done." } );
 }
 
 bool USB_Serial::have_work()
@@ -34,6 +39,7 @@ void USB_Serial::run()
     {
         MESSAGE_TEXT msg = text_in.fetch();
         std::string buffer = serialize_text_message(msg);
+        buffer += std::string("\r\n");
         // write out
         // the write is buffered and returns immediately
         Serial.write(buffer.c_str(), buffer.size());
@@ -44,6 +50,7 @@ void USB_Serial::run()
     {
         MESSAGE_TELEMETRY msg = telemetry_in.fetch();
         std::string buffer = serialize_telemetry_message(msg);
+        buffer += std::string("\r\n");
         // write out
         // the write is buffered and returns immediately
         Serial.write(buffer.c_str(), buffer.size());
@@ -55,56 +62,5 @@ void USB_Serial::run()
     Serial.print(usec_stop-usec_start);
     Serial.println(" us");
     
-}
-
-std::string USB_Serial::serialize_text_message(MESSAGE_TEXT msg)
-{
-    std::string buffer = msg.sender_module;
-    // pad with spaces to 8 characters
-    size_t len = buffer.size();
-    if (len<8)
-    {
-        std::string space(8-len, ' ');
-        buffer += space;
-    };
-    buffer = buffer.substr(0, 8);
-    // separator
-    buffer += std::string(" : ");
-    // message text
-    buffer += msg.text;
-    buffer += std::string("\r\n");
-    return buffer;
-}
-
-std::string USB_Serial::serialize_telemetry_message(MESSAGE_TELEMETRY msg)
-{
-    // sender module
-    std::string buffer = msg.sender_module;
-    // pad with spaces to 8 characters
-    size_t len = buffer.size();
-    if (len<8)
-    {
-        std::string space(8-len, ' ');
-        buffer += space;
-    };
-    buffer = buffer.substr(0, 8);
-    // separator
-    buffer += std::string(" : ");
-    // vaiable name
-    std::string var = msg.variable;
-    // pad with spaces to 8 characters
-    len = var.size();
-    if (len<8)
-    {
-        std::string space(8-len, ' ');
-        var += space;
-    };
-    buffer += var.substr(0, 8);
-    // separator
-    buffer += std::string(" : ");
-    // value
-    buffer += msg.value;
-    buffer += std::string("\r\n");
-    return buffer;
 }
 

@@ -23,10 +23,20 @@
 #include <cstdint>
 #include <string>
 
-struct MESSAGE_GPS_POSITION {
-    double  latitude;       // degree north
-    double  longitude;      // degree east
-    double  altitude;       // meters above MSL
+#define MSG_LEVEL_FATALERROR 1
+#define MSG_LEVEL_CRITICAL 3
+#define MSG_LEVEL_MILESTONE 5
+#define MSG_LEVEL_ERROR 8
+#define MSG_LEVEL_STATE_CHANGE 10
+#define MSG_LEVEL_WARNING 12
+#define MSG_LEVEL_IMPORTANTTELEMETRY 20
+#define MSG_LEVEL_STATUSREPORT 30
+#define MSG_LEVEL_TELEMETRY 50
+
+struct MESSAGE_SYSTEM {
+    std::string sender_module;
+    uint8_t severity_level;
+    std::string text;
 };
 
 struct MESSAGE_TEXT {
@@ -39,3 +49,16 @@ struct MESSAGE_TELEMETRY {
     std::string variable;
     std::string value;
 };
+
+struct MESSAGE_GPS_POSITION {
+    double  latitude;       // degree north
+    double  longitude;      // degree east
+    double  altitude;       // meters above MSL
+};
+
+// How to print the different message types
+// There is no CR/LF at the end of the string, a print routine has to add that if necessary
+std::string serialize_text_message(MESSAGE_TEXT msg);
+std::string serialize_telemetry_message(MESSAGE_TELEMETRY msg);
+    
+

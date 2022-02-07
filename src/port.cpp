@@ -1,4 +1,5 @@
 #include "port.h"
+#include "global.h"
 
 template <typename msg_type>
 void SenderPort<msg_type>::set_receiver(ReceiverPort<msg_type> *receiver)
@@ -9,8 +10,6 @@ void SenderPort<msg_type>::set_receiver(ReceiverPort<msg_type> *receiver)
 template <typename msg_type>
 void SenderPort<msg_type>::transmit(msg_type message)
 {
-    // Serial.println("SenderPort::transmit()");
-    // std::list<ReceiverPort<msg_type>*> list_of_receivers;
     for (auto const& port : list_of_receivers) {
         port->receive(message);
     }
@@ -27,7 +26,6 @@ template class SenderPort<MESSAGE_TELEMETRY>;
 template <typename msg_type>
 void ReceiverPort<msg_type>::receive(msg_type message)
 {
-    // Serial.println("ReceiverPort::receive()");
     queue.push_back(message);
 };
 
@@ -40,7 +38,6 @@ uint16_t ReceiverPort<msg_type>::count()
 template <typename msg_type>
 msg_type ReceiverPort<msg_type>::fetch()
 {
-    // Serial.println("ReceiverPort::fetch()");
     // get the first message
     msg_type msg = queue.front();
     // remove it from the list
@@ -50,5 +47,39 @@ msg_type ReceiverPort<msg_type>::fetch()
 
 // we have to instantiate the class for every possible message type
 template class ReceiverPort<MESSAGE_TEXT>;
+template class ReceiverPort<MESSAGE_SYSTEM>;
 template class ReceiverPort<MESSAGE_GPS_POSITION>;
 template class ReceiverPort<MESSAGE_TELEMETRY>;
+
+
+template <typename msg_type>
+void TimedReceiverPort<msg_type>::receive(msg_type message)
+{
+    // the this pointer is necessary to get the superclass member into scope
+    this->queue.push_back(message);
+    uint32_t t = FC_systick_millis_count;
+    time.push_back(t);
+};
+
+template <typename msg_type>
+msg_type TimedReceiverPort<msg_type>::fetch()
+{
+    // get the first message
+    msg_type msg = this->queue.front();
+    last_time = time.front();
+    // remove it from the list
+    this->queue.pop_front();
+    time.pop_front();
+    return msg;
+};
+
+template <typename msg_type>
+uint32_t TimedReceiverPort<msg_type>::fetch_time()
+{
+    return last_time;
+};
+
+// we have to instantiate the class for every possible message type
+template class TimedReceiverPort<MESSAGE_SYSTEM>;
+template class TimedReceiverPort<MESSAGE_TEXT>;
+

@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
+#include "logger.h"
 
 // counting the miliseconds within one second
 extern volatile uint16_t FC_ms_count;
@@ -26,3 +26,13 @@ extern volatile uint8_t FC_systick_flag;
 // and added with our own functionality
 extern "C" void FC_systick_isr(void);
 
+// Here are the main initializations that are needed to access the processor hardware.
+// 1) bend the interrupt vector to our own ISR
+void setup_core_system();
+
+// This is a system-wide available logger for system messages.
+// It will be created statically in global.cpp.
+// It can be used by all modules to log system information.
+// Depending on the setup the messages will be written to a file 
+// and/or console or telemetry output when the task loop has started.
+extern Logger system_log;

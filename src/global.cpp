@@ -26,4 +26,16 @@ void FC_systick_isr(void)
     FC_systick_flag++;
 }
 
+void setup_core_system()
+{
+    FC_systick_flag = 0;
+    FC_systick_millis_count = 0;
+    FC_ms_count = 0;
+    FC_systick_cycle_count = ARM_DWT_CYCCNT;
+    // bend the systick ISR to our own
+    _VectorsRam[15] = &FC_systick_isr;
+}
+
+Logger system_log("SYSLOG");
+
 
