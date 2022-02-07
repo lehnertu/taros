@@ -10,17 +10,15 @@
 
 /*  
     This is a module simulating a telemetry transmission channel.
-    It outputs all received messages to the USB serial connection.
+    It outputs all received messages to the system console.
 */
-class USB_Serial : public Module
+class Console_out : public Module
 {
 
 public:
 
     // constructor
-    USB_Serial(
-        std::string name,
-        uint32_t baud_rate);
+    Console_out(std::string name);
     
     // The module is queried by the scheduler every millisecond whether it needs to run.
     // This will return true, when a new dataset from the GPS has been received.

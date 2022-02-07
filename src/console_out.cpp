@@ -1,15 +1,10 @@
-#include "serial_usb.h"
-#include <Arduino.h>
+#include "console_out.h"
+#include <iostream>
 
-USB_Serial::USB_Serial(
-    std::string name,
-    uint32_t baud_rate )
+Console_out::Console_out(std::string name)
 {
     // copy the name
     id = name;
-    // open the connection
-    Serial.begin(baud_rate);
-    // Serial.println("USB_Serial setup done.");
     flag_text_pending = false;
     flag_telemetry_pending = false;
     // send a message to the system_log
@@ -17,10 +12,10 @@ USB_Serial::USB_Serial(
         MESSAGE_SYSTEM {
             .sender_module = id,
             .severity_level = MSG_LEVEL_STATE_CHANGE,
-            .text="USB_Serial setup done." } );
+            .text="setup done." } );
 }
 
-bool USB_Serial::have_work()
+bool Console_out::have_work()
 {
     // if there is something received in one of the input ports
     // we have to handle it
@@ -29,20 +24,15 @@ bool USB_Serial::have_work()
     return flag_text_pending | flag_telemetry_pending;
 }
 
-void USB_Serial::run()
+void Console_out::run()
 {
-
-    // TODO probably we should check the buffer availability
-    uint32_t usec_start = micros();
 
     while (flag_text_pending)
     {
         MESSAGE_TEXT msg = text_in.fetch();
         std::string buffer = serialize_text_message(msg);
-        buffer += std::string("\r\n");
         // write out
-        // the write is buffered and returns immediately
-        Serial.write(buffer.c_str(), buffer.size());
+        std::cout << buffer << std::endl;
         flag_text_pending = (text_in.count()>0);
     }
     
@@ -50,17 +40,10 @@ void USB_Serial::run()
     {
         MESSAGE_TELEMETRY msg = telemetry_in.fetch();
         std::string buffer = serialize_telemetry_message(msg);
-        buffer += std::string("\r\n");
         // write out
-        // the write is buffered and returns immediately
-        Serial.write(buffer.c_str(), buffer.size());
+        std::cout << buffer << std::endl;
         flag_telemetry_pending = (telemetry_in.count()>0);
     }
-    
-    uint32_t usec_stop = micros();
-    Serial.print("  --> transmission took ");
-    Serial.print(usec_stop-usec_start);
-    Serial.println(" us");
     
 }
 

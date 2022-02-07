@@ -28,3 +28,12 @@ Some example modules are implmented:
 2) a Blink module operating the on-board LED
 
 A makefile is provided which creates and uploads an executable onto a Teensy 4.1 microcontroller
+
+### linux_sim branch
+
+This branch runs parallel to the developmen in the master branch.
+It allows to compile and execute TAROS systems on a standard Linux PC.
+It is fully independent of any Teensyduino code making up the core of the Teensy version.
+All modules accessing special hardware are omitted.
+Some special modules are defined like a console output of messages.
+The one millisecond interrupt used on the Teensy is replaced by a timer.

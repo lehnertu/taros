@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include "logger.h"
+#include "cpp_timer.h"
 
 // counting the miliseconds within one second
 extern volatile uint16_t FC_ms_count;
@@ -36,3 +37,9 @@ void setup_core_system();
 // Depending on the setup the messages will be written to a file 
 // and/or console or telemetry output when the task loop has started.
 extern Logger system_log;
+
+class SystickTimer : public CppTimer {
+	void timerEvent();
+};
+
+extern SystickTimer timer;
