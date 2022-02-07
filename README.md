@@ -23,9 +23,8 @@ At present only the very basic ingredients of TAROS are implemented:
 3) setting up a network of modules
 4) message printout over the USB serial connection
 
-Some example modules are implmented:
+Some example modules are implemented:
 1) a simulated GPS sensor
-2) a Blink module operating the on-board LED
 
 A makefile is provided which creates and uploads an executable onto a Teensy 4.1 microcontroller
 
