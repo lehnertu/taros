@@ -21,7 +21,7 @@ At present only the very basic ingredients of TAROS are implemented:
 1) scheduling and execution of tasks
 2) messages and ports that send and receive messages
 3) setting up a network of modules
-4) message printout over the USB serial connection
+4) message printout to the linux console
 
 Some example modules are implemented:
 1) a simulated GPS sensor
