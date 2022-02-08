@@ -52,6 +52,7 @@ private:
     float       vy;         // simulated velocity in north direction [m/s]
     float       vz;         // simulated velocity in up direction [m/s]
 
+    uint32_t    startup_time;
     float       gps_rate;
     uint32_t    last_update;
     float       telemetry_rate;
@@ -62,4 +63,5 @@ private:
     bool        flag_update_pending;
     bool        flag_telemetry_pending;
     
+    bool        status_lock;
 };
