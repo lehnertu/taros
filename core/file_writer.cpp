@@ -2,6 +2,7 @@
 #include <fstream>
 #include <unistd.h>
 
+#include "global.h"
 #include "file_writer.h"
 
 FileWriter::FileWriter(
@@ -23,6 +24,12 @@ FileWriter::FileWriter(
     }
     while (exists == 0);
     flag_message_pending = false;
+    // report which file we are writing
+    system_log.system_in.receive(
+        MESSAGE_SYSTEM {
+            .sender_module = id,
+            .severity_level = MSG_LEVEL_STATE_CHANGE,
+            .text=std::string("writing system_log to ") + file_name } );
 }
 
 bool FileWriter::have_work()
