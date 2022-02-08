@@ -2,6 +2,7 @@
 #include "system.h"
 #include "dummy_gps.h"
 #include "console_out.h"
+#include "file_writer.h"
 
 void FC_build_system(
     std::list<Module*> *module_list
@@ -14,6 +15,12 @@ void FC_build_system(
     // wire the syslog output to it
     system_log.out.set_receiver(&(cout->text_in));
 
+    // create a writer for a log file
+    FileWriter *log_writer = new FileWriter("LOGFILE", "taros.system.");
+    module_list->push_back(log_writer);
+    // wire the syslog output to it
+    system_log.out.set_receiver(&(log_writer->text_in));
+    
     // create a simulated GPS module
     DummyGPS *gps = new DummyGPS(std::string("GPS_1"), 5.0, 1.0);
     gps->status_out.set_receiver(&(cout->text_in));
