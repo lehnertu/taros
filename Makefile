@@ -8,15 +8,18 @@
 #******************************************************************************
 
 # on fwl78
-HOME                = /home/ulf
-PROJECT_HOME        = $(HOME)/Programming/taros
+# HOME                = /home/ulf
+# PROJECT_HOME        = $(HOME)/Programming/taros
 
 # on fwl56
-# HOME                = /home/lehnertu
-# PROJECT_HOME        = $(HOME)/Programming/taros
+HOME                = /home/lehnertu
+PROJECT_HOME        = $(HOME)/Programming/taros
 
 TARGET              = DemoSystem
 BOARD_ID            = LINUX
+
+CORE_SRC            = $(PROJECT_HOME)/core
+CORE_BIN            = $(CORE_SRC)
 
 USR_SRC             = $(PROJECT_HOME)/src
 USR_BIN             = $(USR_SRC)
@@ -75,8 +78,13 @@ USR_C_FILES     = $(call rwildcard,$(USR_SRC)/,*.c)
 USR_CPP_FILES   = $(call rwildcard,$(USR_SRC)/,*.cpp)
 USR_OBJ         = $(USR_C_FILES:$(USR_SRC)/%.c=$(USR_BIN)/%.o) $(USR_CPP_FILES:$(USR_SRC)/%.cpp=$(USR_BIN)/%.o)
 
+#Core Sources -----------------------------------------------------------------
+CORE_C_FILES     = $(call rwildcard,$(CORE_SRC)/,*.c)
+CORE_CPP_FILES   = $(call rwildcard,$(CORE_SRC)/,*.cpp)
+CORE_OBJ         = $(USR_C_FILES:$(CORE_SRC)/%.c=$(CORE_BIN)/%.o) $(CORE_CPP_FILES:$(CORE_SRC)/%.cpp=$(CORE_BIN)/%.o)
+
 # Includes -------------------------------------------------------------
-INCLUDE         = -I$(USR_SRC)
+INCLUDE         = -I$(USR_SRC) -I$(CORE_SRC)
 
 #******************************************************************************
 # Rules:
@@ -86,10 +94,11 @@ INCLUDE         = -I$(USR_SRC)
 
 all: $(TARGET)
 
-$(TARGET): $(USR_OBJ)
+$(TARGET): $(USR_OBJ) $(CORE_OBJ)
 
 clean:
 	rm -f $(USR_BIN)/*.o
+	rm -f $(CORE_BIN)/*.o
 	rm -f $(TARGET)
 	@echo "cleaned from binaries of user code."
 
@@ -102,8 +111,17 @@ $(USR_BIN)/%.o: $(USR_SRC)/%.cpp
 	@echo [compile] $(CXX) $(CPP_FLAGS) $(INCLUDE) -o "$@" -c $<
 	@"$(CXX)" $(CPP_FLAGS) $(INCLUDE) -o "$@" -c $<
 
+# Handle core sources ---------------------------------------------------------
+$(CORE_BIN)/%.o: $(CORE_SRC)/%.c
+	@echo [compile] $(CC) $(C_FLAGS) $(INCLUDE) -o "$@" -c $<
+	@"$(CC)" $(C_FLAGS) $(INCLUDE) -o "$@" -c $<
+
+$(CORE_BIN)/%.o: $(CORE_SRC)/%.cpp
+	@echo [compile] $(CXX) $(CPP_FLAGS) $(INCLUDE) -o "$@" -c $<
+	@"$(CXX)" $(CPP_FLAGS) $(INCLUDE) -o "$@" -c $<
+
 # Linking ---------------------------------------------------------------------
-$(TARGET): $(LIB_OBJ) $(USR_OBJ)
-	@echo [linking] $(CC) $(LD_FLAGS) -o "$@" $(USR_OBJ) $(LIBS)
-	@$(CC) $(LD_FLAGS) -o "$@" $(USR_OBJ) $(LIBS)
+$(TARGET): $(LIB_OBJ) $(USR_OBJ) $(CORE_OBJ)
+	@echo [linking] $(CC) $(LD_FLAGS) -o "$@" $(USR_OBJ) $(CORE_OBJ) $(LIBS)
+	@$(CC) $(LD_FLAGS) -o "$@" $(USR_OBJ) $(CORE_OBJ) $(LIBS)
 
