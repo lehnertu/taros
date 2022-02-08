@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
-#include <stdio.h>
 
 #include "file_writer.h"
 
@@ -41,7 +40,6 @@ void FileWriter::run()
 
     // open the file for appending
     file.open (file_name, std::ios::app);
-    // FILE *file = fopen(file_name.c_str(), "a");
     
     if (file.is_open())
     {        
