@@ -12,11 +12,13 @@ DummyGPS::DummyGPS(
     id = name;
     gps_rate = rate;
     telemetry_rate = tm_rate;
+    startup_time = FC_systick_millis_count;
     flag_state_change = true;
     flag_update_pending = false;
     last_update = FC_systick_millis_count;
     flag_telemetry_pending = false;
     last_telemetry = FC_systick_millis_count;
+    status_lock = false;
     // home position
     lat = 51.04943;
     lon = 13.89053;
@@ -103,14 +105,32 @@ void DummyGPS::run()
         last_telemetry = FC_systick_millis_count;
         flag_telemetry_pending = false;
     };
- 
+
+    if (!status_lock)
+    {
+        if (FC_systick_millis_count - startup_time > 5000)
+        {
+            status_lock = true;
+            flag_state_change = true;
+        };
+    };
+    
     if (flag_state_change)
     {
-        system_log.system_in.receive(
-            MESSAGE_SYSTEM {
-                .sender_module = id,
-                .severity_level = MSG_LEVEL_STATE_CHANGE,
-                .text="up and running." } );
+        if (status_lock)
+        {
+            system_log.system_in.receive(
+                MESSAGE_SYSTEM {
+                    .sender_module = id,
+                    .severity_level = MSG_LEVEL_STATE_CHANGE,
+                    .text="acquired lock." } );
+        } else {
+            system_log.system_in.receive(
+                MESSAGE_SYSTEM {
+                    .sender_module = id,
+                    .severity_level = MSG_LEVEL_STATE_CHANGE,
+                    .text="up and running." } );
+        };
         flag_state_change = false;
     };
     
