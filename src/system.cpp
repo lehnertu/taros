@@ -27,12 +27,12 @@ void FC_build_system(
     gps->tm_out.set_receiver(&(cout->telemetry_in));
     module_list->push_back(gps);
     
-    // All messages are still just queued in the Logger and USB_serial module.
+    // All start-up messages are still just queued in the Logger and USB_serial module.
     // They will get sent now, when the scheduler and taskmanager pick up their work.
     system_log.system_in.receive(
         MESSAGE_SYSTEM {
             .sender_module = "SYSTEM",
             .severity_level = MSG_LEVEL_MILESTONE,
-            .text="setup complete." } );
+            .text="build complete." } );
 }
 
