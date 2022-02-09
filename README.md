@@ -27,4 +27,10 @@ Some example modules are implmented:
 1) a simulated GPS sensor
 2) a Blink module operating the on-board LED
 
+## Branches
+
+There are two branches that are maintained in parallel.
+Many files are identical between those two branches and every commit
+of changes to these files should be applied to both branches.
+
 A makefile is provided which creates and uploads an executable onto a Teensy 4.1 microcontroller
