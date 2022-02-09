@@ -34,7 +34,7 @@ void Logger::run()
         MESSAGE_SYSTEM msg = system_in.fetch();
         uint32_t time = system_in.fetch_time();
         std::string buffer = serialize_message(msg,time);
-        // TODO: write out
+        // write out
         out.transmit(
             MESSAGE_TEXT { .sender_module = msg.sender_module, .text=buffer }
         );
@@ -46,7 +46,7 @@ void Logger::run()
         MESSAGE_TEXT msg = text_in.fetch();
         uint32_t time = text_in.fetch_time();
         std::string buffer = serialize_message(msg,time);
-        // TODO: write out
+        // write out
         out.transmit(
             MESSAGE_TEXT { .sender_module = msg.sender_module, .text=buffer }
         );
