@@ -1,3 +1,16 @@
+ Repository handling
+ --------------------
+ 
+ # show overview of files differing between master and linux_sim branches
+git diff --compact-summary master linux_sim
+ 
+ # show differences for a file between branches
+git diff origin/master origin/linux_sim -- src/global.h
+
+ # show the recent commits
+git log --reverse --since="Feb 6 2022" --source
+
+
  Hardware
  --------
  
