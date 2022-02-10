@@ -1,5 +1,6 @@
 #include <cstdio>
 
+#include "global.h"
 #include "logger.h"
 
 Logger::Logger(std::string name)
@@ -89,4 +90,37 @@ std::string Logger::serialize_message(MESSAGE_SYSTEM msg, uint32_t time)
     return text;
 }
 
+
+
+TimedLogger::TimedLogger(std::string name, float rate)
+{
+    // copy the name
+    id = name;
+    // save the startup time and rate
+    last_update = FC_systick_millis_count;
+    log_rate = rate;
+}
+
+bool TimedLogger::have_work()
+{
+    float elapsed = FC_systick_millis_count - last_update;
+    flag_update_pending = (elapsed*log_rate >= 1000.0);
+    return flag_update_pending;
+}
+
+void TimedLogger::run()
+{
+    // Serial.println("TimedLogger run.");
+    if (flag_update_pending)
+    {
+        // TODO: query the data
+        MESSAGE_TEXT msg = sender->get_position();
+        // write out
+        out.transmit(
+            MESSAGE_TEXT { .sender_module = id, .text="logging." }
+        );
+    };
+    last_update = FC_systick_millis_count;
+    flag_update_pending = false;
+}
 
