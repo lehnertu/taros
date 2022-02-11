@@ -24,6 +24,13 @@ void FC_build_system(
     gps->tm_out.set_receiver(&(usb->telemetry_in));
     module_list->push_back(gps);
     
+    // create a logger capturing telemetry data at specified rate
+    TimedLogger *tlog = new TimedLogger(std::string("LOG_5S"), 0.2);
+    tlog->out.set_receiver(&(usb->text_in));
+    auto callback = std::bind(&DummyGPS::get_position, gps); 
+    tlog->register_server_callback(callback);
+    module_list->push_back(tlog);
+
     // All messages are still just queued in the Logger and USB_serial module.
     // They will get sent now, when the scheduler and taskmanager pick up their work.
     system_log.system_in.receive(

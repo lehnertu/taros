@@ -58,7 +58,7 @@ struct MESSAGE_GPS_POSITION {
 
 // How to print the different message types
 // There is no CR/LF at the end of the string, a print routine has to add that if necessary
-std::string serialize_text_message(MESSAGE_TEXT msg);
-std::string serialize_telemetry_message(MESSAGE_TELEMETRY msg);
+template<typename msg_type>
+std::string serialize_message(msg_type msg);
     
 

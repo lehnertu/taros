@@ -38,7 +38,7 @@ void USB_Serial::run()
     while (flag_text_pending)
     {
         MESSAGE_TEXT msg = text_in.fetch();
-        std::string buffer = serialize_text_message(msg);
+        std::string buffer = serialize_message(msg);
         buffer += std::string("\r\n");
         // write out
         // the write is buffered and returns immediately
@@ -49,7 +49,7 @@ void USB_Serial::run()
     while (flag_telemetry_pending)
     {
         MESSAGE_TELEMETRY msg = telemetry_in.fetch();
-        std::string buffer = serialize_telemetry_message(msg);
+        std::string buffer = serialize_message(msg);
         buffer += std::string("\r\n");
         // write out
         // the write is buffered and returns immediately

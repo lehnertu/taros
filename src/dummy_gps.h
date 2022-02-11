@@ -33,6 +33,9 @@ public:
     // It switches on the LED and sends a message to all registered receivers.
     virtual void run();
 
+    // assemble a position message from current data upon request
+    MESSAGE_GPS_POSITION get_position();
+
     // port over which position data is sent out at requested rate
     SenderPort<MESSAGE_GPS_POSITION> output;
     
