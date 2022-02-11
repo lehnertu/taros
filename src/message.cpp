@@ -1,4 +1,5 @@
 #include "message.h"
+#include <cstdio>
 
 template<>
 std::string serialize_message(MESSAGE_TEXT msg)
