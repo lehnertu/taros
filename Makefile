@@ -7,14 +7,14 @@
 #******************************************************************************
 
 # on fwl78
-# HOME                = /home/ulf
-# PROJECT_HOME        = $(HOME)/Programming/taros
-# ARDUINO_HOME        = $(HOME)/Elektronik/Arduino/arduino-1.8.13
+HOME                = /home/ulf
+PROJECT_HOME        = $(HOME)/Programming/taros
+ARDUINO_HOME        = $(HOME)/Elektronik/Arduino/arduino-1.8.13
 
 # on fwl56
-HOME                = /home/lehnertu
-PROJECT_HOME        = $(HOME)/Programming/taros
-ARDUINO_HOME        = $(HOME)/Programming/arduino-1.8.19
+# HOME                = /home/lehnertu
+# PROJECT_HOME        = $(HOME)/Programming/taros
+# ARDUINO_HOME        = $(HOME)/Programming/arduino-1.8.19
 
 TARGET              = FlightController
 BOARD_ID            = TEENSY41

@@ -11,7 +11,7 @@ git diff origin/master origin/linux_sim -- src/global.h
 git log --reverse --since="Feb 6 2022" --source
 
  # pull one file from a different branch
-git checkout linux_dev src/logger.h
+git checkout linux_sim src/logger.h
 
 
  Hardware
