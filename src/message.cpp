@@ -1,7 +1,7 @@
 #include "message.h"
 
 template<>
-std::string serialize_message<MESSAGE_TEXT>(MESSAGE_TEXT msg)
+std::string serialize_message(MESSAGE_TEXT msg)
 {
     std::string buffer = msg.sender_module;
     // pad with spaces to 8 characters
@@ -20,7 +20,7 @@ std::string serialize_message<MESSAGE_TEXT>(MESSAGE_TEXT msg)
 }
 
 template<>
-std::string serialize_message<MESSAGE_TELEMETRY>(MESSAGE_TELEMETRY msg)
+std::string serialize_message(MESSAGE_TELEMETRY msg)
 {
     // sender module
     std::string buffer = msg.sender_module;
@@ -49,5 +49,27 @@ std::string serialize_message<MESSAGE_TELEMETRY>(MESSAGE_TELEMETRY msg)
     // value
     buffer += msg.value;
     return buffer;
+}
+
+template<>
+std::string serialize_message(MESSAGE_GPS_POSITION msg)
+{
+    char buffer[16];
+    // latitude
+    int n = snprintf(buffer, 15, "%10.6f", msg.latitude);
+    buffer[n] = '\0';
+    std::string text = "lat=";
+    text += std::string(buffer,n);
+    // longitude
+    n = snprintf(buffer, 15, "%11.6f", msg.longitude);
+    buffer[n] = '\0';
+    text += ", lon=";
+    text += std::string(buffer,n);
+    // altitude
+    n = snprintf(buffer, 15, "%7.2f", msg.altitude);
+    buffer[n] = '\0';
+    text += ", alt=";
+    text += std::string(buffer,n);
+    return text;
 }
 
