@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <functional>
+
 #include "module.h"
 #include "message.h"
 #include "port.h"
@@ -74,27 +76,27 @@ public:
     // It writes all pending messages to the bus unless a limit of execution time is exceeded.
     virtual void run();
 
-    // this is a pointer to the server::get() function
-    // typedef MESSAGE_GPS_POSITION (*GetFunc)();
+    // Register a callback function of a server, where the logger can request a message.
+    // std::function<return_type(list of argument_type(s))>
+    // The server method is a function taking no arguments and delivering a message.
+    void register_server_callback(std::function<MESSAGE_GPS_POSITION(void)> f);
 
-    // TODO: very bad - a public variable
-    void *sender = NULL;
-    // GetFunc get = NULL;
-    
-    // The timedLogger registers all server ports it should log.
-    // The server can provide a number of different message types.
-    // ServerPort<MESSAGE_GPS_POSITION> *server_port;
+    // TODO: The timedLogger registers all server ports it should log.
+    // TODO: The server can provide a number of different message types.
 
     // port over which formatted messages are sent
     SenderPort<MESSAGE_TEXT> out;
 
 private:
+    
+    // here we store the server callback
+    std::function<MESSAGE_GPS_POSITION(void)> server_callback;
 
     // The logger has its own serialization routines for timed messages.
     // This serialization skips the sender module name - when sending
     // it will be copied from the incoming message - the logger is just a proxy.
-    std::string serialize_message(MESSAGE_TEXT msg, uint32_t time);
-    std::string serialize_message(MESSAGE_SYSTEM msg, uint32_t time);
+    std::string serialize_timed_message(MESSAGE_TEXT msg, uint32_t time);
+    std::string serialize_timed_message(MESSAGE_SYSTEM msg, uint32_t time);
 
     // time of the last update
     uint32_t last_update;

@@ -136,3 +136,13 @@ void DummyGPS::run()
     
 }
 
+MESSAGE_GPS_POSITION DummyGPS::get_position()
+{
+    return MESSAGE_GPS_POSITION
+        {
+            .latitude = lat,
+            .longitude = lon,
+            .altitude = alt
+        };
+}
+

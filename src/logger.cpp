@@ -2,6 +2,7 @@
 
 #include "global.h"
 #include "logger.h"
+#include "message.h"
 
 Logger::Logger(std::string name)
 {
@@ -114,13 +115,30 @@ void TimedLogger::run()
     if (flag_update_pending)
     {
         // TODO: query the data
-        MESSAGE_TEXT msg = sender->get_position();
+        MESSAGE_GPS_POSITION msg = server_callback();
+        // get the system time
+        uint32_t time = FC_systick_millis_count;
+        // assemble the output message
+        // print the time in seconds
+        char buffer[16];
+        int n = snprintf(buffer, 15, "%12.3f", 0.001*time);
+        buffer[n] = '\0';
+        std::string text = std::string(buffer,n);
+        // separator
+        text += std::string(" : ");
+        // append the serialized message text
+        text += serialize_message(msg);
         // write out
         out.transmit(
-            MESSAGE_TEXT { .sender_module = id, .text="logging." }
+            MESSAGE_TEXT { .sender_module = id, .text=text }
         );
     };
     last_update = FC_systick_millis_count;
     flag_update_pending = false;
+}
+
+void TimedLogger::register_server_callback(std::function<MESSAGE_GPS_POSITION(void)> f)
+{
+    server_callback = f;
 }
 
