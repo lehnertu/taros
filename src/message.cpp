@@ -1,6 +1,7 @@
 #include "message.h"
 
-std::string serialize_text_message(MESSAGE_TEXT msg)
+template<>
+std::string serialize_message<MESSAGE_TEXT>(MESSAGE_TEXT msg)
 {
     std::string buffer = msg.sender_module;
     // pad with spaces to 8 characters
@@ -18,7 +19,8 @@ std::string serialize_text_message(MESSAGE_TEXT msg)
     return buffer;
 }
 
-std::string serialize_telemetry_message(MESSAGE_TELEMETRY msg)
+template<>
+std::string serialize_message<MESSAGE_TELEMETRY>(MESSAGE_TELEMETRY msg)
 {
     // sender module
     std::string buffer = msg.sender_module;
