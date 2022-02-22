@@ -130,15 +130,16 @@ void TimedLogger::run()
         text += serialize_message(msg);
         // write out
         out.transmit(
-            MESSAGE_TEXT { .sender_module = id, .text=text }
+            MESSAGE_TEXT { .sender_module = server_name, .text=text }
         );
     };
     last_update = FC_systick_millis_count;
     flag_update_pending = false;
 }
 
-void TimedLogger::register_server_callback(std::function<MESSAGE_GPS_POSITION(void)> f)
+void TimedLogger::register_server_callback(std::function<MESSAGE_GPS_POSITION(void)> f, std::string name)
 {
+    server_name = name;
     server_callback = f;
 }
 

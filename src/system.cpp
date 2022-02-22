@@ -32,7 +32,7 @@ void FC_build_system(
     tlog->out.set_receiver(&(cout->text_in));
     tlog->out.set_receiver(&(log_writer->text_in));
     auto callback = std::bind(&DummyGPS::get_position, gps); 
-    tlog->register_server_callback(callback);
+    tlog->register_server_callback(callback,"GPS_1");
     module_list->push_back(tlog);
 
     // All start-up messages are still just queued in the Logger and USB_serial module.

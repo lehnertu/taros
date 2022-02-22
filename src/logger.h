@@ -79,7 +79,7 @@ public:
     // Register a callback function of a server, where the logger can request a message.
     // std::function<return_type(list of argument_type(s))>
     // The server method is a function taking no arguments and delivering a message.
-    void register_server_callback(std::function<MESSAGE_GPS_POSITION(void)> f);
+    void register_server_callback(std::function<MESSAGE_GPS_POSITION(void)> f, std::string name);
 
     // TODO: The timedLogger registers all server ports it should log.
     // TODO: The server can provide a number of different message types.
@@ -90,6 +90,7 @@ public:
 private:
     
     // here we store the server callback
+    std::string server_name;
     std::function<MESSAGE_GPS_POSITION(void)> server_callback;
 
     // The logger has its own serialization routines for timed messages.
