@@ -13,6 +13,9 @@ git log --reverse --since="Feb 6 2022" --source
  # pull one file from a different branch
 git checkout linux_dev src/logger.h
 
+ # apply one commit from another branch
+git checkout <branch to apply to>
+git cherry-pick <commitSha>
 
  Hardware
  --------
