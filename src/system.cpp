@@ -28,7 +28,7 @@ void FC_build_system(
     TimedLogger *tlog = new TimedLogger(std::string("LOG_5S"), 0.2);
     tlog->out.set_receiver(&(usb->text_in));
     auto callback = std::bind(&DummyGPS::get_position, gps); 
-    tlog->register_server_callback(callback);
+    tlog->register_server_callback(callback,"GPS_1");
     module_list->push_back(tlog);
 
     // All messages are still just queued in the Logger and USB_serial module.

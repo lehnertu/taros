@@ -80,7 +80,7 @@ void DummyGPS::run()
         tm_out.transmit(
             MESSAGE_TELEMETRY {
                 .sender_module = id,
-                .variable = "LAT",
+                .variable = "GPS_LAT",
                 .value = std::string(buffer,n) }
         );
 
@@ -89,7 +89,7 @@ void DummyGPS::run()
         tm_out.transmit(
             MESSAGE_TELEMETRY {
                 .sender_module = id,
-                .variable = "LON",
+                .variable = "GPS_LONG",
                 .value = std::string(buffer,n) }
         );
 
@@ -98,7 +98,7 @@ void DummyGPS::run()
         tm_out.transmit(
             MESSAGE_TELEMETRY {
                 .sender_module = id,
-                .variable = "ALT",
+                .variable = "GPS_ALTI",
                 .value = std::string(buffer,n) }
         );
 

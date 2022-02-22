@@ -64,12 +64,12 @@ std::string serialize_message(MESSAGE_GPS_POSITION msg)
     // longitude
     n = snprintf(buffer, 15, "%11.6f", msg.longitude);
     buffer[n] = '\0';
-    text += ", lon=";
+    text += ", long=";
     text += std::string(buffer,n);
     // altitude
     n = snprintf(buffer, 15, "%7.2f", msg.altitude);
     buffer[n] = '\0';
-    text += ", alt=";
+    text += ", alti=";
     text += std::string(buffer,n);
     return text;
 }

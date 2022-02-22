@@ -53,7 +53,38 @@ struct MESSAGE_TELEMETRY {
 struct MESSAGE_GPS_POSITION {
     double  latitude;       // degree north
     double  longitude;      // degree east
-    double  altitude;       // meters above MSL
+    float   altitude;       // meters above MSL
+};
+
+// in airframe-fixed coordinates (right, forward, up)
+struct MESSAGE_IMU_GYRO {
+    float   nick;           // rate [deg/s] positive up
+    float   roll;           // rate [deg/s] positive left
+    float   yaw;            // rate [deg/s] positive left
+};
+
+// in airframe-fixed coordinates (right, forward, up)
+struct MESSAGE_IMU_ACCEL {
+    float   right;          // acceleration [G]
+    float   forward;        // acceleration [G]
+    float   up;             // acceleration [G]
+};
+
+// in airframe-fixed coordinates (right, forward, up)
+struct MESSAGE_IMU_MAG {
+    float   right;          // field Bx [Gs]
+    float   forward;        // field By [Gs]
+    float   up;             // field Bz [Gs]
+};
+
+// in earth-fixed coordinates
+struct MESSAGE_IMU_AHRS {
+    float   attitude;       // angle of attack with respect to horizontal flight [deg]
+                            // range  -180 ... +180 deg, positive up (hover is +90 deg)
+    float   heading;        // with respect to magnetic north [deg], range 0 ... 360 deg
+                            // nose direction for attitude=-90..+90 deg, else tail direction
+    float   roll;           // roll angle about heading (roll in horizontal flight, yaw in hover)
+                            // range -90 ... 90 deg, positive left
 };
 
 // How to print the different message types
