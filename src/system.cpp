@@ -15,8 +15,8 @@ void FC_build_system(
     system_log.out.set_receiver(&(usb->text_in));
 
     // create a module for LED blinking
-    Blink *bl = new Blink(std::string("LED1"), 3.0);
-    module_list->push_back(bl);
+    // Blink *bl = new Blink(std::string("LED1"), 5.0);
+    // module_list->push_back(bl);
     
     // create a simulated GPS module
     DummyGPS *gps = new DummyGPS(std::string("GPS_1"), 5.0, 2.0);

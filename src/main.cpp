@@ -5,6 +5,7 @@
 // the main program is independent from the Arduino core system and libraries
 
 #include "global.h"
+#include "display.h"
 #include "module.h"
 #include "message.h"
 #include "system.h"
@@ -53,6 +54,10 @@ extern "C" int main(void)
             .severity_level = MSG_LEVEL_MILESTONE,
             .text="entering event loop." } );
 
+    // **** test code for the OLED display ****
+    display_test();
+    // **** test code for the OLED display ****
+    
 	// infinite system loop
 	while (1)
 	{

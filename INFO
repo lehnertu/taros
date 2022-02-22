@@ -20,10 +20,11 @@ git cherry-pick <commitSha>
  Hardware
  --------
  
- 7936K Flash, 1024K RAM (512K tightly coupled), 4K EEPROM (emulated)
- zusätzlich optional : 8-16 MB PSRAM (1-2 chips auf Unterseite)
- zusätzlich optional : 8MB flash rom (auf Unterseite anstelle PSRAM)
- 
+Display is driven via SPI, connected to
+    9 ... DC,
+    10 ... CS,   PIN_SPI_SS
+    11 ... MOSI, PIN_SPI_MOSI
+    13 ... SCL,  PIN_SPI_SCK
  
  
  
@@ -110,10 +111,6 @@ Time.cpp
 HardwareSerial5.cpp
 HardwareSerial6.cpp
 serialEvent.cpp
-
-linker:
-arm-none-eabi-gcc -Os -Wl,--gc-sections,--relax  -mcpu=cortex-m7 -mfloat-abi=hard -mfpu=fpv5-d16 -mthumb -Timxrt1062_t41.ld -o main.elf usb_seremu.o usb_desc.o usb_mtp.o sm_realloc_move.o eeprom.o sm_zalloc.o sm_calloc.o usb_serial3.o usb_serial2.o sm_hash.o debugprintf.o sm_realloc_i.o digital.o pwm.o sm_alloc_valid.o interrupt.o bootdata.o tempmon.o sm_malloc_stats.o rtc.o sm_free.o nonstd.o sm_pool.o analog.o extmem.o delay.o sm_szalloc.o sm_malloc.o usb.o fuse.o sm_realloc.o clockspeed.o usb_serial.o startup.o sm_util.o HardwareSerial.o new.o WString.o HardwareSerial3.o serialEvent6.o serialEvent3.o serialEvent1.o HardwareSerial1.o serialEventUSB1.o serialEvent7.o serialEvent8.o serialEventUSB2.o Print.o usb_inst.o HardwareSerial4.o HardwareSerial7.o HardwareSerial2.o EventResponder.o serialEvent2.o serialEvent5.o IntervalTimer.o HardwareSerial8.o serialEvent4.o Stream.o yield.o WMath.o main.o CrashReport.o Time.o HardwareSerial5.o HardwareSerial6.o serialEvent.o -larm_cortexM7lfsp_math -lm -lstdc++
-
 
 
 CPU details
