@@ -85,7 +85,7 @@ void DisplaySSD1331::run()
             break;
         // display has been cleared, need to rewrite
         case DISPLAY_CLEARED :
-            display->setCursor(0, 2);
+            display->setCursor(3, 3);
             display->print(FC_systick_millis_count);
             display->println(" ms");
             display->print(FC_max_time_to_completion);
@@ -94,7 +94,7 @@ void DisplaySSD1331::run()
             status_out.transmit(
                 MESSAGE_TEXT {
                     .sender_module = id,
-                    .text = std::string("written ")
+                    .text = std::string("updated.")
                     }
                 );
             last_update = FC_systick_millis_count;
@@ -103,12 +103,26 @@ void DisplaySSD1331::run()
         // display update has expired, clear it
         // TODO clearing the display this way leads to a systick overrun
         case DISPLAY_UPDATED :
-            // display->fillScreen(BLACK);
-            display->fillRect(0, 0, display->TFTWIDTH, display->TFTHEIGHT, BLACK);
+            // a) display->fillScreen(BLACK);
+            // b) display->fillRect(0, 0, display->TFTWIDTH, display->TFTHEIGHT, BLACK);
+            // c) use SSD1331 command #22h
+            display->sendCommand(SSD1331_CMD_FILL);
+            display->sendCommand(1);
+            display->sendCommand(SSD1331_CMD_DRAWRECT);
+            display->sendCommand(0);    // first column
+            display->sendCommand(0);    // first row
+            display->sendCommand(60);   // last column
+            display->sendCommand(30);   // last row
+            display->sendCommand(63);   // outline R
+            display->sendCommand(0);    // outline G
+            display->sendCommand(0);    // outline B
+            display->sendCommand(0);    // fill R
+            display->sendCommand(0);    // fill G
+            display->sendCommand(10);   // fill B
             status_out.transmit(
                 MESSAGE_TEXT {
                     .sender_module = id,
-                    .text = std::string("cleared ")
+                    .text = std::string("cleared.")
                     }
                 );
             last_update = FC_systick_millis_count;

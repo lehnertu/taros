@@ -17,6 +17,9 @@ git checkout linux_sim src/logger.h
 git checkout <branch to apply to>
 git cherry-pick <commitSha>
 
+
+
+
  Display
  -------
 
@@ -28,10 +31,12 @@ Display is driven via SPI, connected to
 clearing the display takes 282ms ?!
     96*64*16 = 98 kbit -> 350 kHz transmission
 A) one should use the hardware acceleration instead (draw rectangle command #22h)
-B) the teensy might provide a FIFO for hardware SPI connction
+B) the teensy provides a FIFO for hardware SPI connction
         we'd have to check if the display is ready before next write
-C) the SSD1331 is capable of 150nS cycle time on the SPI interface -> 6.6 MHz 
-
+        FlexSPI TX FIFO 16 * 64 Bits -> one character bitmap (6*8*16 bit)
+C) the SSD1331 is capable of 150nS cycle time on the SPI interface
+        -> 6.6 MHz, 465 µs / character bitmap
+=> the display module should write characters one-by-one
 
 
 
