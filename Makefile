@@ -7,14 +7,14 @@
 #******************************************************************************
 
 # on fwl78
-# HOME                = /home/ulf
-# PROJECT_HOME        = $(HOME)/Programming/taros
-# ARDUINO_HOME        = $(HOME)/Elektronik/Arduino/arduino-1.8.13
+HOME                = /home/ulf
+PROJECT_HOME        = $(HOME)/Programming/taros
+ARDUINO_HOME        = $(HOME)/Elektronik/Arduino/arduino-1.8.13
 
 # on fwl56
-HOME                = /home/lehnertu
-PROJECT_HOME        = $(HOME)/Programming/taros
-ARDUINO_HOME        = $(HOME)/Programming/arduino-1.8.19
+# HOME                = /home/lehnertu
+# PROJECT_HOME        = $(HOME)/Programming/taros
+# ARDUINO_HOME        = $(HOME)/Programming/arduino-1.8.19
 
 TARGET              = FlightController
 BOARD_ID            = TEENSY41
@@ -91,16 +91,19 @@ AR = $(COMPILERPATH)/arm-none-eabi-gcc-ar
 rwildcard =$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 
 # User sources ----------------------------------------------------------------
+USR_HEADERS     = $(call rwildcard,$(USR_SRC)/,*.h)
 USR_C_FILES     = $(call rwildcard,$(USR_SRC)/,*.c)
 USR_CPP_FILES   = $(call rwildcard,$(USR_SRC)/,*.cpp)
 USR_OBJ         = $(USR_C_FILES:$(USR_SRC)/%.c=$(USR_BIN)/%.o) $(USR_CPP_FILES:$(USR_SRC)/%.cpp=$(USR_BIN)/%.o)
 
 # Library sources -------------------------------------------------------------
+LIB_HEADERS     = $(call rwildcard,$(LIB_LOCAL_BASE)/,*.h)
 LIB_C_FILES     = $(call rwildcard,$(LIB_LOCAL_BASE)/,*.c)
 LIB_CPP_FILES   = $(call rwildcard,$(LIB_LOCAL_BASE)/,*.cpp)
 LIB_OBJ         = $(LIB_C_FILES:$(LIB_LOCAL_BASE)/%.c=$(LIB_LOCAL_BASE)/%.o) $(LIB_CPP_FILES:$(LIB_LOCAL_BASE)/%.cpp=$(LIB_LOCAL_BASE)/%.o)
 
 # Core sources ----------------------------------------------------------------
+CORE_HEADERS     = $(call rwildcard,$(CORE_SRC)/,*.h)
 CORE_CPP_FILES  = $(call rwildcard,$(CORE_SRC)/,*.cpp)
 CORE_C_FILES    = $(call rwildcard,$(CORE_SRC)/,*.c)
 CORE_S_FILES    = $(call rwildcard,$(CORE_SRC)/,*.S)
@@ -120,15 +123,15 @@ all: $(TARGET).hex
 $(TARGET).elf: $(CORE_LIB) $(USR_OBJ) $(LIB_OBJ)
 
 # Core library ----------------------------------------------------------------
-$(CORE_BIN)/%.o: $(CORE_SRC)/%.S
+$(CORE_BIN)/%.o: $(CORE_SRC)/%.S $(CORE_HEADERS)
 	@echo [asm] $(CC) $(S_FLAGS) $(INCLUDE) -o $@ -c $<
 	@"$(CC)" $(S_FLAGS) $(INCLUDE) -o $@ -c $<
 
-$(CORE_BIN)/%.o: $(CORE_SRC)/%.c
+$(CORE_BIN)/%.o: $(CORE_SRC)/%.c $(CORE_HEADERS)
 	@echo [compile] $(CC) $(C_FLAGS) $(INCLUDE) -o $@ -c $<
 	@"$(CC)" $(C_FLAGS) $(INCLUDE) -o $@ -c $<
 
-$(CORE_BIN)/%.o: $(CORE_SRC)/%.cpp
+$(CORE_BIN)/%.o: $(CORE_SRC)/%.cpp $(CORE_HEADERS)
 	@echo [compile] $(CXX) $(CPP_FLAGS) $(INCLUDE) -o $@ -c $<
 	@"$(CXX)" $(CPP_FLAGS) $(INCLUDE) -o $@ -c $<
 
@@ -137,20 +140,20 @@ $(CORE_LIB): $(CORE_OBJ)
 	@$(AR) rcs $(CORE_BIN)/$(CORE_LIB) $(CORE_OBJ)
 	
 # Handle user sources ---------------------------------------------------------
-$(USR_BIN)/%.o: $(USR_SRC)/%.c
+$(USR_BIN)/%.o: $(USR_SRC)/%.c $(USR_HEADERS) $(CORE_HEADERS) $(LIB_HEADERS)
 	@echo [compile] $(CC) $(C_FLAGS) $(INCLUDE) -o "$@" -c $<
 	@"$(CC)" $(C_FLAGS) $(INCLUDE) -o "$@" -c $<
 
-$(USR_BIN)/%.o: $(USR_SRC)/%.cpp
+$(USR_BIN)/%.o: $(USR_SRC)/%.cpp $(USR_HEADERS) $(CORE_HEADERS) $(LIB_HEADERS)
 	@echo [compile] $(CXX) $(CPP_FLAGS) $(INCLUDE) -o "$@" -c $<
 	@"$(CXX)" $(CPP_FLAGS) $(INCLUDE) -o "$@" -c $<
 
 # Handle library sources ---------------------------------------------------------
-$(LIB_LOCAL_BASE)/%.o: $(LIB_LOCAL_BASE)/%.c
+$(LIB_LOCAL_BASE)/%.o: $(LIB_LOCAL_BASE)/%.c $(LIB_HEADERS)
 	@echo [compile] $(CC) $(C_FLAGS) $(INCLUDE) -o "$@" -c $<
 	@"$(CC)" $(C_FLAGS) $(INCLUDE) -o "$@" -c $<
 
-$(LIB_LOCAL_BASE)/%.o: $(LIB_LOCAL_BASE)/%.cpp
+$(LIB_LOCAL_BASE)/%.o: $(LIB_LOCAL_BASE)/%.cpp $(LIB_HEADERS)
 	@echo [compile] $(CXX) $(CPP_FLAGS) $(INCLUDE) -o "$@" -c $<
 	@"$(CXX)" $(CPP_FLAGS) $(INCLUDE) -o "$@" -c $<
 
