@@ -1,15 +1,8 @@
 #include <Adafruit_GFX.h>
-#include <Adafruit_SSD1331.h>
 #include <SPI.h>
 
 #include "global.h"
 #include "display.h"
-
-#define sclk 13
-#define mosi 11
-#define cs   10
-#define rst  6
-#define dc   9
 
 // Color definitions
 #define	BLACK           0x0000
@@ -21,82 +14,106 @@
 #define YELLOW          0xFFE0
 #define WHITE           0xFFFF
 
-void display_test()
+// Display states
+#define DISPLAY_UNINITIALIZED   0
+#define DISPLAY_INITIALIZED     1
+#define DISPLAY_CLEARED         2
+#define DISPLAY_UPDATED         3
+
+DisplaySSD1331::DisplaySSD1331(
+    std::string name,       // the ID of the module
+    float rate              // the update rate of the display
+    )
 {
-
-    Adafruit_SSD1331 display = Adafruit_SSD1331(&SPI, cs, dc, rst);
-
-    display.begin();
-
-    display.fillScreen(BLACK);
-    delay(500);
-
-    // lcdTestPattern();
-    uint8_t w,h;
-    display.setAddrWindow(0, 0, 96, 64);
-
-    for (h = 0; h < 64; h++) {
-    for (w = 0; w < 96; w++) {
-      if (w > 83) {
-        display.writePixel(w, h, WHITE);
-      } else if (w > 71) {
-        display.writePixel(w, h, BLUE);
-      } else if (w > 59) {
-        display.writePixel(w, h, GREEN);
-      } else if (w > 47) {
-        display.writePixel(w, h, CYAN);
-      } else if (w > 35) {
-        display.writePixel(w, h, RED);
-      } else if (w > 23) {
-        display.writePixel(w, h, MAGENTA);
-      } else if (w > 11) {
-        display.writePixel(w, h, YELLOW);
-      } else {
-        display.writePixel(w, h, BLACK);
-      }
-    }
-    }
-    display.endWrite();
-
-    delay(2000);
-
-    display.fillScreen(BLACK);
-    display.setCursor(0,0);
-    display.print("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur adipiscing ante sed nibh tincidunt feugiat. Maecenas enim massa");
-    delay(2000);
-
-    // tft print function!
-    display.fillScreen(BLACK);
-    display.setCursor(0, 5);
-    display.setTextColor(RED);
-    display.setTextSize(1);
-    display.println("Hello World!");
-    display.setTextColor(YELLOW, GREEN);
-    display.setTextSize(2);
-    display.print("Hello Wo");
-    display.setTextColor(BLUE);
-    display.setTextSize(3);
-    display.print(1234.567);
-    delay(2000);
-    
-    display.fillScreen(BLACK);
-    display.setCursor(0, 5);
-    display.setTextColor(WHITE);
-    display.setTextSize(0);
-    display.println("Hello World!");
-    display.setTextSize(1);
-    display.setTextColor(GREEN);
-    display.print(3.14159, 5);
-    display.println(" Want pi?");
-    display.print(8675309, HEX); // print 8,675,309 out in HEX!
-    display.print(" Print HEX");
-    display.setTextColor(WHITE);
-    display.println("Sketch has been");
-    display.println("running for: ");
-    display.setTextColor(MAGENTA);
-    display.print(millis() / 1000);
-    display.setTextColor(WHITE);
-    display.print(" seconds.");
-    delay(2000);
-
+    // copy the name
+    id = name;
+    update_rate = rate;
+    // create the display
+    display = new Adafruit_SSD1331(&SPI, DISPLAY_CS, DISPLAY_DC, DISPLAY_RST);
+    // initialize the state
+    last_update = FC_systick_millis_count;
+    state = DISPLAY_UNINITIALIZED;
 }
+
+bool DisplaySSD1331::have_work()
+{
+    bool ret = false;
+    switch(state)
+    {
+        // not yet initialized, we have to do that
+        case DISPLAY_UNINITIALIZED :
+            ret = true;
+            break;
+        // wait a second after initialization
+        case DISPLAY_INITIALIZED :
+            ret = (FC_systick_millis_count-last_update>1000);
+            break;
+        // display has been cleared, need to rewrite
+        case DISPLAY_CLEARED :
+            ret = true;
+            break;
+        // display is updated, wait according to rate
+        case DISPLAY_UPDATED :
+            ret = ((FC_systick_millis_count-last_update)*update_rate>1000);
+            break;
+    };
+    return ret;
+}
+
+void DisplaySSD1331::run()
+{
+    switch(state)
+    {
+        // not yet initialized, we have to do that
+        case DISPLAY_UNINITIALIZED :
+            display->begin();
+            // send a start-up message
+            status_out.transmit(
+                MESSAGE_TEXT {
+                    .sender_module = id,
+                    .text = std::string("initialized.")
+                    }
+                );
+            last_update = FC_systick_millis_count;
+            state=DISPLAY_INITIALIZED;
+            break;
+        // a second after initialization we clear the display
+        case DISPLAY_INITIALIZED :
+            display->fillScreen(BLACK);
+            last_update = FC_systick_millis_count;
+            state=DISPLAY_CLEARED;
+            break;
+        // display has been cleared, need to rewrite
+        case DISPLAY_CLEARED :
+            display->setCursor(0, 2);
+            display->print(FC_systick_millis_count);
+            display->println(" ms");
+            display->print(FC_max_time_to_completion);
+            FC_max_time_to_completion = 0;
+            display->println(" us");
+            status_out.transmit(
+                MESSAGE_TEXT {
+                    .sender_module = id,
+                    .text = std::string("written ")
+                    }
+                );
+            last_update = FC_systick_millis_count;
+            state=DISPLAY_UPDATED;
+            break;
+        // display update has expired, clear it
+        // TODO clearing the display this way leads to a systick overrun
+        case DISPLAY_UPDATED :
+            // display->fillScreen(BLACK);
+            display->fillRect(0, 0, display->TFTWIDTH, display->TFTHEIGHT, BLACK);
+            status_out.transmit(
+                MESSAGE_TEXT {
+                    .sender_module = id,
+                    .text = std::string("cleared ")
+                    }
+                );
+            last_update = FC_systick_millis_count;
+            state=DISPLAY_CLEARED;
+            break;
+    };
+}
+

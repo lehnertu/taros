@@ -3,6 +3,7 @@
 #include <list>
 
 // the main program is independent from the Arduino core system and libraries
+// TODO: it comes in idirectly via display.h -> Adafruit_SSD1331.h
 
 #include "global.h"
 #include "display.h"
@@ -54,22 +55,26 @@ extern "C" int main(void)
             .severity_level = MSG_LEVEL_MILESTONE,
             .text="entering event loop." } );
 
-    // **** test code for the OLED display ****
-    display_test();
-    // **** test code for the OLED display ****
-    
+    // we keep track of the task completion time
+    FC_max_time_to_completion = 0;
+
 	// infinite system loop
 	while (1)
 	{
 	
-	    // systick interrupt has occured or tasklist empty - run scheduler
-	    if (FC_systick_flag>0 or task_list.empty())
+	    // systick interrupt has occured - run scheduler
+	    // but wait for the tasklist to be completed
+	    if (FC_systick_flag>0 and task_list.empty())
 	    {
 	        // a value greater than one indicates that one systick has been skipped
 	        // which should be reported as a major instability incident
 	        if (FC_systick_flag>1)
 	        {
-	            // TODO
+                system_log.system_in.receive(
+                    MESSAGE_SYSTEM {
+                        .sender_module = "SYSTEM",
+                        .severity_level = MSG_LEVEL_CRITICAL,
+                        .text="systick overrun" } );
 	        };
 	        // reset the flag
 	        FC_systick_flag=0;
@@ -108,6 +113,15 @@ extern "C" int main(void)
             // Serial.println((uint64_t)task.module);
             // execute the task
             task.module->run();
+            // if the tasklist is empty now, we store the time is took to complete
+            if (task_list.empty())
+            {
+                // TODO : prevent overruns
+                FC_time_to_completion = ARM_DWT_CYCCNT - FC_systick_cycle_count;
+                // is is reset when an output is created (either log or display)
+                if (FC_time_to_completion > FC_max_time_to_completion)
+                    FC_max_time_to_completion = FC_time_to_completion;
+            };
         }
 
 	} // infinite system loop

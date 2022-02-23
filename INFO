@@ -17,104 +17,31 @@ git checkout linux_sim src/logger.h
 git checkout <branch to apply to>
 git cherry-pick <commitSha>
 
- Hardware
- --------
- 
+ Display
+ -------
+
 Display is driven via SPI, connected to
     9 ... DC,
     10 ... CS,   PIN_SPI_SS
     11 ... MOSI, PIN_SPI_MOSI
     13 ... SCL,  PIN_SPI_SCK
- 
- 
- 
- Software architecture
- ---------------------
- 
- 
- 
+clearing the display takes 282ms ?!
+    96*64*16 = 98 kbit -> 350 kHz transmission
+A) one should use the hardware acceleration instead (draw rectangle command #22h)
+B) the teensy might provide a FIFO for hardware SPI connction
+        we'd have to check if the display is ready before next write
+C) the SSD1331 is capable of 150nS cycle time on the SPI interface -> 6.6 MHz 
+
+
+
+
 
  
- files in build
- --------------
+
+
+ CPU details
+ -----------
  
-usb_seremu.c
-usb_desc.c
-usb_mtp.c
-sm_realloc_move.c
-eeprom.c
-sm_zalloc.c
-sm_calloc.c
-usb_serial3.c
-usb_serial2.c
-sm_hash.c
-
-debugprintf.c
-sm_realloc_i.c
-digital.c
-pwm.c
-sm_alloc_valid.c
-interrupt.c
-bootdata.c
-tempmon.c
-sm_malloc_stats.c
-rtc.c
-
-sm_free.c
-nonstd.c
-sm_pool.c
-analog.c
-extmem.c
-delay.c
-sm_szalloc.c
-sm_malloc.c
-usb.c
-fuse.c
-
-sm_realloc.c
-clockspeed.c
-usb_serial.c
-startup.c
-sm_util.c
-HardwareSerial.cpp
-new.cpp
-WString.cpp
-HardwareSerial3.cpp
-serialEvent6.cpp
-
-serialEvent3.cpp
-serialEvent1.cpp
-HardwareSerial1.cpp
-serialEventUSB1.cpp
-serialEvent7.cpp
-serialEvent8.cpp
-serialEventUSB2.cpp
-Print.cpp
-usb_inst.cpp
-HardwareSerial4.cpp
-
-HardwareSerial7.cpp
-HardwareSerial2.cpp
-EventResponder.cpp
-serialEvent2.cpp
-serialEvent5.cpp
-IntervalTimer.cpp
-HardwareSerial8.cpp
-serialEvent4.cpp
-Stream.cpp
-yield.cpp
-
-WMath.cpp
-main.cpp
-CrashReport.cpp
-Time.cpp
-HardwareSerial5.cpp
-HardwareSerial6.cpp
-serialEvent.cpp
-
-
-CPU details
------------
 DWT - data watchpoint and trace unit
     The DWT if present contains counters for Clock cycles, CYCCNT.
     0xE0001000 - DWT_CTRL - Control Register
@@ -122,6 +49,10 @@ DWT - data watchpoint and trace unit
     DWT registers are described in the Arm®v7-M Architecture Reference Manual.
 ARM_DWT_CYCCNT is a 32-bit unsigned counter for processor cycles (600 MHz), defined in imxrt.h
 
-testing
------------
+
+ testing with USB serial
+ -----------------------
+
 minicom -D /dev/ttyACM0 -b 9600
+
+

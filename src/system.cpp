@@ -2,7 +2,7 @@
 #include "system.h"
 #include "dummy_gps.h"
 #include "serial_usb.h"
-#include "blink.h"
+#include "display.h"
 
 void FC_build_system(
     std::list<Module*> *module_list
@@ -17,6 +17,11 @@ void FC_build_system(
     // create a module for LED blinking
     // Blink *bl = new Blink(std::string("LED1"), 5.0);
     // module_list->push_back(bl);
+    
+    // create a display with 2Hz update
+    DisplaySSD1331 *display = new DisplaySSD1331(std::string("DISPLAY"), 2.0);
+    display->status_out.set_receiver(&(usb->text_in));
+    module_list->push_back(display);
     
     // create a simulated GPS module
     DummyGPS *gps = new DummyGPS(std::string("GPS_1"), 5.0, 2.0);

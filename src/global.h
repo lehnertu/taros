@@ -18,6 +18,10 @@ extern volatile uint32_t FC_systick_millis_count;
 // we store its value with every systick to procide sub-millisecond timing
 extern volatile uint32_t FC_systick_cycle_count;
 
+// we compute the time it took to complete all tasks for one systick
+extern uint32_t FC_time_to_completion;
+extern uint32_t FC_max_time_to_completion;
+
 // raise a flag for the main loop to trigger scheduler/taskmanager execution
 extern volatile uint8_t FC_systick_flag;
 

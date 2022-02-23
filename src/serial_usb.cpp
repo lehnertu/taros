@@ -33,7 +33,6 @@ void USB_Serial::run()
 {
 
     // TODO probably we should check the buffer availability
-    uint32_t usec_start = micros();
 
     while (flag_text_pending)
     {
@@ -56,11 +55,6 @@ void USB_Serial::run()
         Serial.write(buffer.c_str(), buffer.size());
         flag_telemetry_pending = (telemetry_in.count()>0);
     }
-    
-    uint32_t usec_stop = micros();
-    Serial.print("  --> transmission took ");
-    Serial.print(usec_stop-usec_start);
-    Serial.println(" us");
     
 }
 

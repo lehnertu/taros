@@ -4,10 +4,12 @@
 volatile uint16_t FC_ms_count;
 volatile uint32_t FC_systick_millis_count;
 volatile uint32_t FC_systick_cycle_count;
+uint32_t FC_time_to_completion;
+uint32_t FC_max_time_to_completion;
 volatile uint8_t FC_systick_flag;
 
 // These 2 variables are part of the Teensyduino core.
-// They are onlc included for the systick interupt service routine.
+// They are only included for the systick interupt service routine.
 extern "C" volatile uint32_t systick_cycle_count;
 extern "C" volatile uint32_t systick_millis_count;
 
