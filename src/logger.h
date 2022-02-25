@@ -33,21 +33,21 @@ public:
     virtual void run();
 
     // port at which text messages are received to be sent over the USB serial connection
-    TimedReceiverPort<MESSAGE_TEXT> text_in;
+    TimedReceiverPort<Message_Text> text_in;
 
     // port at which system messages are received to be sent over the USB serial connection
-    TimedReceiverPort<MESSAGE_SYSTEM> system_in;
+    TimedReceiverPort<Message_System> system_in;
 
     // port over which formatted messages are sent
-    SenderPort<MESSAGE_TEXT> out;
+    SenderPort<Message_Text> out;
 
 private:
 
     // The logger has its own serialization routines for timed messages.
     // This serialization skips the sender module name - when sending
     // it will be copied from the incoming message - the logger is just a proxy.
-    std::string serialize_message(MESSAGE_TEXT msg, uint32_t time);
-    std::string serialize_message(MESSAGE_SYSTEM msg, uint32_t time);
+    std::string serialize_message(Message_Text msg, uint32_t time);
+    std::string serialize_message(Message_System msg, uint32_t time);
 
     // here are some flags indicating which work is due
     bool  flag_text_pending;
@@ -79,25 +79,25 @@ public:
     // Register a callback function of a server, where the logger can request a message.
     // std::function<return_type(list of argument_type(s))>
     // The server method is a function taking no arguments and delivering a message.
-    void register_server_callback(std::function<MESSAGE_GPS_POSITION(void)> f, std::string name);
+    void register_server_callback(std::function<Message_GPS_position(void)> f, std::string name);
 
     // TODO: The timedLogger registers all server ports it should log.
     // TODO: The server can provide a number of different message types.
 
     // port over which formatted messages are sent
-    SenderPort<MESSAGE_TEXT> out;
+    SenderPort<Message_Text> out;
 
 private:
     
     // here we store the server callback
     std::string server_name;
-    std::function<MESSAGE_GPS_POSITION(void)> server_callback;
+    std::function<Message_GPS_position(void)> server_callback;
 
     // The logger has its own serialization routines for timed messages.
     // This serialization skips the sender module name - when sending
     // it will be copied from the incoming message - the logger is just a proxy.
-    std::string serialize_timed_message(MESSAGE_TEXT msg, uint32_t time);
-    std::string serialize_timed_message(MESSAGE_SYSTEM msg, uint32_t time);
+    std::string serialize_timed_message(Message_Text msg, uint32_t time);
+    std::string serialize_timed_message(Message_System msg, uint32_t time);
 
     // time of the last update
     uint32_t last_update;

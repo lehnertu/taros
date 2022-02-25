@@ -14,10 +14,7 @@ USB_Serial::USB_Serial(
     flag_telemetry_pending = false;
     // send a message to the system_log
     system_log.system_in.receive(
-        MESSAGE_SYSTEM {
-            .sender_module = id,
-            .severity_level = MSG_LEVEL_STATE_CHANGE,
-            .text="USB_Serial setup done." } );
+        Message_System(id, MSG_LEVEL_STATE_CHANGE, "setup done.") );
 }
 
 bool USB_Serial::have_work()
@@ -36,8 +33,8 @@ void USB_Serial::run()
 
     while (flag_text_pending)
     {
-        MESSAGE_TEXT msg = text_in.fetch();
-        std::string buffer = serialize_message(msg);
+        Message_Text msg = text_in.fetch();
+        std::string buffer = msg.serialize();
         buffer += std::string("\r\n");
         // write out
         // the write is buffered and returns immediately
@@ -47,14 +44,13 @@ void USB_Serial::run()
     
     while (flag_telemetry_pending)
     {
-        MESSAGE_TELEMETRY msg = telemetry_in.fetch();
-        std::string buffer = serialize_message(msg);
+        Message_Telemetry msg = telemetry_in.fetch();
+        std::string buffer = msg.serialize();
         buffer += std::string("\r\n");
         // write out
         // the write is buffered and returns immediately
         Serial.write(buffer.c_str(), buffer.size());
         flag_telemetry_pending = (telemetry_in.count()>0);
     }
-    
 }
 

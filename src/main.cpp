@@ -35,10 +35,7 @@ extern "C" int main(void)
     // the logger has to be added to the list of modules so it will be scheduled for execution
     module_list.push_back(&system_log);
     system_log.system_in.receive(
-        MESSAGE_SYSTEM {
-            .sender_module = "SYSTEM",
-            .severity_level = MSG_LEVEL_MILESTONE,
-            .text="Teensy Flight Controller - Version 1.0" } );
+        Message_System("SYSTEM", MSG_LEVEL_MILESTONE,"Teensy Flight Controller - Version 1.0") );
     
     // now create and wire all modules and add them to the list
     // all extended initializations are not yet done but
@@ -50,10 +47,7 @@ extern "C" int main(void)
     setup_core_system();
     
     system_log.system_in.receive(
-        MESSAGE_SYSTEM {
-            .sender_module = "SYSTEM",
-            .severity_level = MSG_LEVEL_MILESTONE,
-            .text="entering event loop." } );
+        Message_System("SYSTEM", MSG_LEVEL_MILESTONE, "entering event loop.") );
 
     // we keep track of the task completion time
     FC_max_time_to_completion = 0;

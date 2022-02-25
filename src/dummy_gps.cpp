@@ -78,34 +78,25 @@ void DummyGPS::run()
         int n = snprintf(buffer, 15, "%.6f", lat);
         buffer[n] = '\0';
         tm_out.transmit(
-            MESSAGE_TELEMETRY {
-                .sender_module = id,
-                .variable = "GPS_LAT",
-                .value = std::string(buffer,n) }
+            Message_Telemetry(id, "GPS_LAT",std::string(buffer,n))
         );
 
         n = snprintf(buffer, 15, "%.6f", lon);
         buffer[n] = '\0';
         tm_out.transmit(
-            MESSAGE_TELEMETRY {
-                .sender_module = id,
-                .variable = "GPS_LONG",
-                .value = std::string(buffer,n) }
+            Message_Telemetry(id, "GPS_LONG",std::string(buffer,n))
         );
 
         n = snprintf(buffer, 15, "%.2f", alt);
         buffer[n] = '\0';
         tm_out.transmit(
-            MESSAGE_TELEMETRY {
-                .sender_module = id,
-                .variable = "GPS_ALTI",
-                .value = std::string(buffer,n) }
+            Message_Telemetry(id, "GPS_ALTI",std::string(buffer,n))
         );
 
         last_telemetry = FC_systick_millis_count;
         flag_telemetry_pending = false;
     };
-
+    
     if (!status_lock)
     {
         if (FC_systick_millis_count - startup_time > 5000)
@@ -120,29 +111,18 @@ void DummyGPS::run()
         if (status_lock)
         {
             system_log.system_in.receive(
-                MESSAGE_SYSTEM {
-                    .sender_module = id,
-                    .severity_level = MSG_LEVEL_STATE_CHANGE,
-                    .text="acquired lock." } );
+                Message_System(id, MSG_LEVEL_STATE_CHANGE, "acquired lock.") );
         } else {
             system_log.system_in.receive(
-                MESSAGE_SYSTEM {
-                    .sender_module = id,
-                    .severity_level = MSG_LEVEL_STATE_CHANGE,
-                    .text="up and running." } );
+                Message_System(id, MSG_LEVEL_STATE_CHANGE, "up and running.") );
         };
         flag_state_change = false;
     };
     
 }
 
-MESSAGE_GPS_POSITION DummyGPS::get_position()
+Message_GPS_position DummyGPS::get_position()
 {
-    return MESSAGE_GPS_POSITION
-        {
-            .latitude = lat,
-            .longitude = lon,
-            .altitude = alt
-        };
+    return Message_GPS_position(id, lat, lon, alt);
 }
 
