@@ -20,7 +20,7 @@ void FC_build_system(
     
     // create a display with 2Hz update
     DisplaySSD1331 *display = new DisplaySSD1331(std::string("DISPLAY"), 2.0);
-    display->status_out.set_receiver(&(usb->text_in));
+    display->status_out.set_receiver(&(system_log.system_in));
     module_list->push_back(display);
     
     // create a simulated GPS module

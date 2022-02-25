@@ -107,11 +107,12 @@ extern "C" int main(void)
             // if the tasklist is empty now, we store the time is took to complete
             if (task_list.empty())
             {
-                // TODO : prevent overruns
+                // TODO : prevent overruns when wrapping around
                 FC_time_to_completion = ARM_DWT_CYCCNT - FC_systick_cycle_count;
                 // is is reset when an output is created (either log or display)
                 if (FC_time_to_completion > FC_max_time_to_completion)
                     FC_max_time_to_completion = FC_time_to_completion;
+                // FC_max_time_to_completion is reset when printed to the display
             };
         }
 
