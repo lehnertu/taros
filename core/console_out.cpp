@@ -9,10 +9,7 @@ Console_out::Console_out(std::string name)
     flag_telemetry_pending = false;
     // send a message to the system_log
     system_log.system_in.receive(
-        MESSAGE_SYSTEM {
-            .sender_module = id,
-            .severity_level = MSG_LEVEL_STATE_CHANGE,
-            .text="setup done." } );
+        Message_System(id, MSG_LEVEL_STATE_CHANGE, "setup done.") );
 }
 
 bool Console_out::have_work()
@@ -29,8 +26,8 @@ void Console_out::run()
 
     while (flag_text_pending)
     {
-        MESSAGE_TEXT msg = text_in.fetch();
-        std::string buffer = serialize_message(msg);
+        Message_Text msg = text_in.fetch();
+        std::string buffer = msg.serialize();
         // write out
         std::cout << buffer << std::endl;
         flag_text_pending = (text_in.count()>0);
@@ -38,12 +35,11 @@ void Console_out::run()
     
     while (flag_telemetry_pending)
     {
-        MESSAGE_TELEMETRY msg = telemetry_in.fetch();
-        std::string buffer = serialize_message(msg);
+        Message_Telemetry msg = telemetry_in.fetch();
+        std::string buffer = msg.serialize();
         // write out
         std::cout << buffer << std::endl;
         flag_telemetry_pending = (telemetry_in.count()>0);
     }
-    
 }
 

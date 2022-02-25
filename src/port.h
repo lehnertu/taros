@@ -14,7 +14,7 @@
 #include <list>
 #include "message.h"
 
-template <typename msg_type>
+template <class msg_type>
 class ReceiverPort;
 
 /*
@@ -23,7 +23,7 @@ class ReceiverPort;
  * The message gets stored in the input queue of the connected receivers
  * and sits there until it is processed by the receiver module
  */
-template <typename msg_type>
+template <class msg_type>
 class SenderPort {
     public:
         // there can be set several receivers that all will get
@@ -40,7 +40,7 @@ class SenderPort {
  * in the input queue associated with this port.
  * It sits there until it is processed by the module owning this port.
  */
-template <typename msg_type>
+template <class msg_type>
 class ReceiverPort {
     public:
         // When a sender decides to send a message to this port it will 
@@ -59,7 +59,7 @@ class ReceiverPort {
  * This is a normal asynchronous receiver port.
  * In addition it records the system time when the message is received.
  */
-template <typename msg_type>
+template <class msg_type>
 class TimedReceiverPort : public ReceiverPort<msg_type> {
     public:
         // When a sender decides to send a message to this port it will 

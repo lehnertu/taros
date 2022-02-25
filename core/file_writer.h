@@ -27,7 +27,7 @@ public:
     virtual void run();
 
     // port at which text messages are received to be sent over the USB serial connection
-    ReceiverPort<MESSAGE_TEXT> text_in;
+    ReceiverPort<Message_Text> text_in;
 
 private:
 

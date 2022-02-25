@@ -26,10 +26,9 @@ FileWriter::FileWriter(
     flag_message_pending = false;
     // report which file we are writing
     system_log.system_in.receive(
-        MESSAGE_SYSTEM {
-            .sender_module = id,
-            .severity_level = MSG_LEVEL_STATE_CHANGE,
-            .text=std::string("writing system_log to ") + file_name } );
+        Message_System(id,
+            MSG_LEVEL_STATE_CHANGE,
+            std::string("writing system_log to ") + file_name) );
 }
 
 bool FileWriter::have_work()
@@ -52,8 +51,8 @@ void FileWriter::run()
     {        
         while (flag_message_pending)
         {
-            MESSAGE_TEXT msg = text_in.fetch();
-            std::string buffer = serialize_message<MESSAGE_TEXT>(msg);
+            Message_Text msg = text_in.fetch();
+            std::string buffer = msg.serialize();
             // write out
             file << buffer;
             file << std::endl;
@@ -65,7 +64,7 @@ void FileWriter::run()
         // if we cannot write, discard the messages
         while (flag_message_pending)
         {
-            MESSAGE_TEXT msg = text_in.fetch();
+            Message_Text msg = text_in.fetch();
             flag_message_pending = (text_in.count()>0);
         }
     }

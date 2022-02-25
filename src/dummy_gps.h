@@ -34,21 +34,21 @@ public:
     virtual void run();
 
     // assemble a position message from current data upon request
-    MESSAGE_GPS_POSITION get_position();
+    Message_GPS_position get_position();
 
     // port over which position data is sent out at requested rate
-    SenderPort<MESSAGE_GPS_POSITION> output;
+    SenderPort<Message_GPS_position> output;
     
     // port over which telemetry messages are sent
-    SenderPort<MESSAGE_TELEMETRY> tm_out;
+    SenderPort<Message_Telemetry> tm_out;
 
     // port over which status messages are sent
-    SenderPort<MESSAGE_TEXT> status_out;
+    SenderPort<Message_Text> status_out;
 
 private:
 
-    float       lat; 		// latitude in degree (north positive)
-    float       lon;		// longitude in degree (east positive)
+    double      lat; 		// latitude in degree (north positive)
+    double      lon;		// longitude in degree (east positive)
     float       alt;		// altitude in m
 
     float       vx;         // simulated velocity in east direction [m/s]

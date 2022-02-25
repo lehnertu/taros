@@ -38,9 +38,6 @@ void FC_build_system(
     // All start-up messages are still just queued in the Logger and USB_serial module.
     // They will get sent now, when the scheduler and taskmanager pick up their work.
     system_log.system_in.receive(
-        MESSAGE_SYSTEM {
-            .sender_module = "SYSTEM",
-            .severity_level = MSG_LEVEL_MILESTONE,
-            .text="build complete." } );
+        Message_System("SYSTEM", MSG_LEVEL_MILESTONE, "build complete.") );
 }
 
