@@ -65,10 +65,7 @@ extern "C" int main(void)
 	        if (FC_systick_flag>1)
 	        {
                 system_log.system_in.receive(
-                    MESSAGE_SYSTEM {
-                        .sender_module = "SYSTEM",
-                        .severity_level = MSG_LEVEL_CRITICAL,
-                        .text="systick overrun" } );
+                    Message_System("SYSTEM", MSG_LEVEL_CRITICAL, "systick overrun !") );
 	        };
 	        // reset the flag
 	        FC_systick_flag=0;

@@ -69,11 +69,7 @@ void DisplaySSD1331::run()
             display->begin();
             // send a start-up message
             status_out.transmit(
-                MESSAGE_TEXT {
-                    .sender_module = id,
-                    .text = std::string("initialized.")
-                    }
-                );
+                Message_Text(id, std::string("initialized.")) );
             last_update = FC_systick_millis_count;
             state=DISPLAY_INITIALIZED;
             break;
@@ -92,11 +88,7 @@ void DisplaySSD1331::run()
             FC_max_time_to_completion = 0;
             display->println(" us");
             status_out.transmit(
-                MESSAGE_TEXT {
-                    .sender_module = id,
-                    .text = std::string("updated.")
-                    }
-                );
+                Message_Text(id, std::string("updated.")) );
             last_update = FC_systick_millis_count;
             state=DISPLAY_UPDATED;
             break;
@@ -120,11 +112,7 @@ void DisplaySSD1331::run()
             display->sendCommand(0);    // fill G
             display->sendCommand(10);   // fill B
             status_out.transmit(
-                MESSAGE_TEXT {
-                    .sender_module = id,
-                    .text = std::string("cleared.")
-                    }
-                );
+                Message_Text(id, std::string("cleared.")) );
             last_update = FC_systick_millis_count;
             state=DISPLAY_CLEARED;
             break;
