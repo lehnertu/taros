@@ -33,21 +33,15 @@ public:
     virtual void run();
 
     // port at which text messages are received to be sent over the USB serial connection
-    TimedReceiverPort<Message_Text> text_in;
+    ReceiverPort<Message_Text> text_in;
 
     // port at which system messages are received to be sent over the USB serial connection
-    TimedReceiverPort<Message_System> system_in;
+    ReceiverPort<Message_System> system_in;
 
     // port over which formatted messages are sent
     SenderPort<Message_Text> out;
 
 private:
-
-    // The logger has its own serialization routines for timed messages.
-    // This serialization skips the sender module name - when sending
-    // it will be copied from the incoming message - the logger is just a proxy.
-    std::string serialize_message(Message_Text msg, uint32_t time);
-    std::string serialize_message(Message_System msg, uint32_t time);
 
     // here are some flags indicating which work is due
     bool  flag_text_pending;
@@ -92,12 +86,6 @@ private:
     // here we store the server callback
     std::string server_name;
     std::function<Message_GPS_position(void)> server_callback;
-
-    // The logger has its own serialization routines for timed messages.
-    // This serialization skips the sender module name - when sending
-    // it will be copied from the incoming message - the logger is just a proxy.
-    std::string serialize_timed_message(Message_Text msg, uint32_t time);
-    std::string serialize_timed_message(Message_System msg, uint32_t time);
 
     // time of the last update
     uint32_t last_update;

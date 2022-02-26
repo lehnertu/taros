@@ -52,35 +52,3 @@ template class ReceiverPort<Message_System>;
 template class ReceiverPort<Message_GPS_position>;
 template class ReceiverPort<Message_Telemetry>;
 
-
-template <typename msg_type>
-void TimedReceiverPort<msg_type>::receive(msg_type message)
-{
-    // the this pointer is necessary to get the superclass member into scope
-    this->queue.push_back(message);
-    uint32_t t = FC_systick_millis_count;
-    time.push_back(t);
-};
-
-template <typename msg_type>
-msg_type TimedReceiverPort<msg_type>::fetch()
-{
-    // get the first message
-    msg_type msg = this->queue.front();
-    last_time = time.front();
-    // remove it from the list
-    this->queue.pop_front();
-    time.pop_front();
-    return msg;
-};
-
-template <typename msg_type>
-uint32_t TimedReceiverPort<msg_type>::fetch_time()
-{
-    return last_time;
-};
-
-// we have to instantiate the class for every possible message type
-template class TimedReceiverPort<Message_Text>;
-template class TimedReceiverPort<Message_System>;
-

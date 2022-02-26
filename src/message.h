@@ -36,6 +36,7 @@
 /*
     This is the base class for all messages.
     It defines all functionality a message must provide.
+    It cannot be used by itself, only derived classes that implement the defined functionality.
 */
 class Message {
     public:
@@ -44,8 +45,13 @@ class Message {
         
         // Generate a string with a standardized format holding the message.
         // There is no CR/LF at the end of the string, a print routine has to add that if necessary.
-        // this should be overridden by derived classes
-        virtual std::string serialize();
+        // this must be overridden by derived classes
+        virtual std::string serialize() = 0;
+        
+        // Generate a text message with all information but the sender id serialized
+        // this must be overridden by derived classes
+        // we cannot declare it here because the derived class is still abstract
+        // virtual Message_Text as_text() = 0;
         
         // there is one single member that is required for all messages
         // the sender module of the message
@@ -63,43 +69,53 @@ class Message_Text : public Message {
             std::string text);
         // override the serialization function
         virtual std::string serialize();
-        // two additional members
+        virtual Message_Text as_text();
+        // additional members
         std::string m_text;
 };
 
 /*
     These are system messages going to a logfile or to the downlink.
-    They have an indication of how important the message is.
+    They have an indication of how important the message is
+    and at which time the message was sent.
+    time : milliseconds since system start will be serialized as seconds with 1 ms resolution
 */
 class Message_System : public Message {
     public:
         // constructor
         Message_System(
             std::string sender_module,
+            uint32_t time,
             uint8_t severity_level,
             std::string text);
         // override the serialization function
         virtual std::string serialize();
-        // two additional members
+        virtual Message_Text as_text();
+        // additional members
         uint8_t m_severity_level;
+        uint32_t m_time;
         std::string m_text;
 };
 
 /*
     These are telemetry messages for automatted evaluation.
     They contain exactly one data item (variable) of given name.
-    They should be directed to a timed receiver port to capture the time of measurement.
+    they contain the time the message was sent.
+    time : milliseconds since system start will be serialized as seconds with 1 ms resolution
 */
 class Message_Telemetry : public Message {
     public:
         // constructor
         Message_Telemetry(
             std::string sender_id,
+            uint32_t time,
             std::string variable,
             std::string value);
         // override the serialization function
         virtual std::string serialize();
-        // 2 additional members
+        virtual Message_Text as_text();
+        // additional members
+        uint32_t m_time;
         std::string m_variable;
         std::string m_value;
 };
@@ -117,7 +133,8 @@ class Message_GPS_position : public Message {
             float   altitude);      // meters above MSL
         // override the serialization function
         virtual std::string serialize();
-        // 3 additional members
+        virtual Message_Text as_text();
+        // additional members
         double  m_latitude;
         double  m_longitude;
         float   m_altitude;

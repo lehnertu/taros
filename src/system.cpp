@@ -39,6 +39,6 @@ void FC_build_system(
     // All messages are still just queued in the Logger and USB_serial module.
     // They will get sent now, when the scheduler and taskmanager pick up their work.
     system_log.system_in.receive(
-        Message_System("SYSTEM", MSG_LEVEL_MILESTONE, "build complete.") );
+        Message_System("SYSTEM", FC_systick_millis_count, MSG_LEVEL_MILESTONE, "build complete.") );
 }
 
