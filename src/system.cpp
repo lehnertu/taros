@@ -23,7 +23,7 @@ void FC_build_system(
     
     // create a simulated GPS module
     DummyGPS *gps = new DummyGPS(std::string("GPS_1"), 5.0, 1.0);
-    gps->status_out.set_receiver(&(cout->text_in));
+    gps->status_out.set_receiver(&(system_log.system_in));
     gps->tm_out.set_receiver(&(cout->telemetry_in));
     module_list->push_back(gps);
     
