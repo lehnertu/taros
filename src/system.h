@@ -14,3 +14,13 @@
 void FC_build_system(
     std::list<Module*> *module_list
 );
+
+/*
+    This cleans up the system. In a practical environment there is an
+    infinite event loop, so, this will never be reached.
+    For debugging, the loop can be ended and the sastem cleaned up
+    to allow the detection of other sources of memory leaks.
+*/
+void FC_destroy_system(
+    std::list<Module*> *module_list
+);

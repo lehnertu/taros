@@ -33,6 +33,9 @@ public:
     // It switches on the LED and sends a message to all registered receivers.
     virtual void run();
 
+    // destructor
+    virtual ~DummyGPS() {};
+
     // assemble a position message from current data upon request
     Message_GPS_position get_position();
 

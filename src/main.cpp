@@ -53,7 +53,7 @@ extern "C" int main(void)
     FC_max_time_to_completion = 0;
 
 	// infinite system loop
-	while (1)
+	while (FC_systick_millis_count<10000)
 	{
 	
 	    // systick interrupt has occured - run scheduler
@@ -118,5 +118,8 @@ extern "C" int main(void)
 
 	}; // infinite system loop
 
+    // we will never get here, except when limiting the task-loop for testing
+    FC_destroy_system(&module_list);
+    
 };
 

@@ -32,6 +32,9 @@ public:
     // It writes all pending messages to the bus unless a limit of execution time is exceeded.
     virtual void run();
 
+    // destructor
+    virtual ~Logger() {};
+
     // port at which text messages are received to be sent over the USB serial connection
     ReceiverPort<Message_Text> text_in;
 
@@ -70,6 +73,9 @@ public:
     // It writes all pending messages to the bus unless a limit of execution time is exceeded.
     virtual void run();
 
+    // destructor
+    virtual ~TimedLogger() {};
+    
     // Register a callback function of a server, where the logger can request a message.
     // std::function<return_type(list of argument_type(s))>
     // The server method is a function taking no arguments and delivering a message.
