@@ -46,7 +46,7 @@ public:
     SenderPort<Message_Telemetry> tm_out;
 
     // port over which status messages are sent
-    SenderPort<Message_Text> status_out;
+    SenderPort<Message_System> status_out;
 
 private:
 

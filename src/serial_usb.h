@@ -31,7 +31,7 @@ public:
     virtual void run();
 
     // destructor
-    virtual ~Console_out() {};
+    virtual ~USB_Serial() {};
 
     // port at which text messages are received to be sent over the USB serial connection
     ReceiverPort<Message_Text> text_in;
