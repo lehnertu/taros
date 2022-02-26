@@ -53,6 +53,9 @@ public:
     // All message ports, that a module may have should be declared public
     // so they can be wired easily during system build
     
+    // we need a virtual destructor for destroying lists of objects
+    virtual ~Module() {};
+    
 protected:
     
     // All modules have a short name which is used to reference the modules

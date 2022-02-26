@@ -26,6 +26,9 @@ public:
     // It writes all pending messages to the bus unless a limit of execution time is exceeded.
     virtual void run();
 
+    // destructor
+    virtual ~FileWriter() {};
+
     // port at which text messages are received to be sent over the USB serial connection
     ReceiverPort<Message_Text> text_in;
 

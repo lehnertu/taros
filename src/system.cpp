@@ -41,3 +41,14 @@ void FC_build_system(
         Message_System("SYSTEM", FC_systick_millis_count, MSG_LEVEL_MILESTONE, "build complete.") );
 }
 
+void FC_destroy_system(
+    std::list<Module*> *module_list
+)
+{
+    std::list<Module*>::iterator it;
+    for (it = module_list->begin(); it != module_list->end(); it++)
+    {
+        Module* mod = *it;
+        delete mod;
+    };
+}
