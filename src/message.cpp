@@ -6,21 +6,7 @@ Message::Message(std::string sender_module)
     m_sender_module = sender_module;
 }
 
-std::string Message::serialize()
-{
-    std::string buffer = m_sender_module;
-    // pad with spaces to 8 characters
-    size_t len = buffer.size();
-    if (len<8)
-    {
-        std::string space(8-len, ' ');
-        buffer += space;
-    };
-    buffer = buffer.substr(0, 8);
-    // separator
-    buffer += std::string(" : ");
-    return buffer;
-}
+
 
 Message_Text::Message_Text(
     std::string sender_module,
@@ -49,19 +35,29 @@ std::string Message_Text::serialize()
     return text;
 }
 
+Message_Text Message_Text::as_text()
+{
+    return Message_Text(m_sender_module, m_text);
+}
+
+//-----------------------------------------------------------------------------
+
 Message_System::Message_System(
     std::string sender_module,
+    uint32_t time,
     uint8_t severity_level,
     std::string text) :
     // call the base class contructor
     Message(sender_module)
 {
     m_severity_level = severity_level;
+    m_time = time;
     m_text = text;
 }
 
 std::string Message_System::serialize()
 {
+    char buffer[12];
     std::string text = m_sender_module;
     // pad with spaces to 8 characters
     size_t len = text.size();
@@ -73,9 +69,14 @@ std::string Message_System::serialize()
     text = text.substr(0, 8);
     // separator
     text += std::string(" : ");
+    // time
+    int n = snprintf(buffer, 11, "%10.3f", (double)m_time*0.001);
+    buffer[n] = '\0';
+    text += std::string(buffer,n);
+    // separator
+    text += std::string(" : ");
     // severity level
-    char buffer[6];
-    int n = snprintf(buffer, 5, "%4d", m_severity_level);
+    n = snprintf(buffer, 5, "%4d", m_severity_level);
     buffer[n] = '\0';
     text += std::string(buffer,n);
     // separator
@@ -84,6 +85,28 @@ std::string Message_System::serialize()
     text += m_text;
     return text;
 }
+
+Message_Text Message_System::as_text()
+{
+    char buffer[12];
+    // time
+    int n = snprintf(buffer, 11, "%10.3f", (double)m_time*0.001);
+    buffer[n] = '\0';
+    std::string text = std::string(buffer,n);
+    // separator
+    text += std::string(" : ");
+    // severity level
+    n = snprintf(buffer, 5, "%4d", m_severity_level);
+    buffer[n] = '\0';
+    text += std::string(buffer,n);
+    // separator
+    text += std::string(" : ");
+    // message text
+    text += m_text;
+    return Message_Text(m_sender_module, text);
+}
+
+//-----------------------------------------------------------------------------
 
 Message_GPS_position::Message_GPS_position(
     std::string sender_id,
@@ -130,19 +153,45 @@ std::string Message_GPS_position::serialize()
     return text;
 }
 
+Message_Text Message_GPS_position::as_text()
+{
+    char buffer[16];
+    // latitude
+    int n = snprintf(buffer, 15, "%10.6f", m_latitude);
+    buffer[n] = '\0';
+    std::string text = "lat=";
+    text += std::string(buffer,n);
+    // longitude
+    n = snprintf(buffer, 15, "%11.6f", m_longitude);
+    buffer[n] = '\0';
+    text += ", long=";
+    text += std::string(buffer,n);
+    // altitude
+    n = snprintf(buffer, 15, "%7.2f", m_altitude);
+    buffer[n] = '\0';
+    text += ", alti=";
+    text += std::string(buffer,n);
+    return Message_Text(m_sender_module, text);
+}
+
+//-----------------------------------------------------------------------------
+
 Message_Telemetry::Message_Telemetry(
             std::string sender_id,
+            uint32_t time,
             std::string variable,
             std::string value) :
     // call the base class contructor
     Message(sender_id)
 {
+    m_time = time;
     m_variable = variable;
     m_value = value;
 }
 
 std::string Message_Telemetry::serialize()
 {
+    char buffer[12];
     std::string text = m_sender_module;
     // pad with spaces to 8 characters
     size_t len = text.size();
@@ -154,6 +203,12 @@ std::string Message_Telemetry::serialize()
     text = text.substr(0, 8);
     // separator
     text += std::string(" : ");
+    // time
+    int n = snprintf(buffer, 11, "%10.3f", (double)m_time*0.001);
+    buffer[n] = '\0';
+    text += std::string(buffer,n);
+    // separator
+    text += std::string(" : ");
     // vaiable name
     text += m_variable.substr(0, 8);
     // separator
@@ -162,4 +217,23 @@ std::string Message_Telemetry::serialize()
     text += m_value;
     return text;
 }
+
+Message_Text Message_Telemetry::as_text()
+{
+    char buffer[12];
+    // time
+    int n = snprintf(buffer, 11, "%10.3f", (double)m_time*0.001);
+    buffer[n] = '\0';
+    std::string text = std::string(buffer,n);
+    // separator
+    text += std::string(" : ");
+    // vaiable name
+    text += m_variable.substr(0, 8);
+    // separator
+    text += std::string(" : ");
+    // value
+    text += m_value;
+    return Message_Text(m_sender_module, text);
+}
+
 

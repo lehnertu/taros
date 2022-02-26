@@ -9,7 +9,7 @@ Console_out::Console_out(std::string name)
     flag_telemetry_pending = false;
     // send a message to the system_log
     system_log.system_in.receive(
-        Message_System(id, MSG_LEVEL_STATE_CHANGE, "setup done.") );
+        Message_System(id, FC_systick_millis_count, MSG_LEVEL_STATE_CHANGE, "setup done.") );
 }
 
 bool Console_out::have_work()

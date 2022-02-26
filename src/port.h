@@ -55,28 +55,3 @@ class ReceiverPort {
         std::list<msg_type> queue;
 };
 
-/*
- * This is a normal asynchronous receiver port.
- * In addition it records the system time when the message is received.
- */
-template <class msg_type>
-class TimedReceiverPort : public ReceiverPort<msg_type> {
-    public:
-        // When a sender decides to send a message to this port it will 
-        // call this method. The receiver port will store the message
-        // and do nothing else.
-        void receive(msg_type message);
-        // The module can fetch the message from the queue fror processing.
-        // Along with it also the receive timestamp is fetched from its queue.
-        // It should be read immedietely after fetching the message
-        msg_type fetch();
-        // fetch_time() does not work on the queues, it just deliveres the
-        // timestamp from the last fetch()
-        uint32_t fetch_time();
-    protected:
-        // the queue is already declared in the base class
-        std::list<uint32_t> time;
-    private:
-        uint32_t last_time;
-};
-

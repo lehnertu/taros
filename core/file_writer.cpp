@@ -27,6 +27,7 @@ FileWriter::FileWriter(
     // report which file we are writing
     system_log.system_in.receive(
         Message_System(id,
+            FC_systick_millis_count,
             MSG_LEVEL_STATE_CHANGE,
             std::string("writing system_log to ") + file_name) );
 }
