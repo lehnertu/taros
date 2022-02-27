@@ -13,7 +13,7 @@ USB_Serial::USB_Serial(
     flag_text_pending = false;
     flag_telemetry_pending = false;
     // send a message to the system_log
-    system_log.system_in.receive(
+    system_log->system_in.receive(
         Message_System(id, FC_systick_millis_count, MSG_LEVEL_STATE_CHANGE, "setup done.") );
 }
 

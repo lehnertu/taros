@@ -107,7 +107,7 @@ void DisplaySSD1331::run()
             // TODO: sending via status_out leads to a fault
             // status_out.transmit(
             //     Message_System(id, FC_systick_millis_count, MSG_LEVEL_STATE_CHANGE, std::string("initialized.")) );
-            system_log.system_in.receive(
+            system_log->system_in.receive(
                 Message_System(id, FC_systick_millis_count, MSG_LEVEL_STATE_CHANGE, "initialized.") );
             state=DISPLAY_CLEARED;
             break;

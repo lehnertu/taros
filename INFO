@@ -61,3 +61,7 @@ ARM_DWT_CYCCNT is a 32-bit unsigned counter for processor cycles (600 MHz), defi
 minicom -D /dev/ttyACM0 -b 9600
 
 
+gdb ./DemoSystem
+(gdb) handle SIG34 noprint
+(gdb) run
+

@@ -38,6 +38,3 @@ void setup_core_system()
     _VectorsRam[15] = &FC_systick_isr;
 }
 
-Logger system_log("SYSLOG");
-
-

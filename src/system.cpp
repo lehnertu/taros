@@ -12,7 +12,7 @@ void FC_build_system(
     USB_Serial *usb = new USB_Serial(std::string("USB_1"), 9600);
     module_list->push_back(usb);
     // wire the syslog output to it
-    system_log.out.set_receiver(&(usb->text_in));
+    system_log->out.set_receiver(&(usb->text_in));
 
     // create a module for LED blinking
     // Blink *bl = new Blink(std::string("LED1"), 5.0);
@@ -20,12 +20,12 @@ void FC_build_system(
     
     // create a display with 2Hz update
     DisplaySSD1331 *display = new DisplaySSD1331(std::string("DISPLAY"), 2.0);
-    display->status_out.set_receiver(&(system_log.system_in));
+    display->status_out.set_receiver(&(system_log->system_in));
     module_list->push_back(display);
     
     // create a simulated GPS module
     DummyGPS *gps = new DummyGPS(std::string("GPS_1"), 5.0, 2.0);
-    gps->status_out.set_receiver(&(system_log.system_in));
+    gps->status_out.set_receiver(&(system_log->system_in));
     gps->tm_out.set_receiver(&(usb->telemetry_in));
     module_list->push_back(gps);
     
@@ -38,7 +38,7 @@ void FC_build_system(
 
     // All messages are still just queued in the Logger and USB_serial module.
     // They will get sent now, when the scheduler and taskmanager pick up their work.
-    system_log.system_in.receive(
+    system_log->system_in.receive(
         Message_System("SYSTEM", FC_systick_millis_count, MSG_LEVEL_MILESTONE, "build complete.") );
 }
 

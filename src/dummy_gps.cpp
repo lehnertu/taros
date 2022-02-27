@@ -110,10 +110,10 @@ void DummyGPS::run()
     {
         if (status_lock)
         {
-            system_log.system_in.receive(
+            system_log->system_in.receive(
                 Message_System(id, FC_systick_millis_count, MSG_LEVEL_STATE_CHANGE, "acquired lock.") );
         } else {
-            system_log.system_in.receive(
+            system_log->system_in.receive(
                 Message_System(id, FC_systick_millis_count, MSG_LEVEL_STATE_CHANGE, "up and running.") );
         };
         flag_state_change = false;

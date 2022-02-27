@@ -35,8 +35,8 @@ extern "C" void FC_systick_isr(void);
 void setup_core_system();
 
 // This is a system-wide available logger for system messages.
-// It will be created statically in global.cpp.
 // It can be used by all modules to log system information.
 // Depending on the setup the messages will be written to a file 
 // and/or console or telemetry output when the task loop has started.
-extern Logger system_log;
+extern Logger* system_log;
+
