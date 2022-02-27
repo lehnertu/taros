@@ -34,6 +34,3 @@ void setup_core_system()
 	timer.startns(1000000);
 }
 
-Logger system_log("SYSLOG");
-
-

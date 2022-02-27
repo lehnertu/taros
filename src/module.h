@@ -56,7 +56,7 @@ public:
     // we need a virtual destructor for destroying lists of objects
     virtual ~Module() {};
     
-protected:
+public:
     
     // All modules have a short name which is used to reference the modules
     // when sending messages (telemetry for instance)

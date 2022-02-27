@@ -25,7 +25,7 @@ FileWriter::FileWriter(
     while (exists == 0);
     flag_message_pending = false;
     // report which file we are writing
-    system_log.system_in.receive(
+    system_log->system_in.receive(
         Message_System(id,
             FC_systick_millis_count,
             MSG_LEVEL_STATE_CHANGE,

@@ -130,3 +130,7 @@ testing
 minicom -D /dev/ttyACM0 -b 9600
 valgrind --tool=memcheck --leak-check=full ./DemoSystem
 
+gdb ./DemoSystem
+(gdb) handle SIG34 noprint
+(gdb) run
+

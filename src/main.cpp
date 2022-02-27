@@ -21,6 +21,8 @@ struct Task
     uint32_t schedule_time;
 };
 
+Logger *system_log;
+
 extern "C" int main(void)
 {
 
@@ -31,8 +33,9 @@ extern "C" int main(void)
     std::list<Task> task_list;
 
     // the logger has to be added to the list of modules so it will be scheduled for execution
-    module_list.push_back(&system_log);
-    system_log.system_in.receive(
+    system_log = new Logger("SYSLOG");
+    module_list.push_back(system_log);
+    system_log->system_in.receive(
         Message_System("SYSTEM", FC_systick_millis_count, MSG_LEVEL_MILESTONE,"Teensy Flight Controller - Version 1.0") );
     
     // now create and wire all modules and add them to the list
@@ -44,7 +47,7 @@ extern "C" int main(void)
     // The millisecond systick interrupt is bent to out own ISR.
     setup_core_system();
     
-    system_log.system_in.receive(
+    system_log->system_in.receive(
         Message_System("SYSTEM", FC_systick_millis_count, MSG_LEVEL_MILESTONE, "entering event loop.") );
 
 	// infinite system loop
@@ -59,7 +62,7 @@ extern "C" int main(void)
 	        if (FC_systick_flag>1)
 	        {
 	            // TODO
-                system_log.system_in.receive(
+                system_log->system_in.receive(
                     Message_System("SYSTEM", FC_systick_millis_count, MSG_LEVEL_CRITICAL, "systick overrun !") );
 	        };
 	        // reset the flag
