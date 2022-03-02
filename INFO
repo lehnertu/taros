@@ -40,8 +40,40 @@ C) the SSD1331 is capable of 150nS cycle time on the SPI interface
 
 
 
+ LoRa modem
+ -----------
+ EBYTE e220-900t22d
 
- 
+normal operation M0=M1=0, config mode M0=M1=1 (wire with one common GPIO pin, could be RTS)
+    M0, M1 have an internal pull-up resitor, they are read as high when not connected -> config mode
+    
+read AUX with GPIO pin (detect start-up sequence) (could use CTS)
+    low during startup, pulled high when normal oeration is reached
+    low during init (when leaving config mode), pulled high when normal oeration is reached
+    low during transmition, pulled high when block is fully sent
+    low 2m before received data is sent over TXD, pulled high when block is fully sent
+
+configuration is persistent -> module can be used without GPIO pins connected
+
+setup with 9600, 8N1 (default)
+
+#00h/#01h   default(0000)   module address, set 0xFFFF for broadcast
+#02h        default(62)     data rate 0b11100100=0xE8  modem 115200,8N1 air=9600bps
+                            default 9600,8N1 air=2.4k
+#03h        default(00)     packet size 200 byte, RSSI noise disabled, 22dBm transmit power
+#04h        default(17)     channel control (0..81) 850.125MHz+CH*1MHz  ch17=867.125MHz
+#05h                        config RSSI byte disabled, transparent transmission mode
+                            LBT disabled, LBT 500ms monitoring time 
+#06h/#07h                   2 byte encryption key
+
+factory default parameter：[c0] 00 00 62 00 17
+Command :   SetRegister : C0+startingaddress+length+parameters
+            ReadRegister: C1+startingaddress+parameters
+            SetTemporaryRegister : C2+startingaddress+parameters
+Response C1+... : WrongFormat -> FF FF FF
+
+USB stick (black=GND, red=+5V, white=RXD, green=TXD) : cross-cable RXD/TXD with modem
+
 
 
  CPU details
