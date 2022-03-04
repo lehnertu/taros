@@ -77,7 +77,7 @@ void TimedLogger::run()
         // separator
         text += std::string(" : ");
         // append the serialized message text
-        text += msg.serialize();
+        text += msg.print_content();
         // write out
         out.transmit(
             Message_Text(server_name, text)
