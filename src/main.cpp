@@ -51,7 +51,7 @@ extern "C" int main(void)
         Message_System("SYSTEM", FC_systick_millis_count, MSG_LEVEL_MILESTONE, "entering event loop.") );
 
 	// infinite system loop
-	while (FC_systick_millis_count<10000)
+	while (FC_systick_millis_count<12000)
 	{
 	
 	    // systick interrupt has occured or tasklist empty - run scheduler

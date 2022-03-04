@@ -53,7 +53,7 @@ void FileWriter::run()
         while (flag_message_pending)
         {
             Message_Text msg = text_in.fetch();
-            std::string buffer = msg.serialize();
+            std::string buffer = msg.printout();
             // write out
             file << buffer;
             file << std::endl;

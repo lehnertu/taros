@@ -27,7 +27,7 @@ void Console_out::run()
     while (flag_text_pending)
     {
         Message_Text msg = text_in.fetch();
-        std::string buffer = msg.serialize();
+        std::string buffer = msg.printout();
         // write out
         std::cout << buffer << std::endl;
         flag_text_pending = (text_in.count()>0);
@@ -36,7 +36,7 @@ void Console_out::run()
     while (flag_telemetry_pending)
     {
         Message_Telemetry msg = telemetry_in.fetch();
-        std::string buffer = msg.serialize();
+        std::string buffer = msg.printout();
         // write out
         std::cout << buffer << std::endl;
         flag_telemetry_pending = (telemetry_in.count()>0);

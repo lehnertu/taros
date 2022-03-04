@@ -33,6 +33,8 @@
 #define MSG_LEVEL_STATUSREPORT 30
 #define MSG_LEVEL_TELEMETRY 50
 
+class Message_Text;
+
 /*
     This is the base class for all messages.
     It defines all functionality a message must provide.
@@ -43,16 +45,22 @@ class Message {
         // standard constructor
         Message(std::string sender_module);
         
+        // need a virtual destructor
+        virtual ~Message() = default;
+        
+        // Generate a string with a standardized format holding the content of the message.
+        // this must be overridden by derived classes
+        virtual std::string print_content() = 0;
+
         // Generate a string with a standardized format holding the message.
         // There is no CR/LF at the end of the string, a print routine has to add that if necessary.
-        // this must be overridden by derived classes
-        virtual std::string serialize() = 0;
+        std::string printout();
         
         // Generate a text message with all information but the sender id serialized
-        // this must be overridden by derived classes
-        // we cannot declare it here because the derived class is still abstract
-        // virtual Message_Text as_text() = 0;
-        
+        // using the printout() generated format
+        Message_Text as_text();
+
+    protected:
         // there is one single member that is required for all messages
         // the sender module of the message
         std::string m_sender_module;
@@ -61,15 +69,17 @@ class Message {
 /*
     These are general text messages.
 */
-class Message_Text : public Message {
+class Message_Text : public Message
+{
     public:
         // constructor
         Message_Text(
             std::string sender_module,
             std::string text);
+        virtual ~Message_Text() = default;
         // override the serialization function
-        virtual std::string serialize();
-        virtual Message_Text as_text();
+        virtual std::string print_content();
+    protected:
         // additional members
         std::string m_text;
 };
@@ -80,7 +90,8 @@ class Message_Text : public Message {
     and at which time the message was sent.
     time : milliseconds since system start will be serialized as seconds with 1 ms resolution
 */
-class Message_System : public Message {
+class Message_System : public Message
+{
     public:
         // constructor
         Message_System(
@@ -88,9 +99,10 @@ class Message_System : public Message {
             uint32_t time,
             uint8_t severity_level,
             std::string text);
+        virtual ~Message_System() = default;
         // override the serialization function
-        virtual std::string serialize();
-        virtual Message_Text as_text();
+        virtual std::string print_content();
+    protected:
         // additional members
         uint8_t m_severity_level;
         uint32_t m_time;
@@ -103,7 +115,8 @@ class Message_System : public Message {
     they contain the time the message was sent.
     time : milliseconds since system start will be serialized as seconds with 1 ms resolution
 */
-class Message_Telemetry : public Message {
+class Message_Telemetry : public Message
+{
     public:
         // constructor
         Message_Telemetry(
@@ -111,9 +124,10 @@ class Message_Telemetry : public Message {
             uint32_t time,
             std::string variable,
             std::string value);
+        virtual ~Message_Telemetry() = default;
         // override the serialization function
-        virtual std::string serialize();
-        virtual Message_Text as_text();
+        virtual std::string print_content();
+    protected:
         // additional members
         uint32_t m_time;
         std::string m_variable;
@@ -123,7 +137,8 @@ class Message_Telemetry : public Message {
 /*
     These are messages sent by a GPS module containing the current position
 */
-class Message_GPS_position : public Message {
+class Message_GPS_position : public Message
+{
     public:
         // constructor
         Message_GPS_position(
@@ -131,9 +146,10 @@ class Message_GPS_position : public Message {
             double  latitude,       // degree north
             double  longitude,      // degree east
             float   altitude);      // meters above MSL
+        virtual ~Message_GPS_position() = default;
         // override the serialization function
-        virtual std::string serialize();
-        virtual Message_Text as_text();
+        virtual std::string print_content();
+    protected:
         // additional members
         double  m_latitude;
         double  m_longitude;
