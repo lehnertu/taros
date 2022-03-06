@@ -58,7 +58,7 @@ configuration is persistent -> module can be used without GPIO pins connected
 setup with 9600, 8N1 (default)
 
 #00h/#01h   default(0000)   module address, set 0xFFFF for broadcast
-#02h        default(62)     data rate 0b11100100=0xE8  modem 115200,8N1 air=9600bps
+#02h        default(62)     data rate 0b11100100=0xE4  modem 115200,8N1 air=9600bps
                             default 9600,8N1 air=2.4k
 #03h        default(00)     packet size 200 byte, RSSI noise disabled, 22dBm transmit power
 #04h        default(17)     channel control (0..81) 850.125MHz+CH*1MHz  ch17=867.125MHz
@@ -70,7 +70,12 @@ factory default parameter：[c0] 00 00 62 00 17
 Command :   SetRegister : C0+startingaddress+length+parameters
             ReadRegister: C1+startingaddress+parameters
             SetTemporaryRegister : C2+startingaddress+parameters
-Response C1+... : WrongFormat -> FF FF FF
+Response C1 + ... : WrongFormat -> FF FF FF
+
+my present configuration:
+    mode = 0x64 : 9600,8N1 air rate 9.6k
+    freq = 0x12 : ch18 = 868.125 MHz
+    command : 0xC0 0x00 0x05 0x00 0x00 0x64 0x00 0x12
 
 USB stick (black=GND, red=+5V, white=RXD, green=TXD) : cross-cable RXD/TXD with modem
 
