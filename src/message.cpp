@@ -6,6 +6,11 @@ Message::Message(std::string sender_module)
     m_sender_module = sender_module;
 }
 
+std::string print_content()
+{
+    return std::string("");
+}
+
 std::string Message::printout()
 {
     std::string text = m_sender_module;

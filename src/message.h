@@ -23,6 +23,19 @@
 #include <cstdint>
 #include <string>
 
+/*
+    All messages carry a type information to be reported upon request.
+    This is a 16-bit integer value which ist also transmitted over
+    the ground communication link as a message signature (upper 10 bit == 0xCC80).
+    This gives room for 63 message types.
+*/
+#define MSG_TYPE_ABSTRACT 0xCC80
+#define MSG_TYPE_SYSTEM 0xCC81
+#define MSG_TYPE_TEXT 0xCC82
+#define MSG_TYPE_TELEMETRY 0xCC83
+#define MSG_TYPE_GPS_POSITION 0xCC88
+
+// system messages carry a severity level information
 #define MSG_LEVEL_FATALERROR 1
 #define MSG_LEVEL_CRITICAL 3
 #define MSG_LEVEL_MILESTONE 5
@@ -38,7 +51,8 @@ class Message_Text;
 /*
     This is the base class for all messages.
     It defines all functionality a message must provide.
-    It cannot be used by itself, only derived classes that implement the defined functionality.
+    It should be used by itself, only derived classes that implement the defined functionality.
+    Message that report MSG_TYPE_ABSTRACT may be ignored by some modules.
 */
 class Message {
     public:
@@ -48,9 +62,12 @@ class Message {
         // need a virtual destructor
         virtual ~Message() = default;
         
+        // type reporting function
+        virtual int16_t type() { return MSG_TYPE_ABSTRACT; };
+        
         // Generate a string with a standardized format holding the content of the message.
         // this must be overridden by derived classes
-        virtual std::string print_content() = 0;
+        virtual std::string print_content();
 
         // Generate a string with a standardized format holding the message.
         // There is no CR/LF at the end of the string, a print routine has to add that if necessary.
@@ -77,6 +94,8 @@ class Message_Text : public Message
             std::string sender_module,
             std::string text);
         virtual ~Message_Text() = default;
+        // override the type reporting function
+        virtual int16_t type() { return MSG_TYPE_TEXT; };
         // override the serialization function
         virtual std::string print_content();
     protected:
@@ -100,6 +119,8 @@ class Message_System : public Message
             uint8_t severity_level,
             std::string text);
         virtual ~Message_System() = default;
+        // override the type reporting function
+        virtual int16_t type() { return MSG_TYPE_SYSTEM; };
         // override the serialization function
         virtual std::string print_content();
     protected:
@@ -125,6 +146,8 @@ class Message_Telemetry : public Message
             std::string variable,
             std::string value);
         virtual ~Message_Telemetry() = default;
+        // override the type reporting function
+        virtual int16_t type() { return MSG_TYPE_TELEMETRY; };
         // override the serialization function
         virtual std::string print_content();
     protected:
@@ -147,6 +170,8 @@ class Message_GPS_position : public Message
             double  longitude,      // degree east
             float   altitude);      // meters above MSL
         virtual ~Message_GPS_position() = default;
+        // override the type reporting function
+        virtual int16_t type() { return MSG_TYPE_GPS_POSITION; };
         // override the serialization function
         virtual std::string print_content();
     protected:
