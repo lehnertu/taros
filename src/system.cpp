@@ -3,6 +3,7 @@
 #include "dummy_gps.h"
 #include "serial_usb.h"
 #include "display.h"
+#include "modem.h"
 
 void FC_build_system(
     std::list<Module*> *module_list
@@ -28,6 +29,11 @@ void FC_build_system(
     gps->status_out.set_receiver(&(system_log->system_in));
     gps->tm_out.set_receiver(&(usb->telemetry_in));
     module_list->push_back(gps);
+    
+    // create a modem for comminication with a ground station
+    Modem *modem = new Modem(std::string("MODEM_1"), 9600);
+    modem->status_out.set_receiver(&(system_log->system_in));
+    module_list->push_back(modem);
     
     // create a logger capturing telemetry data at specified rate
     TimedLogger *tlog = new TimedLogger(std::string("LOG_5S"), 0.2);

@@ -51,7 +51,7 @@ class Message_Text;
 /*
     This is the base class for all messages.
     It defines all functionality a message must provide.
-    It should be used by itself, only derived classes that implement the defined functionality.
+    It should not be used by itself, only derived classes that implement the defined functionality.
     Message that report MSG_TYPE_ABSTRACT may be ignored by some modules.
 */
 class Message {

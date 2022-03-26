@@ -47,6 +47,7 @@ msg_type ReceiverPort<msg_type>::fetch()
 };
 
 // we have to instantiate the class for every possible message type
+template class ReceiverPort<Message>;
 template class ReceiverPort<Message_Text>;
 template class ReceiverPort<Message_System>;
 template class ReceiverPort<Message_GPS_position>;

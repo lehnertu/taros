@@ -58,7 +58,8 @@ configuration is persistent -> module can be used without GPIO pins connected
 setup with 9600, 8N1 (default)
 
 #00h/#01h   default(0000)   module address, set 0xFFFF for broadcast
-#02h        default(62)     data rate 0b11100100=0xE4  modem 115200,8N1 air=9600bps
+#02h        default(62)     data rate 0b11100100=0x64  modem 9600,8N1 air=9600bps
+                            data rate 0b11100100=0xE4  modem 115200,8N1 air=9600bps
                             default 9600,8N1 air=2.4k
 #03h        default(00)     packet size 200 byte, RSSI noise disabled, 22dBm transmit power
 #04h        default(17)     channel control (0..81) 850.125MHz+CH*1MHz  ch17=867.125MHz

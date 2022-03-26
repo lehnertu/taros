@@ -8,6 +8,7 @@ Logger::Logger(std::string name)
 {
     // copy the name
     id = name;
+    runlevel_= MODULE_RUNLEVEL_OPERATIONAL;
     // open the connection
     flag_text_pending = false;
     flag_system_pending = false;
@@ -47,6 +48,7 @@ TimedLogger::TimedLogger(std::string name, float rate)
 {
     // copy the name
     id = name;
+    runlevel_= MODULE_RUNLEVEL_OPERATIONAL;
     // save the startup time and rate
     last_update = FC_systick_millis_count;
     log_rate = rate;

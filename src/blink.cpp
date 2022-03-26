@@ -13,6 +13,7 @@ Blink::Blink(
 {
     // copy the name
     id = name;
+    runlevel_= MODULE_RUNLEVEL_OPERATIONAL;
     blink_rate = rate;
     // get access to the LED
 	pinMode(13, OUTPUT);

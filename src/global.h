@@ -5,6 +5,8 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
+
 #include "logger.h"
 
 // counting the miliseconds within one second
@@ -40,3 +42,8 @@ void setup_core_system();
 // and/or console or telemetry output when the task loop has started.
 extern Logger* system_log;
 
+// report the time elapsed since the timestamp
+// if current FC_systick_millis_count is small than timestamp wrap-around
+uint32_t FC_elapsed_millis(uint32_t timestamp);
+
+std::string hexbyte(char c);

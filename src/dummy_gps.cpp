@@ -10,6 +10,7 @@ DummyGPS::DummyGPS(
 {
     // copy the name
     id = name;
+    runlevel_= MODULE_RUNLEVEL_INITALIZED;
     gps_rate = rate;
     telemetry_rate = tm_rate;
     startup_time = FC_systick_millis_count;
@@ -28,6 +29,7 @@ DummyGPS::DummyGPS(
     vz = 3.0;
     // we cannot send a status message that we are ready to run
     // because the port is not yet wired to any receiver
+    runlevel_=MODULE_RUNLEVEL_OPERATIONAL;
 }
 
 bool DummyGPS::have_work()
@@ -103,6 +105,7 @@ void DummyGPS::run()
         {
             status_lock = true;
             flag_state_change = true;
+            runlevel_= MODULE_RUNLEVEL_OPERATIONAL;
         };
     };
     
@@ -110,11 +113,13 @@ void DummyGPS::run()
     {
         if (status_lock)
         {
+            runlevel_=MODULE_RUNLEVEL_LINK_OK;
             system_log->system_in.receive(
                 Message_System(id, FC_systick_millis_count, MSG_LEVEL_STATE_CHANGE, "acquired lock.") );
         } else {
+            runlevel_=MODULE_RUNLEVEL_OPERATIONAL;
             system_log->system_in.receive(
-                Message_System(id, FC_systick_millis_count, MSG_LEVEL_STATE_CHANGE, "up and running.") );
+                Message_System(id, FC_systick_millis_count, MSG_LEVEL_MILESTONE, "up and running.") );
         };
         flag_state_change = false;
     };

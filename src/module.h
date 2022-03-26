@@ -21,6 +21,12 @@
 #include <cstddef>
 #include <string>
 
+#define MODULE_RUNLEVEL_ERROR -1
+#define MODULE_RUNLEVEL_STOP 0
+#define MODULE_RUNLEVEL_INITALIZED 10
+#define MODULE_RUNLEVEL_OPERATIONAL 16
+#define MODULE_RUNLEVEL_LINK_OK 17
+
 /*
     This is a generic Module class.
     
@@ -56,11 +62,23 @@ public:
     // we need a virtual destructor for destroying lists of objects
     virtual ~Module() {};
     
+    int8_t runlevel() { return runlevel_; };
+    
 public:
     
     // All modules have a short name which is used to reference the modules
     // when sending messages (telemetry for instance)
     // should have 8 characters at max.
     std::string id;
+
+protected:
+
+    // All modules have an operational state that encodes for its initialization
+    // and setup status and its availability for operations.
+    // Zero indicates a broken or out-of-order module, all values above 16
+    // indicate a fully functional module.
+    // See definitions above
+    // Modules may define their own mappings
+    int8_t runlevel_;
     
 };
