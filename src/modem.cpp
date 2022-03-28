@@ -19,7 +19,7 @@ Modem::Modem(
     flag_setup_pending = true;
     flag_msg_pending = false;
     flag_received = false;
-    last_time = FC_systick_millis_count;
+    last_time = FC_time_now();
     // nothing received yet
     uplink_num_chars = 0;
     // we cannot send a status message that we are ready to run
@@ -28,8 +28,7 @@ Modem::Modem(
 
 bool Modem::have_work()
 {
-    // TODO this elapsed time should be a genaral function
-    uint32_t elapsed = FC_systick_millis_count - last_time;
+    uint32_t elapsed = FC_elapsed_millis(last_time);
     // see if any setup action is due
     if ((runlevel_)==1 and elapsed>10) flag_setup_pending = true;
     if ((runlevel_)==2 and elapsed>100) flag_setup_pending = true;
@@ -39,7 +38,7 @@ bool Modem::have_work()
     if (Serial1.available() > 0) flag_received = true;
     // when we have received something, but the receeiver is idle for 10ms
     // then we have the complete message
-    if ((uplink_num_chars>0) and elapsed>10) flag_received_completely = true;
+    if ((uplink_num_chars>0) and elapsed>5) flag_received_completely = true;
     // if there is something received in one of the input ports
     // we have to handle it
     if ((runlevel_>=16) and (downlink.count()>0)) flag_msg_pending = true;
@@ -62,7 +61,7 @@ void Modem::run()
                 Serial1.setTimeout(0);
                 // send a message to the system_log
                 status_out.transmit(
-                    Message_System(id, FC_systick_millis_count, MSG_LEVEL_STATE_CHANGE, "initialized.") );
+                    Message_System(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "initialized.") );
                 runlevel_=1;
                 break;
             case 1:
@@ -84,7 +83,7 @@ void Modem::run()
                 Serial1.write(0x00);
                 Serial1.write(0x12);    // freq ch18 = 868.125 MHz
                 status_out.transmit(
-                    Message_System(id, FC_systick_millis_count, MSG_LEVEL_STATE_CHANGE, "configured.") );
+                    Message_System(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "configured.") );
                 runlevel_=3;
                 // clear the receive buffer
                 uplink_num_chars = 0;
@@ -98,7 +97,7 @@ void Modem::run()
                 // waited logn enough, modem is ready now
                 {
                     status_out.transmit(
-                        Message_System(id, FC_systick_millis_count, MSG_LEVEL_MILESTONE, "up and running.") );
+                        Message_System(id, FC_time_now(), MSG_LEVEL_MILESTONE, "up and running.") );
                     runlevel_=MODULE_RUNLEVEL_OPERATIONAL;
                     // send out a wakeup message
                     std::string buffer("\n\nTAROS : "+id+"\r\n");
@@ -119,13 +118,12 @@ void Modem::run()
         // reset the flag
         flag_setup_pending = false;
         // record the time
-        last_time = FC_systick_millis_count;
+        last_time = FC_time_now();
     }
 
     if (flag_received)
     {
-        // this can be that something is in the incoming FIFO
-        // or there is something in the uplink buffer but the port is idle for 10ms (complete message)
+        // something is in the incoming FIFO
         if (runlevel_<3)
         {
             // we are not receiving messages yet, trash it
@@ -145,13 +143,15 @@ void Modem::run()
         // reset the flag
         flag_received = false;
         // record the time
-        last_time = FC_systick_millis_count;
+        last_time = FC_time_now();
     }
     
     if (flag_received_completely)
     {
+        // there is something in the uplink buffer but the port is idle for 5ms (complete message)
         if (runlevel_==3)
         {
+            // during setup: we have received the configuration response
             // report to system log
             std::string report("configuration response : ");
             for (int i=0; i<uplink_num_chars; i++)
@@ -159,24 +159,24 @@ void Modem::run()
                 report += hexbyte(uplink_buffer[i]);
             };
             status_out.transmit(
-                Message_System(id, FC_systick_millis_count, MSG_LEVEL_STATUSREPORT, report) );
+                Message_System(id, FC_time_now(), MSG_LEVEL_STATUSREPORT, report) );
             // check if the response is valid
             if ((uplink_num_chars==8) and (uplink_buffer[0]==0xC1))
             {
                 runlevel_=4;
                 status_out.transmit(
-                    Message_System(id, FC_systick_millis_count, MSG_LEVEL_STATUSREPORT, "configured correctly") );
+                    Message_System(id, FC_time_now(), MSG_LEVEL_STATUSREPORT, "configured correctly") );
             } else {
                 runlevel_=MODULE_RUNLEVEL_ERROR;
                 status_out.transmit(
-                    Message_System(id, FC_systick_millis_count, MSG_LEVEL_ERROR, "configuration error") );
+                    Message_System(id, FC_time_now(), MSG_LEVEL_ERROR, "configuration error") );
             }
             // done with this message, clear the buffer
             uplink_num_chars = 0;
         }
         flag_received_completely = false;
         // record the time
-        last_time = FC_systick_millis_count;
+        last_time = FC_time_now();
     }
     
     // TODO probably we should check the buffer availability
@@ -193,7 +193,7 @@ void Modem::run()
         // reset the flag
         flag_msg_pending = false;
         // record the time
-        last_time = FC_systick_millis_count;
+        last_time = FC_time_now();
     }
     
 }

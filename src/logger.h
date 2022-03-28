@@ -35,6 +35,9 @@ public:
     // destructor
     virtual ~Logger() {};
 
+    // port at which arbitrary messages are received
+    ReceiverPort<Message> in;
+
     // port at which text messages are received to be sent over the USB serial connection
     ReceiverPort<Message_Text> text_in;
 
@@ -47,6 +50,7 @@ public:
 private:
 
     // here are some flags indicating which work is due
+    bool  flag_message_pending;
     bool  flag_text_pending;
     bool  flag_system_pending;
 

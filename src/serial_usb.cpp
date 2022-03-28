@@ -15,7 +15,7 @@ USB_Serial::USB_Serial(
     flag_telemetry_pending = false;
     // send a message to the system_log
     system_log->system_in.receive(
-        Message_System(id, FC_systick_millis_count, MSG_LEVEL_MILESTONE, "up and running.") );
+        Message_System(id, FC_time_now(), MSG_LEVEL_MILESTONE, "up and running.") );
     runlevel_= MODULE_RUNLEVEL_OPERATIONAL;
 }
 

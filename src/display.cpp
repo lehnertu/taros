@@ -33,7 +33,7 @@ DisplaySSD1331::DisplaySSD1331(
     // create the display
     display = new Adafruit_SSD1331(&SPI, DISPLAY_CS, DISPLAY_DC, DISPLAY_RST);
     // initialize the state
-    last_update = FC_systick_millis_count;
+    last_update = FC_time_now();
     state = DISPLAY_UNINITIALIZED;
 }
 
@@ -51,7 +51,7 @@ bool DisplaySSD1331::have_work()
         // wait a second after initialization
         case DISPLAY_INITIALIZED :
         {
-            ret = (FC_systick_millis_count-last_update>1000);
+            ret = (FC_elapsed_millis(last_update)>1000);
             break;
         }
         // as long as we are in the CLOCK state we always have a character to print
@@ -69,7 +69,7 @@ bool DisplaySSD1331::have_work()
         // display is updated, wait according to rate
         case DISPLAY_UPDATED :
         {
-            ret = ((FC_systick_millis_count-last_update)*update_rate>1000);
+            ret = (FC_elapsed_millis(last_update)*update_rate>1000);
             break;
         }
         // display has been cleared, need to rewrite
@@ -93,7 +93,7 @@ void DisplaySSD1331::run()
         {
             display->begin();
             // send a start-up message
-            last_update = FC_systick_millis_count;
+            last_update = FC_time_now();
             state=DISPLAY_INITIALIZED;
             break;
         }
@@ -103,12 +103,12 @@ void DisplaySSD1331::run()
         case DISPLAY_INITIALIZED :
         {
             display->fillScreen(BLACK);
-            last_update = FC_systick_millis_count;
+            last_update = FC_time_now();
             // TODO: sending via status_out leads to a fault
             // status_out.transmit(
-            //     Message_System(id, FC_systick_millis_count, MSG_LEVEL_STATE_CHANGE, std::string("initialized.")) );
+            //     Message_System(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, std::string("initialized.")) );
             system_log->system_in.receive(
-                Message_System(id, FC_systick_millis_count, MSG_LEVEL_STATE_CHANGE, "initialized.") );
+                Message_System(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "initialized.") );
             state=DISPLAY_CLEARED;
             break;
         }
@@ -119,7 +119,7 @@ void DisplaySSD1331::run()
             {
                 display->setCursor(3, 3);
                 // in the first cycle generate the string
-                uint32_t time = FC_systick_millis_count;
+                uint32_t time = FC_time_now();
                 uint8_t h = time/(1000*60*60);
                 time -= h*60*60*1000;
                 uint8_t m = time/(1000*60);
@@ -159,7 +159,7 @@ void DisplaySSD1331::run()
                 // we are done with the ttc
                 cycle_count = 0;
                 state=DISPLAY_UPDATED;
-                last_update = FC_systick_millis_count;
+                last_update = FC_time_now();
                 state=DISPLAY_UPDATED;
             }
             break;
@@ -185,7 +185,7 @@ void DisplaySSD1331::run()
             display->sendCommand(0);    // fill R
             display->sendCommand(0);    // fill G
             display->sendCommand(10);   // fill B
-            last_update = FC_systick_millis_count;
+            last_update = FC_time_now();
             state=DISPLAY_CLEARED;
             break;
         }

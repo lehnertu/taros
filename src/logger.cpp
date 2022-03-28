@@ -10,6 +10,7 @@ Logger::Logger(std::string name)
     id = name;
     runlevel_= MODULE_RUNLEVEL_OPERATIONAL;
     // open the connection
+    flag_message_pending = false;
     flag_text_pending = false;
     flag_system_pending = false;
 }
@@ -18,6 +19,7 @@ bool Logger::have_work()
 {
     // if there is something received in one of the input ports
     // we have to handle it
+    if (in.count()>0) flag_message_pending = true;
     if (text_in.count()>0) flag_text_pending = true;
     if (system_in.count()>0) flag_system_pending = true;
     return flag_text_pending | flag_system_pending;
@@ -26,7 +28,14 @@ bool Logger::have_work()
 void Logger::run()
 {
 
-    // Serial.println("Logger run.");
+    while (flag_message_pending)
+    {
+        Message msg = in.fetch();
+        // write out
+        out.transmit(msg.as_text());
+        flag_message_pending = (system_in.count()>0);
+    }
+    
     while (flag_system_pending)
     {
         Message_System msg = system_in.fetch();
@@ -50,13 +59,13 @@ TimedLogger::TimedLogger(std::string name, float rate)
     id = name;
     runlevel_= MODULE_RUNLEVEL_OPERATIONAL;
     // save the startup time and rate
-    last_update = FC_systick_millis_count;
+    last_update = FC_time_now();
     log_rate = rate;
 }
 
 bool TimedLogger::have_work()
 {
-    float elapsed = FC_systick_millis_count - last_update;
+    float elapsed = FC_elapsed_millis(last_update);
     flag_update_pending = (elapsed*log_rate >= 1000.0);
     return flag_update_pending;
 }
@@ -69,7 +78,7 @@ void TimedLogger::run()
         // TODO: query the data
         Message_GPS_position msg = server_callback();
         // get the system time
-        uint32_t time = FC_systick_millis_count;
+        uint32_t time = FC_time_now();
         // assemble the output message
         // print the time in seconds
         char buffer[16];
@@ -85,7 +94,7 @@ void TimedLogger::run()
             Message_Text(server_name, text)
         );
     };
-    last_update = FC_systick_millis_count;
+    last_update = FC_time_now();
     flag_update_pending = false;
 }
 

@@ -24,10 +24,10 @@
 #include <string>
 
 /*
-    All messages carry a type information to be reported upon request.
+    All messages carry a type information.
     This is a 16-bit integer value which ist also transmitted over
     the ground communication link as a message signature (upper 10 bit == 0xCC80).
-    This gives room for 63 message types.
+    That gives room for 63 message types.
 */
 #define MSG_TYPE_ABSTRACT 0xCC80
 #define MSG_TYPE_SYSTEM 0xCC81

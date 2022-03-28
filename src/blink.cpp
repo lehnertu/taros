@@ -19,14 +19,14 @@ Blink::Blink(
 	pinMode(13, OUTPUT);
 	// initialize the variables
 	state_on = false;
-    last_on_time = FC_systick_millis_count;
+    last_on_time = FC_time_now();
     flag_on_pending=false;
     flag_off_pending = false;
 }
 
 bool Blink::have_work()
 {
-    float elapsed = FC_systick_millis_count - last_on_time;
+    float elapsed = FC_elapsed_millis(last_on_time);
     if (state_on and (elapsed >= 50.0)) flag_off_pending=true;
     if (elapsed*blink_rate >= 1000.0) flag_on_pending=true;
     // if we need to switch either on or off we have work to do
@@ -38,7 +38,7 @@ void Blink::run()
     
     if (flag_on_pending)
     {
-        last_on_time = FC_systick_millis_count;
+        last_on_time = FC_time_now();
         digitalWriteFast(13, HIGH);
         state_on = true;
         flag_on_pending=false;

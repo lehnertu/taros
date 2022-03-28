@@ -42,6 +42,9 @@ void setup_core_system();
 // and/or console or telemetry output when the task loop has started.
 extern Logger* system_log;
 
+// miliseconds since program start (about 50 days capacity)
+uint32_t FC_time_now();
+
 // report the time elapsed since the timestamp
 // if current FC_systick_millis_count is small than timestamp wrap-around
 uint32_t FC_elapsed_millis(uint32_t timestamp);

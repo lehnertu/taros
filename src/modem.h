@@ -19,6 +19,11 @@
     4 : configuration has been acknowledged
     5 : modem put into transceiver mode
    16 : up and running
+   
+    At 9600 baud over-the-air rate a single character takes 1ms transmission time.
+    Before starting a transmission one should check, that tre transmission buffer
+    has been empty for 8ms. A duration of 5ms during which no character
+    has bee received is recognized as the end of one message.
 */
 class Modem : public Module
 {
@@ -42,7 +47,7 @@ public:
     virtual ~Modem() {};
 
     // port at which messages are received to be sent
-    ReceiverPort<Message> downlink;
+    MessageReceiverPort downlink;
 
     // port over which received messages are delivered
     SenderPort<Message> uplink;

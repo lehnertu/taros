@@ -34,10 +34,14 @@ void FC_build_system(
     Modem *modem = new Modem(std::string("MODEM_1"), 9600);
     modem->status_out.set_receiver(&(system_log->system_in));
     module_list->push_back(modem);
+    // wire the syslog output to it
+    // TODO : this leads to lots of systick overruns
+    // system_log->out.set_receiver(&(modem->downlink));
     
     // create a logger capturing telemetry data at specified rate
     TimedLogger *tlog = new TimedLogger(std::string("LOG_5S"), 0.2);
     tlog->out.set_receiver(&(usb->text_in));
+    tlog->out.set_receiver(&(modem->downlink));
     auto callback = std::bind(&DummyGPS::get_position, gps); 
     tlog->register_server_callback(callback,"GPS_1");
     module_list->push_back(tlog);
@@ -45,7 +49,7 @@ void FC_build_system(
     // All messages are still just queued in the Logger and USB_serial module.
     // They will get sent now, when the scheduler and taskmanager pick up their work.
     system_log->system_in.receive(
-        Message_System("SYSTEM", FC_systick_millis_count, MSG_LEVEL_MILESTONE, "build complete.") );
+        Message_System("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "build complete.") );
 }
 
 void FC_destroy_system(
