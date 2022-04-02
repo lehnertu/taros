@@ -37,16 +37,16 @@ public:
     virtual ~DummyGPS() {};
 
     // assemble a position message from current data upon request
-    Message_GPS_position get_position();
+    Message get_position();
 
     // port over which position data is sent out at requested rate
-    SenderPort<Message_GPS_position> output;
+    SenderPort output;
     
     // port over which telemetry messages are sent
-    SenderPort<Message_Telemetry> tm_out;
+    SenderPort tm_out;
 
     // port over which status messages are sent
-    SenderPort<Message_System> status_out;
+    SenderPort status_out;
 
 private:
 

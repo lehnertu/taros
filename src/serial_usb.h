@@ -34,15 +34,11 @@ public:
     virtual ~USB_Serial() {};
 
     // port at which text messages are received to be sent over the USB serial connection
-    ReceiverPort<Message_Text> text_in;
-
-    // port at which telemetry messages are received to be sent over the USB serial connection
-    ReceiverPort<Message_Telemetry> telemetry_in;
+    ReceiverPort in;
 
 private:
 
     // here are some flags indicating which work is due
-    bool  flag_text_pending;
-    bool  flag_telemetry_pending;
+    bool  flag_msg_pending;
 
 };

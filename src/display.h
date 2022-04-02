@@ -41,7 +41,7 @@ public:
     virtual void run();
         
     // port over which status messages are sent
-    SenderPort<Message_System> status_out;
+    SenderPort status_out;
 
 private:
 

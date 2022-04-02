@@ -47,13 +47,13 @@ public:
     virtual ~Modem() {};
 
     // port at which messages are received to be sent
-    MessageReceiverPort downlink;
+    ReceiverPort downlink;
 
     // port over which received messages are delivered
-    SenderPort<Message> uplink;
+    SenderPort uplink;
     
     // port over which status messages are sent
-    SenderPort<Message_System> status_out;
+    SenderPort status_out;
     
     // TODO: we should have a reset
     // so the setup can be repeated after an error

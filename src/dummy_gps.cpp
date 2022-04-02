@@ -78,22 +78,16 @@ void DummyGPS::run()
     {
         char buffer[16];
         int n = snprintf(buffer, 15, "%.6f", lat);
-        buffer[n] = '\0';
         tm_out.transmit(
-            Message_Telemetry(id, FC_time_now(), "GPS_LAT", std::string(buffer,n))
-        );
+            Message(id, FC_time_now(), "GPS_LAT", std::string(buffer,n)) );
 
         n = snprintf(buffer, 15, "%.6f", lon);
-        buffer[n] = '\0';
         tm_out.transmit(
-            Message_Telemetry(id, FC_time_now(), "GPS_LONG", std::string(buffer,n))
-        );
+            Message(id, FC_time_now(), "GPS_LONG", std::string(buffer,n)) );
 
         n = snprintf(buffer, 15, "%.2f", alt);
-        buffer[n] = '\0';
         tm_out.transmit(
-            Message_Telemetry(id, FC_time_now(), "GPS_ALTI", std::string(buffer,n))
-        );
+            Message(id, FC_time_now(), "GPS_ALTI", std::string(buffer,n)) );
 
         last_telemetry = FC_time_now();
         flag_telemetry_pending = false;
@@ -114,20 +108,25 @@ void DummyGPS::run()
         if (status_lock)
         {
             runlevel_=MODULE_RUNLEVEL_LINK_OK;
-            system_log->system_in.receive(
-                Message_System(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "acquired lock.") );
+            system_log->in.receive(
+                Message(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "acquired lock.") );
         } else {
             runlevel_=MODULE_RUNLEVEL_OPERATIONAL;
-            system_log->system_in.receive(
-                Message_System(id, FC_time_now(), MSG_LEVEL_MILESTONE, "up and running.") );
+            system_log->in.receive(
+                Message(id, FC_time_now(), MSG_LEVEL_MILESTONE, "up and running.") );
         };
         flag_state_change = false;
     };
     
 }
 
-Message_GPS_position DummyGPS::get_position()
+Message DummyGPS::get_position()
 {
-    return Message_GPS_position(id, lat, lon, alt);
+    MSG_DATA_GPS_POSITION data {
+        .latitude = lat,
+        .longitude = lon,
+        .altitude = alt };
+    Message msg(id, MSG_TYPE_GPS_POSITION, sizeof(MSG_DATA_GPS_POSITION), &data);
+    return msg;
 }
 

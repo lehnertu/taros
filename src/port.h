@@ -14,31 +14,22 @@
 #include <list>
 #include "message.h"
 
-template <class msg_type>
 class ReceiverPort;
-
-class MessageReceiverPort;
 
 /*
  * This port is intended for asynchronous communication.
  * The sender transmits one message and does not care about it anymore.
  * The message gets stored in the input queue of the connected receivers
- * and sits there until it is processed by the receiver module.
- * According receiver ports can be type-bound or general receiver ports.
- * The set_receiver method has overrides for both types.
- * The list of receivers are kept separate, however, internally.
+ * and sits there until it is processed by the receiver module
  */
-template <class msg_type>
 class SenderPort {
     public:
         // there can be set several receivers that all will get
         // the messages sent through this port
-        void set_receiver(ReceiverPort<msg_type> *receiver);
-        void set_receiver(MessageReceiverPort *receiver);
-        void transmit(msg_type message);
+        void set_receiver(ReceiverPort *receiver);
+        void transmit(Message message);
     protected:
-        std::list<ReceiverPort<msg_type>*> list_of_receivers;
-        std::list<MessageReceiverPort*> list_of_message_receivers;
+        std::list<ReceiverPort*> list_of_receivers;
 };
 
 /*
@@ -47,29 +38,7 @@ class SenderPort {
  * in the input queue associated with this port.
  * It sits there until it is processed by the module owning this port.
  */
-template <class msg_type>
 class ReceiverPort {
-    public:
-        // When a sender decides to send a message to this port it will 
-        // call this method. The receiver port will store the message
-        // and do nothing else.
-        void receive(msg_type message);
-        // The module owning the port must query the number of messages available
-        uint16_t count();
-        // The module can fetch the message from the queue fror processing.
-        msg_type fetch();
-    protected:
-        std::list<msg_type> queue;
-};
-
-/*
- * This port is intended for asynchronous communication.
- * It is supposed to accept all message types.
- * Whenever the connected sender decides to send a message it gets stored
- * in the input queue associated with this port.
- * It sits there until it is processed by the module owning this port.
- */
-class MessageReceiverPort {
     public:
         // When a sender decides to send a message to this port it will 
         // call this method. The receiver port will store the message
@@ -82,3 +51,4 @@ class MessageReceiverPort {
     protected:
         std::list<Message> queue;
 };
+

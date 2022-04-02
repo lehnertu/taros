@@ -61,7 +61,7 @@ void Modem::run()
                 Serial1.setTimeout(0);
                 // send a message to the system_log
                 status_out.transmit(
-                    Message_System(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "initialized.") );
+                    Message(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "initialized.") );
                 runlevel_=1;
                 break;
             case 1:
@@ -83,7 +83,7 @@ void Modem::run()
                 Serial1.write(0x00);
                 Serial1.write(0x12);    // freq ch18 = 868.125 MHz
                 status_out.transmit(
-                    Message_System(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "configured.") );
+                    Message(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "configured.") );
                 runlevel_=3;
                 // clear the receive buffer
                 uplink_num_chars = 0;
@@ -97,7 +97,7 @@ void Modem::run()
                 // waited logn enough, modem is ready now
                 {
                     status_out.transmit(
-                        Message_System(id, FC_time_now(), MSG_LEVEL_MILESTONE, "up and running.") );
+                        Message(id, FC_time_now(), MSG_LEVEL_MILESTONE, "up and running.") );
                     runlevel_=MODULE_RUNLEVEL_OPERATIONAL;
                     // send out a wakeup message
                     std::string buffer("\n\nTAROS : "+id+"\r\n");
@@ -159,17 +159,17 @@ void Modem::run()
                 report += hexbyte(uplink_buffer[i]);
             };
             status_out.transmit(
-                Message_System(id, FC_time_now(), MSG_LEVEL_STATUSREPORT, report) );
+                Message(id, FC_time_now(), MSG_LEVEL_STATUSREPORT, report) );
             // check if the response is valid
             if ((uplink_num_chars==8) and (uplink_buffer[0]==0xC1))
             {
                 runlevel_=4;
                 status_out.transmit(
-                    Message_System(id, FC_time_now(), MSG_LEVEL_STATUSREPORT, "configured correctly") );
+                    Message(id, FC_time_now(), MSG_LEVEL_STATUSREPORT, "configured correctly") );
             } else {
                 runlevel_=MODULE_RUNLEVEL_ERROR;
                 status_out.transmit(
-                    Message_System(id, FC_time_now(), MSG_LEVEL_ERROR, "configuration error") );
+                    Message(id, FC_time_now(), MSG_LEVEL_ERROR, "configuration error") );
             }
             // done with this message, clear the buffer
             uplink_num_chars = 0;
