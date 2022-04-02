@@ -10,14 +10,15 @@ DummyGPS::DummyGPS(
 {
     // copy the name
     id = name;
+    runlevel_= MODULE_RUNLEVEL_INITALIZED;
     gps_rate = rate;
     telemetry_rate = tm_rate;
-    startup_time = FC_systick_millis_count;
+    startup_time = FC_time_now();
     flag_state_change = true;
     flag_update_pending = false;
-    last_update = FC_systick_millis_count;
+    last_update = FC_time_now();
     flag_telemetry_pending = false;
-    last_telemetry = FC_systick_millis_count;
+    last_telemetry = FC_time_now();
     status_lock = false;
     // home position
     lat = 51.04943;
@@ -28,14 +29,15 @@ DummyGPS::DummyGPS(
     vz = 3.0;
     // we cannot send a status message that we are ready to run
     // because the port is not yet wired to any receiver
+    runlevel_=MODULE_RUNLEVEL_OPERATIONAL;
 }
 
 bool DummyGPS::have_work()
 {
-    float elapsed = FC_systick_millis_count - last_update;
+    float elapsed = FC_elapsed_millis(last_update);
     flag_update_pending = (elapsed*gps_rate >= 1000.0);
     
-    elapsed = FC_systick_millis_count - last_telemetry;
+    elapsed = FC_elapsed_millis(last_telemetry);
     flag_telemetry_pending = (elapsed*telemetry_rate >= 1000.0);
 
     return flag_state_change | flag_update_pending | flag_telemetry_pending;
@@ -52,7 +54,7 @@ void DummyGPS::run()
     if (flag_update_pending)
     {
         // time in seconds
-        float elapsed = 0.001*(FC_systick_millis_count - last_update);
+        float elapsed = 0.001 * FC_elapsed_millis(last_update);
         // velocity damping
         vx -= 0.2 * vx * elapsed;
         vy -= 0.2 * vy * elapsed;
@@ -68,7 +70,7 @@ void DummyGPS::run()
 
         // TODO: send message
         
-        last_update = FC_systick_millis_count;
+        last_update = FC_time_now();
         flag_update_pending = false;
     };
 
@@ -76,33 +78,28 @@ void DummyGPS::run()
     {
         char buffer[16];
         int n = snprintf(buffer, 15, "%.6f", lat);
-        buffer[n] = '\0';
         tm_out.transmit(
-            Message_Telemetry(id, FC_systick_millis_count, "GPS_LAT", std::string(buffer,n))
-        );
+            Message(id, FC_time_now(), "GPS_LAT", std::string(buffer,n)) );
 
         n = snprintf(buffer, 15, "%.6f", lon);
-        buffer[n] = '\0';
         tm_out.transmit(
-            Message_Telemetry(id, FC_systick_millis_count, "GPS_LONG", std::string(buffer,n))
-        );
+            Message(id, FC_time_now(), "GPS_LONG", std::string(buffer,n)) );
 
         n = snprintf(buffer, 15, "%.2f", alt);
-        buffer[n] = '\0';
         tm_out.transmit(
-            Message_Telemetry(id, FC_systick_millis_count, "GPS_ALTI", std::string(buffer,n))
-        );
+            Message(id, FC_time_now(), "GPS_ALTI", std::string(buffer,n)) );
 
-        last_telemetry = FC_systick_millis_count;
+        last_telemetry = FC_time_now();
         flag_telemetry_pending = false;
     };
     
     if (!status_lock)
     {
-        if (FC_systick_millis_count - startup_time > 5000)
+        if (FC_elapsed_millis(startup_time) > 5000)
         {
             status_lock = true;
             flag_state_change = true;
+            runlevel_= MODULE_RUNLEVEL_OPERATIONAL;
         };
     };
     
@@ -110,19 +107,26 @@ void DummyGPS::run()
     {
         if (status_lock)
         {
-            system_log->system_in.receive(
-                Message_System(id, FC_systick_millis_count, MSG_LEVEL_STATE_CHANGE, "acquired lock.") );
+            runlevel_=MODULE_RUNLEVEL_LINK_OK;
+            system_log->in.receive(
+                Message(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "acquired lock.") );
         } else {
-            system_log->system_in.receive(
-                Message_System(id, FC_systick_millis_count, MSG_LEVEL_STATE_CHANGE, "up and running.") );
+            runlevel_=MODULE_RUNLEVEL_OPERATIONAL;
+            system_log->in.receive(
+                Message(id, FC_time_now(), MSG_LEVEL_MILESTONE, "up and running.") );
         };
         flag_state_change = false;
     };
     
 }
 
-Message_GPS_position DummyGPS::get_position()
+Message DummyGPS::get_position()
 {
-    return Message_GPS_position(id, lat, lon, alt);
+    MSG_DATA_GPS_POSITION data {
+        .latitude = lat,
+        .longitude = lon,
+        .altitude = alt };
+    Message msg(id, MSG_TYPE_GPS_POSITION, sizeof(MSG_DATA_GPS_POSITION), &data);
+    return msg;
 }
 

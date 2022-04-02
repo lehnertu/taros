@@ -29,8 +29,8 @@ public:
     // destructor
     virtual ~FileWriter() {};
 
-    // port at which text messages are received to be sent over the USB serial connection
-    ReceiverPort<Message_Text> text_in;
+    // port at which messages are received to be written to file
+    ReceiverPort in;
 
 private:
 

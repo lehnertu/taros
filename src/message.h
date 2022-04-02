@@ -23,6 +23,58 @@
 #include <cstdint>
 #include <string>
 
+/*
+    All messages carry a type information.
+    This is a 16-bit integer value which ist also transmitted over
+    the ground communication link as a message signature (upper 10 bit == 0xCC80).
+    That gives room for 63 message types.
+    
+    The body of the message is just a blob of binary data.
+    This type information determines, what type of data we have to expect.
+*/
+#define MSG_TYPE_ABSTRACT 0xcc80
+#define MSG_TYPE_SYSTEM 0xcc81
+#define MSG_TYPE_TEXT 0xcc82
+#define MSG_TYPE_TELEMETRY 0xcc83
+#define MSG_TYPE_GPS_POSITION 0xcc88
+
+/*
+    All messages have a data body which has to be interpreted depending on the message type.
+    These data bodies are structs declared here.
+    
+    All strings within the message are declared with their number of charcters
+    as type TextSize. This implies that the corresponding number of characters
+    follows afer the struct in the data blob (in the sequence the strings are listed).
+    The strings have no termination and may themselves contain arbitrary binary data.
+    
+    The structs will be 32-bit aligned in memory and take correspondingly more space.
+    Alternatively defin them as struct __attribute__ ((packed))
+*/
+using TextSize = uint8_t;
+
+struct MSG_DATA_SYSTEM {
+    uint8_t     severity_level;
+    uint32_t    time;
+    TextSize    text;
+};
+
+struct MSG_DATA_TEXT {
+    TextSize    text;
+};
+
+struct MSG_DATA_TELEMETRY {
+    uint32_t    time;
+    TextSize    variable;
+    TextSize    value;
+};
+
+struct MSG_DATA_GPS_POSITION {
+    double  latitude;
+    double  longitude;
+    float   altitude;
+};
+
+// system messages carry a severity level information
 #define MSG_LEVEL_FATALERROR 1
 #define MSG_LEVEL_CRITICAL 3
 #define MSG_LEVEL_MILESTONE 5
@@ -33,128 +85,81 @@
 #define MSG_LEVEL_STATUSREPORT 30
 #define MSG_LEVEL_TELEMETRY 50
 
-class Message_Text;
-
 /*
-    This is the base class for all messages.
-    It defines all functionality a message must provide.
-    It cannot be used by itself, only derived classes that implement the defined functionality.
+    This is a message the can be sent and received in between modules.
+    It holds information about the sender module and the size of the transmitted data block.
+    The type information encodes which struct to use in order to decode the data blob.
 */
 class Message {
     public:
-        // standard constructor
-        Message(std::string sender_module);
+        // no default constructor
+        // a compile error would occur if it was used
+        Message() = delete;
         
-        // need a virtual destructor
-        virtual ~Message() = default;
+        // copy constructor
+        Message(const Message& other);
+        
+        // copy assignment operator
+        Message& operator=(const Message& other);
+        
+        // Standard constructor:
+        // This allocates a buffer of the requested size and copies the data
+        // referenced by the given pointer into this buffer.
+        // If a size 0 is given, the pointer remains NULL.
+        Message(
+            std::string sender_module,
+            uint16_t    msg_type,
+            uint16_t    msg_size,
+            void*       msg_data);
+        
+        // Constructor for a MSG_TYPE_TEXT message
+        Message(
+            std::string sender_module,
+            std::string text);
+            
+        // Constructor for a MSG_TYPE_SYSTEM message
+        Message(
+            std::string sender_module,
+            uint32_t    time,
+            uint8_t     severity_level,
+            std::string text);
+                    
+        // Constructor for a MSG_TYPE_TELEMETRY message
+        Message(
+            std::string sender_module,
+            uint32_t    time,
+            std::string variable,
+            std::string value);
+                    
+        // we need a destructor to free any allocated memory
+        ~Message();
+        
+        // type reporting function
+        int16_t type() { return m_type; };
         
         // Generate a string with a standardized format holding the content of the message.
-        // this must be overridden by derived classes
-        virtual std::string print_content() = 0;
+        std::string print_content();
 
         // Generate a string with a standardized format holding the message.
+        // This gives the sender ID with 8 characters, separator and
+        // the message content as formatted by print_content()
         // There is no CR/LF at the end of the string, a print routine has to add that if necessary.
         std::string printout();
         
         // Generate a text message with all information but the sender id serialized
         // using the printout() generated format
-        Message_Text as_text();
+        Message as_text();
 
     protected:
         // there is one single member that is required for all messages
         // the sender module of the message
         std::string m_sender_module;
+        uint16_t    m_type;
+        uint16_t    m_size;
+        void*       m_data;
 };
 
-/*
-    These are general text messages.
-*/
-class Message_Text : public Message
-{
-    public:
-        // constructor
-        Message_Text(
-            std::string sender_module,
-            std::string text);
-        virtual ~Message_Text() = default;
-        // override the serialization function
-        virtual std::string print_content();
-    protected:
-        // additional members
-        std::string m_text;
-};
-
-/*
-    These are system messages going to a logfile or to the downlink.
-    They have an indication of how important the message is
-    and at which time the message was sent.
-    time : milliseconds since system start will be serialized as seconds with 1 ms resolution
-*/
-class Message_System : public Message
-{
-    public:
-        // constructor
-        Message_System(
-            std::string sender_module,
-            uint32_t time,
-            uint8_t severity_level,
-            std::string text);
-        virtual ~Message_System() = default;
-        // override the serialization function
-        virtual std::string print_content();
-    protected:
-        // additional members
-        uint8_t m_severity_level;
-        uint32_t m_time;
-        std::string m_text;
-};
-
-/*
-    These are telemetry messages for automatted evaluation.
-    They contain exactly one data item (variable) of given name.
-    they contain the time the message was sent.
-    time : milliseconds since system start will be serialized as seconds with 1 ms resolution
-*/
-class Message_Telemetry : public Message
-{
-    public:
-        // constructor
-        Message_Telemetry(
-            std::string sender_id,
-            uint32_t time,
-            std::string variable,
-            std::string value);
-        virtual ~Message_Telemetry() = default;
-        // override the serialization function
-        virtual std::string print_content();
-    protected:
-        // additional members
-        uint32_t m_time;
-        std::string m_variable;
-        std::string m_value;
-};
-
-/*
-    These are messages sent by a GPS module containing the current position
-*/
-class Message_GPS_position : public Message
-{
-    public:
-        // constructor
-        Message_GPS_position(
-            std::string sender_id,
-            double  latitude,       // degree north
-            double  longitude,      // degree east
-            float   altitude);      // meters above MSL
-        virtual ~Message_GPS_position() = default;
-        // override the serialization function
-        virtual std::string print_content();
-    protected:
-        // additional members
-        double  m_latitude;
-        double  m_longitude;
-        float   m_altitude;
-};
+// =============== additional messages not handled yet =========================================
 
 // in airframe-fixed coordinates (right, forward, up)
 struct MESSAGE_IMU_GYRO {

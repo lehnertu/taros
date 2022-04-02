@@ -8,12 +8,12 @@
 #******************************************************************************
 
 # on fwl78
-# HOME                = /home/ulf
-# PROJECT_HOME        = $(HOME)/Programming/taros
+HOME                = /home/ulf
+PROJECT_HOME        = $(HOME)/Programming/taros
 
 # on fwl56
-HOME                = /home/lehnertu
-PROJECT_HOME        = $(HOME)/Programming/taros
+# HOME                = /home/lehnertu
+# PROJECT_HOME        = $(HOME)/Programming/taros
 
 TARGET              = DemoSystem
 BOARD_ID            = LINUX

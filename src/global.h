@@ -42,3 +42,12 @@ class SystickTimer : public CppTimer {
 };
 
 extern SystickTimer timer;
+
+// miliseconds since program start (about 50 days capacity)
+uint32_t FC_time_now();
+
+// report the time elapsed since the timestamp
+// if current FC_systick_millis_count is small than timestamp wrap-around
+uint32_t FC_elapsed_millis(uint32_t timestamp);
+
+std::string hexbyte(char c);

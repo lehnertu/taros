@@ -35,35 +35,31 @@ public:
     // destructor
     virtual ~Logger() {};
 
-    // port at which text messages are received to be sent over the USB serial connection
-    ReceiverPort<Message_Text> text_in;
-
-    // port at which system messages are received to be sent over the USB serial connection
-    ReceiverPort<Message_System> system_in;
+    // port at which arbitrary messages are received
+    ReceiverPort in;
 
     // port over which formatted messages are sent
-    SenderPort<Message_Text> out;
+    SenderPort out;
 
 private:
 
     // here are some flags indicating which work is due
-    bool  flag_text_pending;
-    bool  flag_system_pending;
+    bool  flag_message_pending;
 
 };
 
 
 /* 
-    The TimedLogger queries a number of server messages at a predefined time interval,
+    The Requester queries a number of server messages at a predefined time interval,
     serializes them and sends them as text messages to a number of receivers.
 */
-class TimedLogger : public Module
+class Requester : public Module
 {
 
 public:
 
     // constructor
-    TimedLogger(std::string name, float rate);
+    Requester(std::string name, float rate);
     
     // The module is queried by the scheduler every millisecond whether it needs to run.
     // This will return true, when a new dataset from the GPS has been received.
@@ -74,24 +70,24 @@ public:
     virtual void run();
 
     // destructor
-    virtual ~TimedLogger() {};
+    virtual ~Requester() {};
     
     // Register a callback function of a server, where the logger can request a message.
     // std::function<return_type(list of argument_type(s))>
     // The server method is a function taking no arguments and delivering a message.
-    void register_server_callback(std::function<Message_GPS_position(void)> f, std::string name);
+    void register_server_callback(std::function<Message(void)> f, std::string name);
 
-    // TODO: The timedLogger registers all server ports it should log.
+    // TODO: The Requester registers all server ports it should log.
     // TODO: The server can provide a number of different message types.
 
     // port over which formatted messages are sent
-    SenderPort<Message_Text> out;
+    SenderPort out;
 
 private:
     
     // here we store the server callback
     std::string server_name;
-    std::function<Message_GPS_position(void)> server_callback;
+    std::function<Message(void)> server_callback;
 
     // time of the last update
     uint32_t last_update;

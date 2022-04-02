@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <iostream>
 #include <cstdint>
 #include <list>
 
@@ -35,9 +36,28 @@ extern "C" int main(void)
     // the logger has to be added to the list of modules so it will be scheduled for execution
     system_log = new Logger("SYSLOG");
     module_list.push_back(system_log);
-    system_log->system_in.receive(
-        Message_System("SYSTEM", FC_systick_millis_count, MSG_LEVEL_MILESTONE,"Teensy Flight Controller - Version 1.0") );
     
+    Message m("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "Teensy Autonomous Robot Operation System - Version 1.0");
+    system_log->in.receive(m);
+    
+    /*
+        {
+        std::cout << "\n\n === Message(..) === " << std::endl;
+        Message m("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "Teensy Autonomous Robot Operation System - Version 1.0");
+        std::cout << "\n\n === m.printout() === " << std::endl;
+        std::cout << m.printout() << std::endl;
+        // std::cout << " === m.print_hex() === " << std::endl;
+        // m.print_hex();
+        std::cout << "\n\n === mt = m.as_text() === " << std::endl;
+        Message mt = m.as_text();
+        std::cout << "\n\n === mt.printout() === " << std::endl;
+        std::cout << mt.printout() << std::endl;
+        std::cout << "\n\n === receive(m) === " << std::endl;
+        system_log->in.receive(m);
+        std::cout << "\n === leaving Message(..) === \n" << std::endl;
+        } // ms, m, mt go out of scope
+    */
+        
     // now create and wire all modules and add them to the list
     // all extended initializations are not yet done but
     // have to be handled my the modules as tasks
@@ -47,10 +67,11 @@ extern "C" int main(void)
     // The millisecond systick interrupt is bent to out own ISR.
     setup_core_system();
     
-    system_log->system_in.receive(
-        Message_System("SYSTEM", FC_systick_millis_count, MSG_LEVEL_MILESTONE, "entering event loop.") );
+    system_log->in.receive(
+        Message("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "entering event loop.") );;
 
 	// infinite system loop
+	// while (true)
 	while (FC_systick_millis_count<12000)
 	{
 	
@@ -61,9 +82,8 @@ extern "C" int main(void)
 	        // which should be reported as a major instability incident
 	        if (FC_systick_flag>1)
 	        {
-	            // TODO
-                system_log->system_in.receive(
-                    Message_System("SYSTEM", FC_systick_millis_count, MSG_LEVEL_CRITICAL, "systick overrun !") );
+                system_log->in.receive(
+                    Message("SYSTEM", FC_time_now(), MSG_LEVEL_CRITICAL, "systick overrun !") );;
 	        };
 	        // reset the flag
 	        FC_systick_flag=0;

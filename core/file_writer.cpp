@@ -25,16 +25,14 @@ FileWriter::FileWriter(
     while (exists == 0);
     flag_message_pending = false;
     // report which file we are writing
-    system_log->system_in.receive(
-        Message_System(id,
-            FC_systick_millis_count,
-            MSG_LEVEL_STATE_CHANGE,
-            std::string("writing system_log to ") + file_name) );
+    system_log->in.receive(
+        Message(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE,
+        std::string("writing system_log to ") + file_name) );
 }
 
 bool FileWriter::have_work()
 {
-    if (text_in.count()>0) flag_message_pending = true;
+    if (in.count()>0) flag_message_pending = true;
     return flag_message_pending;
 }
 
@@ -52,12 +50,12 @@ void FileWriter::run()
     {        
         while (flag_message_pending)
         {
-            Message_Text msg = text_in.fetch();
+            Message msg = in.fetch();
             std::string buffer = msg.printout();
             // write out
             file << buffer;
             file << std::endl;
-            flag_message_pending = (text_in.count()>0);
+            flag_message_pending = (in.count()>0);
         }
         // close the file
         file.close();
@@ -65,8 +63,8 @@ void FileWriter::run()
         // if we cannot write, discard the messages
         while (flag_message_pending)
         {
-            Message_Text msg = text_in.fetch();
-            flag_message_pending = (text_in.count()>0);
+            Message msg = in.fetch();
+            flag_message_pending = (in.count()>0);
         }
     }
     
