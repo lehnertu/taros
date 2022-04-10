@@ -34,8 +34,7 @@ git cherry-pick <commitSha>
  
 
 
-CPU details
------------
+
 DWT - data watchpoint and trace unit
     The DWT if present contains counters for Clock cycles, CYCCNT.
     0xE0001000 - DWT_CTRL - Control Register

@@ -41,7 +41,7 @@ void FC_build_system(
     // All start-up messages are still just queued in the Logger and USB_serial module.
     // They will get sent now, when the scheduler and taskmanager pick up their work.
     system_log->in.receive(
-        Message("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "build complete.")
+        Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "build complete.")
     );
 
 }

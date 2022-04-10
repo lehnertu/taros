@@ -26,8 +26,8 @@ FileWriter::FileWriter(
     flag_message_pending = false;
     // report which file we are writing
     system_log->in.receive(
-        Message(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE,
-        std::string("writing system_log to ") + file_name) );
+        Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE,
+            std::string("writing system_log to ") + file_name) );
 }
 
 bool FileWriter::have_work()

@@ -36,9 +36,8 @@ extern "C" int main(void)
     // the logger has to be added to the list of modules so it will be scheduled for execution
     system_log = new Logger("SYSLOG");
     module_list.push_back(system_log);
-    
-    Message m("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "Teensy Autonomous Robot Operation System - Version 1.0");
-    system_log->in.receive(m);
+    system_log->in.receive(
+        Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE,"Teensy Flight Controller - Version 1.0") );
     
     /*
         {
@@ -68,7 +67,7 @@ extern "C" int main(void)
     setup_core_system();
     
     system_log->in.receive(
-        Message("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "entering event loop.") );;
+        Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "entering event loop.") );
 
 	// infinite system loop
 	// while (true)
@@ -83,7 +82,7 @@ extern "C" int main(void)
 	        if (FC_systick_flag>1)
 	        {
                 system_log->in.receive(
-                    Message("SYSTEM", FC_time_now(), MSG_LEVEL_CRITICAL, "systick overrun !") );;
+                    Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_CRITICAL, "systick overrun !") );;
 	        };
 	        // reset the flag
 	        FC_systick_flag=0;

@@ -79,15 +79,15 @@ void DummyGPS::run()
         char buffer[16];
         int n = snprintf(buffer, 15, "%.6f", lat);
         tm_out.transmit(
-            Message(id, FC_time_now(), "GPS_LAT", std::string(buffer,n)) );
+            Message::TelemetryMessage(id, FC_time_now(), "GPS_LAT", std::string(buffer,n)) );
 
         n = snprintf(buffer, 15, "%.6f", lon);
         tm_out.transmit(
-            Message(id, FC_time_now(), "GPS_LONG", std::string(buffer,n)) );
+            Message::TelemetryMessage(id, FC_time_now(), "GPS_LONG", std::string(buffer,n)) );
 
         n = snprintf(buffer, 15, "%.2f", alt);
         tm_out.transmit(
-            Message(id, FC_time_now(), "GPS_ALTI", std::string(buffer,n)) );
+            Message::TelemetryMessage(id, FC_time_now(), "GPS_ALTI", std::string(buffer,n)) );
 
         last_telemetry = FC_time_now();
         flag_telemetry_pending = false;
@@ -109,11 +109,11 @@ void DummyGPS::run()
         {
             runlevel_=MODULE_RUNLEVEL_LINK_OK;
             system_log->in.receive(
-                Message(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "acquired lock.") );
+                Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "acquired lock.") );
         } else {
             runlevel_=MODULE_RUNLEVEL_OPERATIONAL;
             system_log->in.receive(
-                Message(id, FC_time_now(), MSG_LEVEL_MILESTONE, "up and running.") );
+                Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_MILESTONE, "up and running.") );
         };
         flag_state_change = false;
     };

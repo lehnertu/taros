@@ -101,7 +101,7 @@ class Message {
         
         // copy assignment operator
         Message& operator=(const Message& other);
-        
+
         // Standard constructor:
         // This allocates a buffer of the requested size and copies the data
         // referenced by the given pointer into this buffer.
@@ -111,21 +111,27 @@ class Message {
             uint16_t    msg_type,
             uint16_t    msg_size,
             void*       msg_data);
+
+        // Constructor from buffer:
+        // This is used to re-create a message from the compact binary format
+        // which is used for transmission over low-bandwidth channels (e.g. modem)
+        // All information is contained in the buffer (sender id, message type, length).
+        Message(char* buffer);
         
-        // Constructor for a MSG_TYPE_TEXT message
-        Message(
+        // named Constructor for a MSG_TYPE_TEXT message
+        static Message TextMessage(
             std::string sender_module,
             std::string text);
             
         // Constructor for a MSG_TYPE_SYSTEM message
-        Message(
+        static Message SystemMessage(
             std::string sender_module,
             uint32_t    time,
             uint8_t     severity_level,
             std::string text);
                     
         // Constructor for a MSG_TYPE_TELEMETRY message
-        Message(
+        static Message TelemetryMessage(
             std::string sender_module,
             uint32_t    time,
             std::string variable,
@@ -150,6 +156,11 @@ class Message {
         // using the printout() generated format
         Message as_text();
 
+        // put a compact date block describing the message, suitable for transmission
+        // over low-bandwidth communication channels into a given data buffer
+        // it returns the number of bytes actually used
+        uint8_t buffer(char* buffer, size_t size);
+        
     protected:
         // there is one single member that is required for all messages
         // the sender module of the message

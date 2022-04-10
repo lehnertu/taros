@@ -8,7 +8,7 @@ Console_out::Console_out(std::string name)
     flag_message_pending = false;
     // send a message to the system_log
     system_log->in.receive(
-        Message(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "setup done.") );
+        Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "setup done.") );
 }
 
 bool Console_out::have_work()
