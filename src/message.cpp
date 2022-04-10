@@ -61,19 +61,22 @@ Message& Message::operator=(const Message& other)
     }
     return *this;
 }
- 
-Message::Message(
+
+Message::Message(char* buffer)
+{
+}
+
+Message Message::TextMessage(
     std::string sender_module,
     std::string text)
 {
+    Message msg = Message(sender_module, MSG_TYPE_TEXT, 0, NULL);
     // std::cout << "MSG_TYPE_TEXT constructor";
-    m_sender_module = sender_module;
-    m_type = MSG_TYPE_TEXT;
-    m_size = sizeof(MSG_DATA_TEXT) + text.size();
-    m_data = malloc(m_size);
+    msg.m_size = sizeof(MSG_DATA_TEXT) + text.size();
+    msg.m_data = malloc(msg.m_size);
     // std::cout << " size=" << m_size << std::endl;
     // pointer to the allocated memory
-    MSG_DATA_TEXT *d = (MSG_DATA_TEXT *)m_data;
+    MSG_DATA_TEXT *d = (MSG_DATA_TEXT *)msg.m_data;
     d->text = text.size();
     // point to the rest of the memory block reserved for the string
     // the pointer is advanced by 1x the size of the object
@@ -82,22 +85,22 @@ Message::Message(
     char *t = (char *)d;
     for (size_t i=0; i<text.size(); i++)
         *t++ = text[i];
+    return msg;
 }
 
-Message::Message(
+Message Message::SystemMessage(
     std::string sender_module,
     uint32_t    time,
     uint8_t     severity_level,
     std::string text)
 {
+    Message msg = Message(sender_module, MSG_TYPE_SYSTEM, 0, NULL);
     // std::cout << "MSG_TYPE_SYSTEM constructor";
-    m_sender_module = sender_module;
-    m_type = MSG_TYPE_SYSTEM;
-    m_size = sizeof(MSG_DATA_SYSTEM) + text.size();
-    m_data = malloc(m_size);
+    msg.m_size = sizeof(MSG_DATA_SYSTEM) + text.size();
+    msg.m_data = malloc(msg.m_size);
     // std::cout << " size=" << m_size << std::endl;
     // pointer to the allocated memory
-    MSG_DATA_SYSTEM *d = (MSG_DATA_SYSTEM *)m_data;
+    MSG_DATA_SYSTEM *d = (MSG_DATA_SYSTEM *)msg.m_data;
     d->severity_level = severity_level;
     d->time = time;
     d->text = text.size();
@@ -108,22 +111,22 @@ Message::Message(
     char *t = (char *)d;
     for (size_t i=0; i<text.size(); i++)
         *t++ = text[i];
+    return msg;
 };
 
-Message::Message(
+Message Message::TelemetryMessage(
     std::string sender_module,
     uint32_t    time,
     std::string variable,
     std::string value)
 {
+    Message msg = Message(sender_module, MSG_TYPE_TELEMETRY, 0, NULL);
     // std::cout << "MSG_TYPE_TELEMETRY constructor";
-    m_sender_module = sender_module;
-    m_type = MSG_TYPE_TELEMETRY;
-    m_size = sizeof(MSG_DATA_SYSTEM) + variable.size() + value.size();
-    m_data = malloc(m_size);
+    msg.m_size = sizeof(MSG_DATA_SYSTEM) + variable.size() + value.size();
+    msg.m_data = malloc(msg.m_size);
     // std::cout << " size=" << m_size << std::endl;
     // pointer to the allocated memory
-    MSG_DATA_TELEMETRY *d = (MSG_DATA_TELEMETRY *)m_data;
+    MSG_DATA_TELEMETRY *d = (MSG_DATA_TELEMETRY *)msg.m_data;
     d->time = time;
     d->variable = variable.size();
     d->value = value.size();
@@ -136,6 +139,7 @@ Message::Message(
         *t++ = variable[i];
     for (size_t i=0; i<value.size(); i++)
         *t++ = value[i];
+    return msg;
 }
 
 Message::~Message()
@@ -284,7 +288,55 @@ std::string Message::printout()
 
 Message Message::as_text()
 {
-    return Message(m_sender_module, print_content());
+    return Message::TextMessage(m_sender_module, print_content());
+}
+
+uint8_t Message::buffer(char* buffer, size_t size)
+{
+    // check for buffer size
+    if (size<11) return 0;
+    char* ptr = buffer;
+    // mesagge type is encoded with two bytes
+    char *source = (char*) &m_type;
+    *ptr++ = *source++;
+    *ptr++ = *source++;
+    // reserve one byte for the message size (we don't know it yet)
+    ptr++;
+    // sender ID is put as a fixed length of 8 characters
+    size_t n=0;
+    while ((n<m_sender_module.size()) and (n<8))
+    {
+        *ptr++ = m_sender_module[n];
+        n++;
+    };
+    while (n<8)
+    {
+        *ptr++ = 0x20; // fill with spaces
+        n++;
+    };
+    uint8_t n_bytes = 11; // 2+1+8 bytes fixed information
+    // the data block is put as compact as possible (depending on the type)
+    // TODO
+    // check for buffer size (keep one byte for checksum)
+    switch (m_type)
+    {
+        case MSG_TYPE_SYSTEM:
+        {
+            break;
+        };
+        case MSG_TYPE_TEXT:
+        {
+            break;
+        };
+        default:
+        {
+        };
+    }    
+    // the message size is put into the buffer (the type word and size byte are not counted)
+    buffer[2] = n_bytes-3;
+    // TODO add a CRC checksum
+
+    return n_bytes;
 }
 
 /*

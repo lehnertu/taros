@@ -108,7 +108,7 @@ void DisplaySSD1331::run()
             // status_out.transmit(
             //     Message_System(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, std::string("initialized.")) );
             system_log->in.receive(
-                Message(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "initialized.") );
+                Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "initialized.") );
             state=DISPLAY_CLEARED;
             break;
         }

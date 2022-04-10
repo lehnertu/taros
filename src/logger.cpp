@@ -70,7 +70,7 @@ void Requester::run()
         text += msg.print_content();
         // write out
         out.transmit(
-            Message(server_name, text)
+            Message::TextMessage(server_name, text)
         );
     };
     last_update = FC_time_now();

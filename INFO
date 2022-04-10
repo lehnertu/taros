@@ -46,12 +46,14 @@ C) the SSD1331 is capable of 150nS cycle time on the SPI interface
 
 normal operation M0=M1=0, config mode M0=M1=1 (wire with one common GPIO pin, could be RTS)
     M0, M1 have an internal pull-up resitor, they are read as high when not connected -> config mode
+    => pin 22
     
 read AUX with GPIO pin (detect start-up sequence) (could use CTS)
     low during startup, pulled high when normal oeration is reached
     low during init (when leaving config mode), pulled high when normal oeration is reached
     low during transmition, pulled high when block is fully sent
     low 2m before received data is sent over TXD, pulled high when block is fully sent
+    => pin 23
 
 configuration is persistent -> module can be used without GPIO pins connected
 

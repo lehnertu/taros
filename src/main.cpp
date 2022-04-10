@@ -39,7 +39,7 @@ extern "C" int main(void)
     system_log = new Logger("SYSLOG");
     module_list.push_back(system_log);
     system_log->in.receive(
-        Message("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE,"Teensy Flight Controller - Version 1.0") );
+        Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE,"Teensy Flight Controller - Version 1.0") );
     
     // now create and wire all modules and add them to the list
     // all extended initializations are not yet done but
@@ -51,7 +51,7 @@ extern "C" int main(void)
     setup_core_system();
     
     system_log->in.receive(
-        Message("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "entering event loop.") );
+        Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "entering event loop.") );
 
     // we keep track of the task completion time
     FC_max_time_to_completion = 0;
@@ -70,7 +70,7 @@ extern "C" int main(void)
 	        if (FC_systick_flag>1)
 	        {
                 system_log->in.receive(
-                    Message("SYSTEM", FC_time_now(), MSG_LEVEL_CRITICAL, "systick overrun !") );;
+                    Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_CRITICAL, "systick overrun !") );;
 	        };
 	        // reset the flag
 	        FC_systick_flag=0;

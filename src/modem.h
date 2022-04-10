@@ -7,8 +7,27 @@
 #include "message.h"
 #include "port.h"
 
+/*
+
+    LoRa modem
+    -----------
+    EBYTE e220-900t22d
+
+    normal operation M0=M1=0, config mode M0=M1=1
+        M0, M1 have an internal pull-up resitor, they are read as high when not connected -> config mode
+        (wire with one common GPIO pin, could be RTS) => pin 22
+        
+    read AUX with GPIO pin (detect start-up sequence)
+        low during startup, pulled high when normal operation is reached
+        low during init (when leaving config mode), pulled high when normal operation is reached
+        low during transmition, pulled high when block is fully sent
+        low 2m before received data is sent over TXD, pulled high when block is fully sent
+        (could use CTS) => pin 23
+
+*/
+
 /*  
-    This is a module encapsulating a transmission channel.
+    This is a class encapsulating the transmission channel.
     It sends all received messages to the ground station.
     It receives command messages from the ground station.
     
@@ -21,7 +40,7 @@
    16 : up and running
    
     At 9600 baud over-the-air rate a single character takes 1ms transmission time.
-    Before starting a transmission one should check, that tre transmission buffer
+    Before starting a transmission one should check, that the transmission buffer
     has been empty for 8ms. A duration of 5ms during which no character
     has bee received is recognized as the end of one message.
 */
@@ -60,6 +79,9 @@ public:
     
 private:
 
+    // check the AUX pin
+    bool        busy();
+    
     // here are some flags indicating which work is due
     bool        flag_setup_pending;
     bool        flag_msg_pending;

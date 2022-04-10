@@ -14,7 +14,7 @@ USB_Serial::USB_Serial(
     flag_msg_pending = false;
     // send a message to the system_log
     system_log->in.receive(
-        Message(id, FC_time_now(), MSG_LEVEL_MILESTONE, "up and running.") );
+        Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_MILESTONE, "up and running.") );
     runlevel_= MODULE_RUNLEVEL_OPERATIONAL;
 }
 
