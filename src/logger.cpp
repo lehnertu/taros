@@ -28,8 +28,13 @@ void Logger::run()
     {
         Message msg = in.fetch();
         // write out
-        out.transmit(msg.as_text());
+        text_out.transmit(msg.as_text());
         flag_message_pending = (in.count()>0);
+        // system messages are also sent via the system_out port
+        if (msg.type()==MSG_TYPE_SYSTEM)
+        {
+            system_out.transmit(msg);
+        };
     }
 }
 

@@ -42,9 +42,20 @@ bool Modem::busy()
     return digitalRead(MODEM_AUX) == LOW;
 }
 
+// TODO: handle uplink messages
+// these should be command messages (with a unique identifier)
+// we should respond with a confirmation containing the UID and RSI
+// an empty command could be used as a ping
+
 bool Modem::have_work()
 {
     uint32_t elapsed = FC_elapsed_millis(last_time);
+    // we detect the time elapsed as long as there is no activity at the modem
+    if(busy())
+    {
+        elapsed=0;
+        last_time = FC_time_now();
+    };
     // see if any setup action is due
     if ((runlevel_)==1 and elapsed>10) flag_setup_pending = true;   // init hardware
     if ((runlevel_)==2 and elapsed>100) flag_setup_pending = true;  // send configuration
@@ -55,10 +66,12 @@ bool Modem::have_work()
     if (Serial1.available() > 0) flag_received = true;
     // when we have received something, but the receeiver is idle for 10ms
     // then we have the complete message
-    if ((uplink_num_chars>0) and elapsed>5) flag_received_completely = true;
+    // this implies the modem is not busy()
+    if ((uplink_num_chars>0) and elapsed>10) flag_received_completely = true;
     // if there is something received in one of the input ports
-    // we have to handle it
-    if ((runlevel_>=16) and (downlink.count()>0)) flag_msg_pending = true;
+    // we have to handle it unless the modem is busy()
+    // we wait 15 ms after busy() giving receiving messages higher priority than sending
+    if ((runlevel_>=16) and (downlink.count()>0) and (elapsed>15)) flag_msg_pending = true;
     // if there is no activity for longer than 2s send a ping to the ground station
     if ((runlevel_>=16) and elapsed>2000) flag_setup_pending = true;
     return flag_setup_pending | flag_received | flag_received_completely | flag_msg_pending;
@@ -216,17 +229,21 @@ void Modem::run()
     // one message per millisecond is more than the air channel can handle
     if (flag_msg_pending)
     {
+        /* this should be excluded now - checked in have_work()
         if (busy())
         {
             status_out.transmit(
                 Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_WARNING, "busy.") );
         };
+        */
         Message msg = downlink.fetch();
-        std::string buffer = msg.printout();
-        buffer += std::string("\r\n");
+        // std::string buffer = msg.printout();
+        // buffer += std::string("\r\n");
+        char buffer[200];
+        uint8_t nchar = msg.buffer(buffer, 200);
         // write out
         // the write is buffered and returns immediately
-        Serial1.write(buffer.c_str(), buffer.size());
+        Serial1.write(buffer, nchar);
         // reset the flag
         flag_msg_pending = false;
         // record the time

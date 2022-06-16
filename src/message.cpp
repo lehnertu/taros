@@ -3,6 +3,7 @@
 #include <cstdlib> // for C-style memory handling
 #include <cstring> // for std::memcpy
 // include <iostream> // for std::cout during debugging
+#include <Arduino.h> // for USB during debugging
 
 Message::Message(
     std::string sender_module,
@@ -95,10 +96,14 @@ Message Message::SystemMessage(
     std::string text)
 {
     Message msg = Message(sender_module, MSG_TYPE_SYSTEM, 0, NULL);
-    // std::cout << "MSG_TYPE_SYSTEM constructor";
+    Serial.print("MSG_TYPE_SYSTEM constructor");
     msg.m_size = sizeof(MSG_DATA_SYSTEM) + text.size();
     msg.m_data = malloc(msg.m_size);
     // std::cout << " size=" << m_size << std::endl;
+    Serial.print("  text=");
+    Serial.print(text.size());
+    Serial.print("  m_size=");
+    Serial.println(msg.m_size);
     // pointer to the allocated memory
     MSG_DATA_SYSTEM *d = (MSG_DATA_SYSTEM *)msg.m_data;
     d->severity_level = severity_level;
@@ -294,14 +299,14 @@ Message Message::as_text()
 uint8_t Message::buffer(char* buffer, size_t size)
 {
     // check for buffer size
-    if (size<11) return 0;
+    if (size<12) return 0;
     char* ptr = buffer;
-    // mesagge type is encoded with two bytes
+    // mesagge type is encoded with two bytes, high byte first
     char *source = (char*) &m_type;
-    *ptr++ = *source++;
-    *ptr++ = *source++;
+    buffer[1] = *source++;
+    buffer[0] = *source++;
     // reserve one byte for the message size (we don't know it yet)
-    ptr++;
+    ptr+=3;
     // sender ID is put as a fixed length of 8 characters
     size_t n=0;
     while ((n<m_sender_module.size()) and (n<8))
@@ -316,18 +321,39 @@ uint8_t Message::buffer(char* buffer, size_t size)
     };
     uint8_t n_bytes = 11; // 2+1+8 bytes fixed information
     // the data block is put as compact as possible (depending on the type)
-    // TODO
-    // check for buffer size (keep one byte for checksum)
+    // number of free bytes remaining in the buffer
+    uint8_t remaining = size-11;
     switch (m_type)
     {
         case MSG_TYPE_SYSTEM:
         {
+            MSG_DATA_SYSTEM *md = (MSG_DATA_SYSTEM *)m_data;
+            int count = md->text;
+            Serial.print("\nMSG_DATA_SYSTEM size=");
+            Serial.println(count);
+            // check for buffer size (keep one byte for checksum)
+            if (remaining > 1+4+count)
+            {
+                *ptr = md->severity_level;
+                std::memcpy(ptr+1, &(md->time), 4);
+                n_bytes += 5;
+                // the number of characters is not needed in the block, because the total length is known
+                // the text content starts at the next character after the m_data struct
+                uint8_t *txt = (uint8_t *) m_data;
+                txt += sizeof(MSG_DATA_SYSTEM);
+                // now append all characters
+                std::memcpy(ptr+5, txt, count);
+                n_bytes += count;
+            };
+            // if buffer size is insufficient go ahead with missing data block
             break;
         };
         case MSG_TYPE_TEXT:
         {
+            // TODO
             break;
         };
+        // TODO: more cases
         default:
         {
         };
@@ -335,139 +361,6 @@ uint8_t Message::buffer(char* buffer, size_t size)
     // the message size is put into the buffer (the type word and size byte are not counted)
     buffer[2] = n_bytes-3;
     // TODO add a CRC checksum
-
     return n_bytes;
 }
 
-/*
-
-//-----------------------------------------------------------------------------
-
-
-Message_Text::Message_Text(
-    std::string sender_module,
-    std::string text) :
-    // call the base class contructor
-    Message(sender_module)
-{
-    m_text = text;
-}
-
-std::string Message_Text::print_content()
-{
-    return m_text;
-}
-
-//-----------------------------------------------------------------------------
-
-Message_System::Message_System(
-    std::string sender_module,
-    uint32_t time,
-    uint8_t severity_level,
-    std::string text) :
-    // call the base class contructor
-    Message(sender_module)
-{
-    m_severity_level = severity_level;
-    m_time = time;
-    m_text = text;
-}
-
-std::string Message_System::print_content()
-{
-    char buffer[12];
-    // time
-    int n = snprintf(buffer, 11, "%10.3f", (double)m_time*0.001);
-    buffer[n] = '\0';
-    std::string text = std::string(buffer,n);
-    // separator
-    text += std::string(" : ");
-    // severity level
-    n = snprintf(buffer, 5, "%4d", m_severity_level);
-    buffer[n] = '\0';
-    text += std::string(buffer,n);
-    // separator
-    text += std::string(" : ");
-    // message text
-    text += m_text;
-    return text;
-}
-
-//-----------------------------------------------------------------------------
-
-Message_GPS_position::Message_GPS_position(
-    std::string sender_id,
-    double  latitude,
-    double  longitude,
-    float   altitude) :
-    // call the base class contructor
-    Message(sender_id)
-{
-    m_latitude = latitude;
-    m_longitude = longitude;
-    m_altitude = altitude;
-}
-
-std::string Message_GPS_position::print_content()
-{
-    char buffer[16];
-    // latitude
-    int n = snprintf(buffer, 15, "%10.6f", m_latitude);
-    buffer[n] = '\0';
-    std::string text = "lat=";
-    text += std::string(buffer,n);
-    // longitude
-    n = snprintf(buffer, 15, "%11.6f", m_longitude);
-    buffer[n] = '\0';
-    text += ", long=";
-    text += std::string(buffer,n);
-    // altitude
-    n = snprintf(buffer, 15, "%7.2f", m_altitude);
-    buffer[n] = '\0';
-    text += ", alti=";
-    text += std::string(buffer,n);
-    return text;
-}
-
-//-----------------------------------------------------------------------------
-
-Message_Telemetry::Message_Telemetry(
-            std::string sender_id,
-            uint32_t time,
-            std::string variable,
-            std::string value) :
-    // call the base class contructor
-    Message(sender_id)
-{
-    m_time = time;
-    m_variable = variable;
-    m_value = value;
-}
-
-std::string Message_Telemetry::print_content()
-{
-    char buffer[12];
-    // time
-    int n = snprintf(buffer, 11, "%10.3f", (double)m_time*0.001);
-    buffer[n] = '\0';
-    std::string text = std::string(buffer,n);
-    // separator
-    text += std::string(" : ");
-    // vaiable name
-    std::string varname = m_variable;
-    // pad with spaces to 8 characters
-    size_t len = varname.size();
-    if (len<8)
-    {
-        std::string space(8-len, ' ');
-        varname += space;
-    };
-    text += varname.substr(0, 8);
-    // separator
-    text += std::string(" : ");
-    // value
-    text += m_value;
-    return text;
-}
-
-*/

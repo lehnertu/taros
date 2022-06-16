@@ -38,9 +38,12 @@ public:
     // port at which arbitrary messages are received
     ReceiverPort in;
 
-    // port over which formatted messages are sent
-    SenderPort out;
+    // port over which all messages are sent as text messages
+    SenderPort text_out;
 
+    // filtered port for system messages only
+    SenderPort system_out;
+    
 private:
 
     // here are some flags indicating which work is due

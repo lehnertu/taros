@@ -32,11 +32,10 @@
     The body of the message is just a blob of binary data.
     This type information determines, what type of data we have to expect.
 */
-#define MSG_TYPE_ABSTRACT 0xcc80
-#define MSG_TYPE_SYSTEM 0xcc81
-#define MSG_TYPE_TEXT 0xcc82
-#define MSG_TYPE_TELEMETRY 0xcc83
-#define MSG_TYPE_GPS_POSITION 0xcc88
+#define MSG_TYPE_ABSTRACT       0xcc80
+#define MSG_TYPE_SYSTEM         0xcc81
+#define MSG_TYPE_TEXT           0xcc82
+#define MSG_TYPE_TELEMETRY      0xcc83
 
 /*
     All messages have a data body which has to be interpreted depending on the message type.
@@ -48,7 +47,7 @@
     The strings have no termination and may themselves contain arbitrary binary data.
     
     The structs will be 32-bit aligned in memory and take correspondingly more space.
-    Alternatively defin them as struct __attribute__ ((packed))
+    Alternatively define them as struct __attribute__ ((packed))
 */
 using TextSize = uint8_t;
 
@@ -58,22 +57,6 @@ struct MSG_DATA_SYSTEM {
     TextSize    text;
 };
 
-struct MSG_DATA_TEXT {
-    TextSize    text;
-};
-
-struct MSG_DATA_TELEMETRY {
-    uint32_t    time;
-    TextSize    variable;
-    TextSize    value;
-};
-
-struct MSG_DATA_GPS_POSITION {
-    double  latitude;
-    double  longitude;
-    float   altitude;
-};
-
 // system messages carry a severity level information
 #define MSG_LEVEL_FATALERROR 1
 #define MSG_LEVEL_CRITICAL 3
@@ -81,9 +64,33 @@ struct MSG_DATA_GPS_POSITION {
 #define MSG_LEVEL_ERROR 8
 #define MSG_LEVEL_STATE_CHANGE 10
 #define MSG_LEVEL_WARNING 12
-#define MSG_LEVEL_IMPORTANTTELEMETRY 20
 #define MSG_LEVEL_STATUSREPORT 30
-#define MSG_LEVEL_TELEMETRY 50
+
+struct MSG_DATA_TEXT {
+    TextSize    text;
+};
+
+/*
+    This message declares a telemetry vaiable.
+    The combination of sender and variable name can be replaced
+    by the hash in future data value transmissions.
+    The hash also defines the data size and variable types
+*/
+struct MSG_DATA_TELEMETRY {
+    uint16_t    hash;
+    TextSize    variable;
+};
+
+/*
+    for all data messages no sender information (that is encoded in the hash)
+    and no size is transmitted (that is encoded in the MSG_TYPE)
+    just the timestamp and binary data
+*/
+#define MSG_TYPE_DATA_INT16     0xcc90
+#define MSG_TYPE_DATA_FLOAT     0xcc98
+#define MSG_TYPE_DATA_DOUBLE    0xcc99
+
+#define MSG_TYPE_DATA_GPS       0xcca0      // double latitude, double longitude, float altitude
 
 /*
     This is a message the can be sent and received in between modules.
@@ -131,17 +138,18 @@ class Message {
             std::string text);
                     
         // Constructor for a MSG_TYPE_TELEMETRY message
+        // this also creates the hash for the defined message
+        // the sender must store this hash to subsequently send data messages
         static Message TelemetryMessage(
             std::string sender_module,
-            uint32_t    time,
             std::string variable,
-            std::string value);
+            uint16_t    & hash);
                     
         // we need a destructor to free any allocated memory
         ~Message();
         
         // type reporting function
-        int16_t type() { return m_type; };
+        uint16_t type() { return m_type; };
         
         // Generate a string with a standardized format holding the content of the message.
         std::string print_content();

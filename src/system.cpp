@@ -13,7 +13,7 @@ void FC_build_system(
     USB_Serial *usb = new USB_Serial(std::string("USB_1"), 115200);
     module_list->push_back(usb);
     // wire the syslog output to it
-    system_log->out.set_receiver(&(usb->in));
+    system_log->text_out.set_receiver(&(usb->in));
 
     // create a module for LED blinking
     // Blink *bl = new Blink(std::string("LED1"), 5.0);
@@ -32,11 +32,11 @@ void FC_build_system(
     
     // create a modem for comminication with a ground station
     Modem *modem = new Modem(std::string("MODEM_1"), 9600);
-    modem->status_out.set_receiver(&(system_log->in));
+    // modem->status_out.set_receiver(&(system_log->in));
     module_list->push_back(modem);
     // wire the syslog output to it
     // TODO : this leads to lots of systick overruns
-    // system_log->out.set_receiver(&(modem->downlink));
+    system_log->system_out.set_receiver(&(modem->downlink));
     
     // create a logger capturing telemetry data at specified rate
     Requester *req = new Requester(std::string("LOG_5S"), 0.2);
