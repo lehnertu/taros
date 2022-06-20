@@ -27,6 +27,9 @@ Some example modules are implmented:
 1) a simulated GPS sensor
 2) a Blink module operating the on-board LED
 
+Development of a ground control station has been started as a Flutter project.
+It is intended for controlling the robot using a mobile device.
+
 ## Branches
 
 There are two branches that are maintained in parallel.
