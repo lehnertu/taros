@@ -1,27 +1,44 @@
-import 'dart:math';
+// import 'dart:math';
 import 'package:flutter/material.dart';
 
 class PFDpage extends StatelessWidget {
-  const PFDpage({Key? key}) : super(key: key);
+  PFDpage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      children: const <Widget>[
+      children: [
         Expanded(
           flex: 2,
           child: PFD(),
         ),
         Expanded(
-          child: Text('navigation', textAlign: TextAlign.center),
+          flex: 1,
+          child: Text('Navigation'),
         ),
       ],
     );
   }
 }
 
-class PFD extends StatelessWidget {
-  const PFD({Key? key}) : super(key: key);
+class PFD extends StatefulWidget {
+  PFD({Key? key}) : super(key: key);
+  @override
+  StatePFD createState() => StatePFD();
+}
+
+class StatePFD extends State<PFD> {
+  var _altimeter = 23.5;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,9 +67,20 @@ class PFD extends StatelessWidget {
                 flex: 4,
                 child: Container(
                   color: const Color.fromARGB(255, 84, 255, 68),
-                  child: CustomPaint(
-                    painter: PositionPainter(),
+                  child: Slider(
+                    value: _altimeter,
+                    min: -30.0,
+                    max: 150.0,
+                    label: _altimeter.toString(),
+                    onChanged: (value) {
+                      setState(() {
+                        _altimeter = value;
+                      });
+                    },
                   ),
+                  // child: CustomPaint(
+                  //   painter: PositionPainter(),
+                  // ),
                 ),
               ),
             ],
@@ -64,7 +92,7 @@ class PFD extends StatelessWidget {
           child: Container(
             color: const Color.fromARGB(255, 196, 244, 255),
             child: CustomPaint(
-              painter: AltitudePainter(),
+              painter: AltitudePainter(_altimeter),
             ),
           ),
         ),
@@ -74,18 +102,15 @@ class PFD extends StatelessWidget {
 }
 
 class AltitudePainter extends CustomPainter {
-  final alt = 27.8;
+  final double alt;
+  AltitudePainter(this.alt);
+
   @override
   void paint(Canvas canvas, Size size) {
     final double leftEdge = (size.width * 0.5).round().toDouble();
     final double rightEdge = (leftEdge + 30).toDouble();
     final double pixelsPerMeter = size.height / 60.0;
     final double centerPixel = size.height * 0.5;
-
-    // round a value to full 10s
-    double round10(x) {
-      return (10.0 * (0.1 * x).round().toDouble());
-    }
 
     // pixel scale of altitude centered about alt
     double scale(meters) {
@@ -101,35 +126,52 @@ class AltitudePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4.0
       ..color = const Color.fromARGB(255, 0, 0, 0);
-
+    // background of the scale bar
+    if (0.0 > alt - 25.0) {
+      final groundBox = Paint()
+        ..style = PaintingStyle.fill
+        ..strokeWidth = 0
+        ..color = Color.fromARGB(255, 208, 150, 57);
+      canvas.drawRect(
+          Rect.fromLTWH(
+              leftEdge, scale(0.0), 30, 0.9 * size.height - scale(0.0)),
+          groundBox);
+    }
     // outline of the scale bar
     canvas.drawRect(
         Rect.fromLTWH(leftEdge, 0.1 * size.height, 30, 0.8 * size.height),
         thinLine);
-    for (var m = round10(alt - 25.0); m < round10(alt + 25.0); m += 10.0) {
-      canvas.drawLine(
-        Offset(leftEdge, scale(round10(m))),
-        Offset(rightEdge, scale(round10(m))),
-        thickLine,
-      );
-      // label the markers
-      TextSpan ts = TextSpan(
-        text: '$m',
-        style: const TextStyle(color: Colors.black, fontSize: 16),
-      );
-      TextPainter tp = TextPainter(
-          text: ts,
-          textAlign: TextAlign.right,
-          textDirection: TextDirection.ltr);
-      tp.layout(minWidth: 40.0, maxWidth: 60);
-      tp.paint(canvas, Offset(leftEdge - 50, scale(round10(m)) - 10));
-    }
-    for (var m = (alt - 25.0).round(); m < (alt + 25.0).round(); m += 1) {
-      canvas.drawLine(
-        Offset(leftEdge + 5, scale(m)),
-        Offset(rightEdge - 5, scale(m)),
-        thinLine,
-      );
+    for (var m = (alt - 23).round(); m < (alt + 24).round(); m += 1) {
+      if (m % 10 == 0) {
+        canvas.drawLine(
+          Offset(leftEdge, scale(m)),
+          Offset(rightEdge, scale(m)),
+          thickLine,
+        );
+        // label the markers
+        TextSpan ts = TextSpan(
+          text: m.toStringAsFixed(0),
+          style: const TextStyle(color: Colors.black, fontSize: 16),
+        );
+        TextPainter tp = TextPainter(
+            text: ts,
+            textAlign: TextAlign.right,
+            textDirection: TextDirection.ltr);
+        tp.layout(minWidth: 40.0, maxWidth: 60);
+        tp.paint(canvas, Offset(leftEdge - 50, scale(m) - 10));
+      } else if (m % 5 == 0) {
+        canvas.drawLine(
+          Offset(leftEdge + 5, scale(m)),
+          Offset(rightEdge - 5, scale(m)),
+          thinLine,
+        );
+      } else {
+        canvas.drawLine(
+          Offset(leftEdge + 10, scale(m)),
+          Offset(rightEdge - 10, scale(m)),
+          thinLine,
+        );
+      }
     }
 
     // the numeric altitude display
@@ -145,11 +187,14 @@ class AltitudePainter extends CustomPainter {
       ..color = Colors.black;
     canvas.drawRect(
         Rect.fromLTWH(leftEdge - 81, centerPixel - 20, 80, 40), altOutline);
-
     TextSpan ts = TextSpan(
-      text: '$alt',
+      text: alt.toStringAsFixed(0),
       style: const TextStyle(
-          color: Colors.black, fontSize: 30, fontWeight: FontWeight.bold),
+        color: Colors.black,
+        fontSize: 30,
+        fontFamily: 'Monospace',
+        fontWeight: FontWeight.bold,
+      ),
     );
     TextPainter tp = TextPainter(
         text: ts, textAlign: TextAlign.right, textDirection: TextDirection.ltr);

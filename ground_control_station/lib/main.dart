@@ -82,11 +82,11 @@ class _TabsMainWidgetState extends State<_TabsMainWidget>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [
+        children: [
           Center(
             child: PFDpage(),
           ),
-          TableExample(),
+          const TableExample(),
           ms,
         ],
       ),
