@@ -1,6 +1,7 @@
 #include "global.h"
 #include "system.h"
 #include "dummy_gps.h"
+#include "servo.h"
 #include "serial_usb.h"
 #include "display.h"
 #include "modem.h"
@@ -29,6 +30,9 @@ void FC_build_system(
     gps->status_out.set_receiver(&(system_log->in));
     gps->tm_out.set_receiver(&(usb->in));
     module_list->push_back(gps);
+    
+    // creste a servo controller
+    Servo8chDriver *servo = new Servo8chDriver(std::string("SERVO_1"));
     
     // create a modem for comminication with a ground station
     Modem *modem = new Modem(std::string("MODEM_1"), 9600);

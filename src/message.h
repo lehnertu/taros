@@ -36,6 +36,7 @@
 #define MSG_TYPE_SYSTEM         0xcc81
 #define MSG_TYPE_TEXT           0xcc82
 #define MSG_TYPE_TELEMETRY      0xcc83
+#define MSG_TYPE_GPS_POSITION   0xcc84
 
 /*
     All messages have a data body which has to be interpreted depending on the message type.
@@ -70,13 +71,25 @@ struct MSG_DATA_TEXT {
     TextSize    text;
 };
 
+struct MSG_DATA_TELEMETRY {
+    uint32_t    time;
+    TextSize    variable;
+    TextSize    value;
+};
+
+struct MSG_DATA_GPS_POSITION {
+    double latitude;
+    double longitude;
+    float altitude;
+};
+
 /*
     This message declares a telemetry vaiable.
     The combination of sender and variable name can be replaced
     by the hash in future data value transmissions.
     The hash also defines the data size and variable types
 */
-struct MSG_DATA_TELEMETRY {
+struct MSG_TELEMETRY_VARIABLE {
     uint16_t    hash;
     TextSize    variable;
 };
@@ -89,7 +102,6 @@ struct MSG_DATA_TELEMETRY {
 #define MSG_TYPE_DATA_INT16     0xcc90
 #define MSG_TYPE_DATA_FLOAT     0xcc98
 #define MSG_TYPE_DATA_DOUBLE    0xcc99
-
 #define MSG_TYPE_DATA_GPS       0xcca0      // double latitude, double longitude, float altitude
 
 /*
@@ -142,9 +154,10 @@ class Message {
         // the sender must store this hash to subsequently send data messages
         static Message TelemetryMessage(
             std::string sender_module,
+            uint32_t    time,
             std::string variable,
-            uint16_t    & hash);
-                    
+            std::string value);
+                 
         // we need a destructor to free any allocated memory
         ~Message();
         
