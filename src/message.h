@@ -37,7 +37,7 @@
 #define MSG_TYPE_TEXT           0xcc82
 #define MSG_TYPE_TELEMETRY      0xcc83
 #define MSG_TYPE_GPS_POSITION   0xcc84
-
+#define MSG_TYPE_SERVO          0xcc85
 /*
     All messages have a data body which has to be interpreted depending on the message type.
     These data bodies are structs declared here.
@@ -81,6 +81,11 @@ struct MSG_DATA_GPS_POSITION {
     double latitude;
     double longitude;
     float altitude;
+};
+
+#define NUM_SERVO_CHANNELS 8
+struct MSG_DATA_SERVO {
+    short int pos[NUM_SERVO_CHANNELS];
 };
 
 /*

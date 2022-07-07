@@ -20,7 +20,7 @@ struct Task
 {
     // the module which has started this task
     Module* module;
-    // the system time at which the task has been started (FC_systick_millis_count)
+    // the system time at which the task has been started
     uint32_t schedule_time;
 };
 
@@ -38,8 +38,8 @@ extern "C" int main(void)
     // the logger has to be added to the list of modules so it will be scheduled for execution
     system_log = new Logger("SYSLOG");
     module_list.push_back(system_log);
-    system_log->system_in.receive(
-        Message_System("SYSTEM", FC_systick_millis_count, MSG_LEVEL_MILESTONE,"Teensy Flight Controller - Version 1.0") );
+    system_log->in.receive(
+        Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE,"Teensy Flight Controller - Version 1.0") );
     
     // now create and wire all modules and add them to the list
     // all extended initializations are not yet done but
@@ -50,14 +50,15 @@ extern "C" int main(void)
     // The millisecond systick interrupt is bent to out own ISR.
     setup_core_system();
     
-    system_log->system_in.receive(
-        Message_System("SYSTEM", FC_systick_millis_count, MSG_LEVEL_MILESTONE, "entering event loop.") );
+    system_log->in.receive(
+        Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "entering event loop.") );
 
     // we keep track of the task completion time
     FC_max_time_to_completion = 0;
 
 	// infinite system loop
-	while (FC_systick_millis_count<12000)
+	// while (FC_time_now()<12000)
+	for(;;)
 	{
 	
 	    // systick interrupt has occured - run scheduler
@@ -68,9 +69,8 @@ extern "C" int main(void)
 	        // which should be reported as a major instability incident
 	        if (FC_systick_flag>1)
 	        {
-	            // TODO
-                system_log->system_in.receive(
-                    Message_System("SYSTEM", FC_systick_millis_count, MSG_LEVEL_CRITICAL, "systick overrun !") );
+                system_log->in.receive(
+                    Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_CRITICAL, "systick overrun !") );;
 	        };
 	        // reset the flag
 	        FC_systick_flag=0;
@@ -87,7 +87,7 @@ extern "C" int main(void)
 	            {
 	                Task task = {
 	                    .module = mod,
-	                    .schedule_time = FC_systick_millis_count
+	                    .schedule_time = FC_time_now()
 	                    };
 	                task_list.push_back(task);
 	                // Serial.print("scheduling Module at ");

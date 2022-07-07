@@ -38,9 +38,15 @@ public:
     // destructor
     virtual ~Servo8chDriver() {};
 
+    // port at which arbitrary messages are received
+    ReceiverPort in;
+
 private:
 
-    const int num_ch = 8;
-    const int pins[8] = {2, 3, 4, 5, 7, 8, 28, 29};
+    // NUM_SERVO_CHANNELS is defined in <message.h>
+    const int pins[NUM_SERVO_CHANNELS] = {2, 3, 4, 5, 7, 8, 28, 29};
+
+    // here is the flag indicating that work is due
+    bool  flag_message_pending;
     
 };
