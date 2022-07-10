@@ -1,0 +1,144 @@
+=========================
+hardware
+=========================
+
+RESET pin is connected but not used
+   this is equivalent to setting the rest bit in the trigger register
+max. I2C clock speed 400 kHz (default on Teensy is 100kHz)
+the I2C port is shared with the barometer (BMP388)
+  !! the IMU should handle both in alternation to avoid conflicts
+
+=========================
+register reading
+=========================
+
+void BNO055::readReg(uint8_t reg, uint8_t *pBuf, uint8_t len)
+{
+    lastOperateStatus = eStatusErrDeviceNotDetect;
+    _pWire->begin();
+    _pWire->beginTransmission(_addr);       // this just stores the slave adress
+    _pWire->write(reg);                     // this copies the register address into the transmit buffer
+    if(_pWire->endTransmission() != 0)      // this writes and waits for completion
+        return;
+
+    _pWire->requestFrom(_addr, len);        // wait for the received data
+    for(uint8_t i = 0; i < len; i ++)
+        pBuf[i] = _pWire->read();
+    lastOperateStatus = eStatusOK;
+}
+
+=========================
+
+Writing the address takes 230 to 550 µs (@100kHz)
+    This consists of
+        master.write_async()                // start the trasmission
+                                            // interrupt/hardware driven sending
+        finish()                            // wait for completion
+
+The majority of the time is spent within requestFrom()
+    This consists of
+        master.read_async()                 // initialize the read
+        finish()                            // wait for completion
+
+_pWire->read() just copies the data from the buffer
+    next to no time
+    
+TODO:
+
+    // Call setClock() before calling begin() to set the I2C frequency.
+    // Although you can pass any frequency, it will be converted to one
+    // of the standard values of 100_000, 400_000 or 1_000_000.
+    // The default is 100000.
+    Wire.setClock(uint32_t frequency);
+
+TODO:
+
+    split sending the request (beginTransmission and write)
+    and the read
+    (answer is received asynchronously in the background using an interrupt)
+
+
+
+
+=========================
+imx_rt1060_i2c_driver.cpp
+=========================
+this defines the real hardware access
+
+class instances:
+    IMX_RT1060_I2CMaster Master
+    IMX_RT1060_I2CMaster Master1
+    IMX_RT1060_I2CMaster Master2
+    IMX_RT1060_I2CSlave Slave
+    IMX_RT1060_I2CSlave Slave1
+    IMX_RT1060_I2CSlave Slave2
+
+if including "imx_rt1060/imx_rt1060_i2c_driver.h" a direct access to the Master and Slave is possible.
+
+
+
+===================
+i2c_driver_wire.cpp 
+===================
+
+this wraps the Masters and slaves - 3 busses are available on the Teensy 4.x
+
+class instances:
+    I2CDriverWire Wire(Master, Slave);
+    I2CDriverWire Wire1(Master1, Slave1);
+    I2CDriverWire Wire2(Master2, Slave2);
+
+
+
+I2CDriverWire::I2CDriverWire(I2CMaster& master, I2CSlave& slave)
+        : Stream(), master(master), slave(slave) {
+}
+
+void I2CDriverWire::begin(uint8_t address) {
+    prepare_slave();
+    slave.listen(address);
+}
+
+void I2CDriverWire::prepare_slave() {
+    end();
+    slave.set_receive_buffer(rxBuffer, rx_buffer_length);
+    slave.after_receive(std::bind(&I2CDriverWire::on_receive_wrapper, this, std::placeholders::_1, std::placeholders::_2));
+    slave.before_transmit(std::bind(&I2CDriverWire::before_transmit, this, std::placeholders::_1));
+}
+
+void I2CDriverWire::beginTransmission(int address) {
+    write_address = (uint8_t)address;
+    tx_next_byte_to_write = 0;
+}
+
+size_t I2CDriverWire::write(uint8_t data) {
+    if (tx_next_byte_to_write < tx_buffer_length) {
+        tx_buffer[tx_next_byte_to_write++] = data;
+        return 1;
+    }
+    return 0;
+}
+
+uint8_t I2CDriverWire::endTransmission(int stop = true) {
+    master.write_async(write_address, tx_buffer, tx_next_byte_to_write, stop);
+    finish();
+    return toWireResult(master.error());
+}
+
+uint8_t I2CDriverWire::requestFrom(int address, int quantity, int stop) {
+    rx_bytes_available = 0;
+    rx_next_byte_to_read = 0;
+    master.read_async((uint8_t)address, rxBuffer, min((size_t)quantity, rx_buffer_length), stop);
+    finish();
+    rx_bytes_available = master.get_bytes_transferred();
+    return rx_bytes_available;
+}
+
+int I2CDriverWire::read() {
+    if (rx_next_byte_to_read < rx_bytes_available) {
+        return rxBuffer[rx_next_byte_to_read++];
+    }
+    return no_more_bytes;
+}
+
+
