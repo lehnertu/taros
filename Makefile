@@ -174,13 +174,15 @@ upload:
 
 clean:
 	rm -f $(USR_BIN)/*.o $(USR_BIN)/*.d
-	rm -f $(LIB_LOCAL_BASE)/*.o $(LIB_LOCAL_BASE)/*.d
+	find $(LIB_LOCAL_BASE) -name "*.o" -type f -delete
+	find $(LIB_LOCAL_BASE) -name "*.d" -type f -delete
 	rm -f $(TARGET).elf
 	@echo "cleaned from binaries of user code."
 
 distclean:
 	rm -f $(USR_BIN)/*.o $(USR_BIN)/*.d
-	rm -f $(LIB_LOCAL_BASE)/*.o $(LIB_LOCAL_BASE)/*.d
+	find $(LIB_LOCAL_BASE) -name "*.o" -type f -delete
+	find $(LIB_LOCAL_BASE) -name "*.d" -type f -delete
 	rm -f $(CORE_BIN)/*.o $(CORE_BIN)/*.d $(CORE_BIN)/$(CORE_LIB)
 	rm -f $(TARGET).elf $(TARGET).hex 
 	@echo "cleaning done."
