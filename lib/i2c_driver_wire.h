@@ -68,6 +68,12 @@ public:
     void beginTransmission(int address);
 
     uint8_t endTransmission(int stop = true);
+    
+    // for non-blocking transfers we split endTransmission)=
+    // into runTransmission and an external wait for master_finish()
+    void runTransmission(int stop = true);
+    bool master_finished();
+    uint8_t master_error();
 
     size_t write(uint8_t data) override;
 
@@ -75,6 +81,12 @@ public:
 
     uint8_t requestFrom(int address, int quantity, int stop = true);
 
+    // for non-blocking transfers we split requestFrom()
+    // into runRequest, an external wait for master_finish()
+    // and if needed master_available() for the number of read bytes
+    void runRequest(int address, int quantity, int stop = true);
+    uint8_t master_available();
+    
     inline int available() override {
         return (int)(rx_bytes_available - rx_next_byte_to_read);
     }
@@ -124,8 +136,10 @@ public:
     using Print::write;
 
 private:
+
     I2CMaster& master;
     I2CSlave& slave;
+
     uint32_t master_frequency = 100 * 1000U;
 
     void (* on_receive)(int len) = nullptr;

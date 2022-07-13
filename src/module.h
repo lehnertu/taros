@@ -21,8 +21,13 @@
 #include <cstddef>
 #include <string>
 
+// after the constructor of a module has been executed,
+// the module status can either be ERROR or STOP
 #define MODULE_RUNLEVEL_ERROR -1
 #define MODULE_RUNLEVEL_STOP 0
+// after running the setup() method the runlevel should change to SETUP_OK
+// it could immediately go to OPERATIONAL if no further initializations aree necessary
+#define MODULE_RUNLEVEL_SETUP_OK 1
 #define MODULE_RUNLEVEL_INITALIZED 10
 #define MODULE_RUNLEVEL_OPERATIONAL 16
 #define MODULE_RUNLEVEL_LINK_OK 17
@@ -42,6 +47,14 @@ class Module
 
 public:
 
+    // All modules have a setup() method that is intended for
+    // initializations which cannot easily proceed in the background.
+    // This may be reset procedures, configurations or loading
+    // calibration data. This will be called once per module
+    // before the system loop is started. It will never be called
+    // later on, as it could break the system timimg.
+    virtual void setup() = 0;
+    
     // The module is queried by the scheduler every millisecond whether it needs to run.
     // If the overall workload is low this can also happen much more often.
     // This method needs to answer and return immediately.

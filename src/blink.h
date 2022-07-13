@@ -18,6 +18,9 @@ public:
         std::string name,    // the ID of the module
         float rate           // the blink rate
             );
+
+    // nothing to do
+    virtual void setup() { runlevel_ = MODULE_RUNLEVEL_OPERATIONAL; };
     
     // The module is queried by the scheduler every millisecond whether it needs to run.
     virtual bool have_work();

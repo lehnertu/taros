@@ -54,6 +54,9 @@ public:
         std::string name,
         uint32_t baud_rate);
     
+    // TODO: move initializations here
+    virtual void setup() { runlevel_ = MODULE_RUNLEVEL_SETUP_OK; };
+    
     // The module is queried by the scheduler every millisecond whether it needs to run.
     // This will return true, when a new dataset from the GPS has been received.
     virtual bool have_work();

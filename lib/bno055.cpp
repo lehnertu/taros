@@ -128,24 +128,15 @@ void BNO055::setReg(uint8_t reg, uint8_t pageId, uint8_t val)
 
 void BNO055::readReg(uint8_t reg, uint8_t *pBuf, uint8_t len)
 {   
-    uint32_t t0 = micros();
     lastOperateStatus = eStatusErrDeviceNotDetect;
     _pWire->begin();
     _pWire->beginTransmission(_addr);
     _pWire->write(reg);
     if(_pWire->endTransmission() != 0)
         return;
-    uint32_t t1 = micros();
-    delay(1);
-    uint32_t t1b = micros();
     _pWire->requestFrom(_addr, len);
-    uint32_t t2 = micros();
     for(uint8_t i = 0; i < len; i ++)
         pBuf[i] = _pWire->read();
-    uint32_t t3 = micros();
-    char line[80];
-    sprintf(line,"t1=%d t2=%d t3=%d micros", t1-t0, t2-t1b, t3-t2);
-    Serial.println(line);
     lastOperateStatus = eStatusOK;
 }
 
@@ -161,4 +152,37 @@ void BNO055::writeReg(uint8_t reg, uint8_t *pBuf, uint8_t len)
         return;
     lastOperateStatus = eStatusOK;
 }
+
+// ************* methods for non-blocking reads **********
+
+void BNO055::NonBlockingRead_init(uint8_t reg)
+{
+    lastOperateStatus = eStatusErrDeviceNotDetect;
+    _pWire->begin();
+    _pWire->beginTransmission(_addr);
+    _pWire->write(reg);
+    _pWire->runTransmission(true);
+}
+
+bool BNO055::NonBlockingRead_finished()
+{
+    return _pWire->master_finished();
+}
+
+void BNO055::NonBlockingRead_request(uint8_t len)
+{
+    _pWire->runRequest(_addr, len);
+}
+
+uint8_t BNO055::NonBlockingRead_available()
+{
+    return _pWire->master_available();
+}
+
+void BNO055::NonBlockingRead_getData(uint8_t *pBuf, uint8_t len)
+{
+    for(uint8_t i = 0; i < len; i ++)
+        pBuf[i] = _pWire->read();
+}
+
 

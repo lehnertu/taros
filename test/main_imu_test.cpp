@@ -47,6 +47,8 @@ typedef struct {
 
 void setup_bno()
 {
+    // set fast mode I²C
+    Wire.setClock(400000);
     Serial.println("bno055() setup");
     bno055_OK = true;
     // check ID registers
@@ -126,10 +128,43 @@ void setup_bno()
 void read_IMU()
 {
     uint32_t start = systick_millis_count;
+    
     sMagAnalog = bno055.getMag();                       // read geomagnetic vector
     sGyrAnalog = bno055.getGyro();                      // read gyroscope
     sGrvAnalog = bno055.getGravity();                   // read gravity vector
-    Quat = bno055.getQuaternion();                      // read quaternion
+    
+    // Quat = bno055.getQuaternion();                      // read quaternion
+    // For reading the quaternion data we use a non-blocking read method.
+    char line[80];
+    BNO055::sQuaData_t raw;
+    uint32_t t0 = micros();
+    bno055.NonBlockingRead_init(BNO055::BNO055_QUATERNION_DATA_W_LSB_ADDR);
+    uint32_t t1 = micros();
+    while (!bno055.NonBlockingRead_finished()) {};
+    uint32_t t2 = micros();
+    sprintf(line,"NonBlockingRead_init:%d wait:%d micros", t1-t0, t2-t1);
+    Serial.println(line);
+    // TODO: test for error
+    t0 = micros();
+    bno055.NonBlockingRead_request(sizeof(raw));
+    t1 = micros();
+    while (!bno055.NonBlockingRead_finished()) {};
+    t2 = micros();
+    sprintf(line,"NonBlockingRead_request:%d wait:%d micros", t1-t0, t2-t1);
+    Serial.println(line);
+    // TODO: test for error
+    t0 = micros();
+    uint8_t n_bytes = bno055.NonBlockingRead_available();
+    bno055.NonBlockingRead_getData((uint8_t*) &raw, (uint8_t)sizeof(raw));
+    t1 = micros();
+    sprintf(line,"NonBlockingRead_getData:%d micros %d bytes", t1-t0, n_bytes);
+    Serial.println(line);
+    // scale : 1.0 = 2^14 lsb
+    Quat.w = raw.w * 0.000061035;
+    Quat.x = raw.x * 0.000061035;
+    Quat.y = raw.y * 0.000061035;
+    Quat.z = raw.z * 0.000061035;
+
     uint32_t stop = systick_millis_count;
     Serial.println();
     Serial.print("=== read_IMU === ");
@@ -195,7 +230,7 @@ void print_IMU()
     // by the heading+90deg vector and the down vector (i.e. the angle between the wing and the level plane).
     // This gives a continuous transition between the usual roll during forward flight
     // and the yaw angle needed during hover.
-    // Its not a bug its a feature :
+    // TODO : Its not a bug its a feature :
     // The heading flips when rolling inverted - as a result the roll angle is inverted, too.
     double w_north = -sin(PI/180.0*heading);
     double w_east = cos(PI/180.0*heading);
@@ -224,7 +259,7 @@ void print_IMU()
 
 // TODO:
 // sensor calibration is performed automatically in the background
-// some sensor movement(placement is nedded for that
+// some sensor movement(placement) is needed for that
 // check CALIB_STAT register for the status
 // switch to config mode and read the calibration data
 // store the calibration data and in the future write before switchon to NDoF

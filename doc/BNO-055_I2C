@@ -141,4 +141,65 @@ int I2CDriverWire::read() {
     return no_more_bytes;
 }
 
+void I2CDriverWire::finish() {
+    elapsedMillis timeout;
+    while (timeout < timeout_millis) {
+        if (master.finished()) {
+            return;
+        }
+    }
+    Serial.println("Timed out waiting for transfer to finish.");
+}
+
+
+
+
+====================================
+imx_rt1060/imx_rt1060_i2c_driver.cpp
+====================================
+
+void IMX_RT1060_I2CMaster::write_async(uint8_t address, uint8_t* buffer, size_t num_bytes, bool send_stop) {
+    if (!start(address, MASTER_WRITE)) {
+        return;
+    }
+    if (num_bytes == 0) {
+        // The caller is probably probing addresses to find slaves.
+        // Don't try to transmit anything.
+        ignore_tdf = true;
+        port->MTDR = LPI2C_MTDR_CMD_STOP;
+        return;
+    }
+
+    buff.initialise(buffer, num_bytes);
+    stop_on_completion = send_stop;
+    port->MIER |= LPI2C_MIER_TDIE;
+}
+
+inline bool IMX_RT1060_I2CMaster::finished() {
+    return state >= State::idle;
+}
+
+void IMX_RT1060_I2CMaster::read_async(uint8_t address, uint8_t* buffer, size_t num_bytes, bool send_stop) {
+    if (num_bytes > MAX_MASTER_READ_LENGTH) {
+        _error = I2CError::invalid_request;
+        return;
+    }
+
+    if (!start(address, MASTER_READ)) {
+        return;
+    }
+    if (num_bytes == 0) {
+        // The caller is probably probing addresses to find slaves.
+        // Don't try to read anything.
+        port->MTDR = LPI2C_MTDR_CMD_STOP;
+        return;
+    }
+
+    buff.initialise(buffer, num_bytes);
+    port->MTDR = LPI2C_MTDR_CMD_RECEIVE | (num_bytes - 1);
+
+    if (send_stop) {
+        port->MTDR = LPI2C_MTDR_CMD_STOP;
+    }
+}
 

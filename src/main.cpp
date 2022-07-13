@@ -37,18 +37,30 @@ extern "C" int main(void)
 
     // the logger has to be added to the list of modules so it will be scheduled for execution
     system_log = new Logger("SYSLOG");
+    // the logger can queue messages even before its setup() is run
     module_list.push_back(system_log);
     system_log->in.receive(
         Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE,"Teensy Flight Controller - Version 1.0") );
     
-    // now create and wire all modules and add them to the list
+    // Now create and wire all modules and add them to the list
     // all extended initializations are not yet done but
-    // have to be handled my the modules as tasks
+    // have to be handled my the modules as tasks.
+    // Modules cannot yet send messages during system build,
+    // initializations that require messages should be delayed to the module setup().
     FC_build_system(&module_list);
 
     // Here the core hardware is initialized.
     // The millisecond systick interrupt is bent to out own ISR.
     setup_core_system();
+    
+    // call the setup() method for all modules in the list
+    // the modules are now wired, so they can send messages
+    std::list<Module*>::iterator it;
+    for (it = module_list.begin(); it != module_list.end(); it++)
+    {
+        Module* mod = *it;
+        mod->setup();
+    };
     
     system_log->in.receive(
         Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "entering event loop.") );

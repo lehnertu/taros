@@ -25,6 +25,9 @@ public:
         float tm_rate        // the rate at which telemetry messages are sent
             );
     
+    // nothing to do
+    virtual void setup() { runlevel_ = MODULE_RUNLEVEL_OPERATIONAL; };
+    
     // The module is queried by the scheduler every millisecond whether it needs to run.
     // This will return true, when a new dataset from the GPS has been received.
     virtual bool have_work();

@@ -62,6 +62,21 @@ uint8_t I2CDriverWire::endTransmission(int stop) {
     return toWireResult(master.error());
 }
 
+void I2CDriverWire::runTransmission(int stop)
+{
+    master.write_async(write_address, tx_buffer, tx_next_byte_to_write, stop);
+}
+
+bool I2CDriverWire::master_finished()
+{
+    return master.finished();
+}
+
+uint8_t I2CDriverWire::master_error()
+{
+    return toWireResult(master.error());
+}
+
 size_t I2CDriverWire::write(uint8_t data) {
     if (tx_next_byte_to_write < tx_buffer_length) {
         tx_buffer[tx_next_byte_to_write++] = data;
@@ -86,6 +101,19 @@ uint8_t I2CDriverWire::requestFrom(int address, int quantity, int stop) {
     rx_next_byte_to_read = 0;
     master.read_async((uint8_t)address, rxBuffer, min((size_t)quantity, rx_buffer_length), stop);
     finish();
+    rx_bytes_available = master.get_bytes_transferred();
+    return rx_bytes_available;
+}
+
+void I2CDriverWire::runRequest(int address, int quantity, int stop)
+{
+    rx_bytes_available = 0;
+    rx_next_byte_to_read = 0;
+    master.read_async((uint8_t)address, rxBuffer, min((size_t)quantity, rx_buffer_length), stop);
+}
+
+uint8_t I2CDriverWire::master_available()
+{
     rx_bytes_available = master.get_bytes_transferred();
     return rx_bytes_available;
 }

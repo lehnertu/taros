@@ -16,11 +16,13 @@
 
 // Display states
 #define DISPLAY_UNINITIALIZED   0
-#define DISPLAY_INITIALIZED     1
+#define DISPLAY_CLEARED         1
 #define DISPLAY_CLOCK           2
 #define DISPLAY_TTC             3
-#define DISPLAY_UPDATED         4
-#define DISPLAY_CLEARED         5
+#define DISPLAY_HEADING         4
+#define DISPLAY_PITCH           5
+#define DISPLAY_ROLL            6
+#define DISPLAY_UPDATED        10
 
 DisplaySSD1331::DisplaySSD1331(
     std::string name,       // the ID of the module
@@ -32,26 +34,46 @@ DisplaySSD1331::DisplaySSD1331(
     update_rate = rate;
     // create the display
     display = new Adafruit_SSD1331(&SPI, DISPLAY_CS, DISPLAY_DC, DISPLAY_RST);
+    // set some defaults
+    heading = 123.0;
+    pitch = 90.1;
+    roll = 14.5;
+    gx = -49.1;
+    gy = -5.3;
+    gz = 13.2;
+
     // initialize the state
     last_update = FC_time_now();
     state = DISPLAY_UNINITIALIZED;
 }
+
+void DisplaySSD1331::setup()
+{
+    // this seems to use the default transfer rate of 8 MHz
+    display->begin();
+    last_update = FC_time_now();
+    // wait one second
+    while (FC_elapsed_millis(last_update)<1000) {};
+    display->fillScreen(BLACK);
+    status_out.transmit(
+        Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "initialized.") );
+    state=DISPLAY_CLEARED;
+    
+    last_update = FC_time_now();
+    runlevel_ = MODULE_RUNLEVEL_SETUP_OK;
+};
 
 bool DisplaySSD1331::have_work()
 {
     bool ret = false;
     switch(state)
     {
-        // not yet initialized, we have to do that
-        case DISPLAY_UNINITIALIZED :
+        // display has been cleared, need to rewrite
+        case DISPLAY_CLEARED :
         {
+            state = DISPLAY_CLOCK;
+            cycle_count = 0;
             ret = true;
-            break;
-        }
-        // wait a second after initialization
-        case DISPLAY_INITIALIZED :
-        {
-            ret = (FC_elapsed_millis(last_update)>1000);
             break;
         }
         // as long as we are in the CLOCK state we always have a character to print
@@ -66,18 +88,29 @@ bool DisplaySSD1331::have_work()
             ret = true;
             break;
         }
+        // as long as we are in the HEADING state we always have a character to print
+        case DISPLAY_HEADING :
+        {
+            ret = true;
+            break;
+        }
+        // as long as we are in the PITCH state we always have a character to print
+        case DISPLAY_PITCH :
+        {
+            ret = true;
+            break;
+        }
+        // as long as we are in the ROLL state we always have a character to print
+        case DISPLAY_ROLL :
+        {
+            ret = true;
+            break;
+        }
         // display is updated, wait according to rate
+        // then proceed to clear the display
         case DISPLAY_UPDATED :
         {
             ret = (FC_elapsed_millis(last_update)*update_rate>1000);
-            break;
-        }
-        // display has been cleared, need to rewrite
-        case DISPLAY_CLEARED :
-        {
-            state = DISPLAY_CLOCK;
-            cycle_count = 0;
-            ret = true;
             break;
         }
     };
@@ -88,27 +121,26 @@ void DisplaySSD1331::run()
 {
     switch(state)
     {
-        // not yet initialized, we have to do that
-        case DISPLAY_UNINITIALIZED :
+        // the time since the last update has expired, clear the display
+        case DISPLAY_UPDATED :
         {
-            display->begin();
-            // send a start-up message
+            // a) display->fillScreen(BLACK);
+            // b) display->fillRect(0, 0, display->TFTWIDTH, display->TFTHEIGHT, BLACK);
+            // c) use SSD1331 command #22h
+            display->sendCommand(SSD1331_CMD_FILL);
+            display->sendCommand(1);
+            display->sendCommand(SSD1331_CMD_DRAWRECT);
+            display->sendCommand(0);    // first column
+            display->sendCommand(0);    // first row
+            display->sendCommand(95);   // last column
+            display->sendCommand(20);   // last row
+            display->sendCommand(63);   // outline R
+            display->sendCommand(0);    // outline G
+            display->sendCommand(0);    // outline B
+            display->sendCommand(0);    // fill R
+            display->sendCommand(0);    // fill G
+            display->sendCommand(10);   // fill B
             last_update = FC_time_now();
-            state=DISPLAY_INITIALIZED;
-            break;
-        }
-        // a second after initialization we clear the display
-        // TODO introduce the wait
-        // TODO clearing the display this way leads to a systick overrun
-        case DISPLAY_INITIALIZED :
-        {
-            display->fillScreen(BLACK);
-            last_update = FC_time_now();
-            // TODO: sending via status_out leads to a fault
-            // status_out.transmit(
-            //     Message_System(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, std::string("initialized.")) );
-            system_log->in.receive(
-                Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "initialized.") );
             state=DISPLAY_CLEARED;
             break;
         }
@@ -158,35 +190,75 @@ void DisplaySSD1331::run()
             {
                 // we are done with the ttc
                 cycle_count = 0;
-                state=DISPLAY_UPDATED;
                 last_update = FC_time_now();
-                state=DISPLAY_UPDATED;
+                state=DISPLAY_HEADING;
             }
             break;
         }
-        // display has been updated - wait
-        // action occurs when the update has expired, clear the display
-        // TODO clearing the display this way leads to a systick overrun
-        case DISPLAY_UPDATED :
+        // handle the HEADING display
+        case DISPLAY_HEADING :
         {
-            // a) display->fillScreen(BLACK);
-            // b) display->fillRect(0, 0, display->TFTWIDTH, display->TFTHEIGHT, BLACK);
-            // c) use SSD1331 command #22h
-            display->sendCommand(SSD1331_CMD_FILL);
-            display->sendCommand(1);
-            display->sendCommand(SSD1331_CMD_DRAWRECT);
-            display->sendCommand(0);    // first column
-            display->sendCommand(0);    // first row
-            display->sendCommand(95);   // last column
-            display->sendCommand(22);   // last row
-            display->sendCommand(63);   // outline R
-            display->sendCommand(0);    // outline G
-            display->sendCommand(0);    // outline B
-            display->sendCommand(0);    // fill R
-            display->sendCommand(0);    // fill G
-            display->sendCommand(10);   // fill B
-            last_update = FC_time_now();
-            state=DISPLAY_CLEARED;
+            if (cycle_count == 0)
+            {
+                display->setCursor(3, 22);
+                // in the first cycle generate the string
+                num_cycles = snprintf(buffer, 16, "H: %5.1f  %5.1f", heading, gz);
+            } else {
+                // in all subsequent cycles each display one character
+                display->print(buffer[cycle_count-1]);
+            }
+            cycle_count++;
+            if (cycle_count > num_cycles)
+            {
+                // we are done with the ttc
+                cycle_count = 0;
+                last_update = FC_time_now();
+                state=DISPLAY_PITCH;
+            }
+            break;
+        }
+        // handle the PITCH display
+        case DISPLAY_PITCH :
+        {
+            if (cycle_count == 0)
+            {
+                display->setCursor(3, 30);
+                // in the first cycle generate the string
+                num_cycles = snprintf(buffer, 16, "P: %5.1f  %5.1f", pitch, gy);
+            } else {
+                // in all subsequent cycles each display one character
+                display->print(buffer[cycle_count-1]);
+            }
+            cycle_count++;
+            if (cycle_count > num_cycles)
+            {
+                // we are done with the ttc
+                cycle_count = 0;
+                last_update = FC_time_now();
+                state=DISPLAY_ROLL;
+            }
+            break;
+        }
+        // handle the ROLL display
+        case DISPLAY_ROLL :
+        {
+            if (cycle_count == 0)
+            {
+                display->setCursor(3, 38);
+                // in the first cycle generate the string
+                num_cycles = snprintf(buffer, 16, "R: %5.1f  %5.1f", roll, gx);
+            } else {
+                // in all subsequent cycles each display one character
+                display->print(buffer[cycle_count-1]);
+            }
+            cycle_count++;
+            if (cycle_count > num_cycles)
+            {
+                // we are done with the ttc
+                cycle_count = 0;
+                last_update = FC_time_now();
+                state=DISPLAY_UPDATED;
+            }
             break;
         }
     };

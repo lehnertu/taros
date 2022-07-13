@@ -96,14 +96,14 @@ Message Message::SystemMessage(
     std::string text)
 {
     Message msg = Message(sender_module, MSG_TYPE_SYSTEM, 0, NULL);
-    Serial.print("MSG_TYPE_SYSTEM constructor");
+    // Serial.print("MSG_TYPE_SYSTEM constructor");
     msg.m_size = sizeof(MSG_DATA_SYSTEM) + text.size();
     msg.m_data = malloc(msg.m_size);
     // std::cout << " size=" << m_size << std::endl;
-    Serial.print("  text=");
-    Serial.print(text.size());
-    Serial.print("  m_size=");
-    Serial.println(msg.m_size);
+    // Serial.print("  text=");
+    // Serial.print(text.size());
+    // Serial.print("  m_size=");
+    // Serial.println(msg.m_size);
     // pointer to the allocated memory
     MSG_DATA_SYSTEM *d = (MSG_DATA_SYSTEM *)msg.m_data;
     d->severity_level = severity_level;
@@ -329,8 +329,8 @@ uint8_t Message::buffer(char* buffer, size_t size)
         {
             MSG_DATA_SYSTEM *md = (MSG_DATA_SYSTEM *)m_data;
             int count = md->text;
-            Serial.print("\nMSG_DATA_SYSTEM size=");
-            Serial.println(count);
+            // Serial.print("\nMSG_DATA_SYSTEM size=");
+            // Serial.println(count);
             // check for buffer size (keep one byte for checksum)
             if (remaining > 1+4+count)
             {

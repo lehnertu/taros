@@ -305,6 +305,29 @@ public:
     // correct page is assumed
     void readReg(uint8_t reg, uint8_t *pBuf, uint8_t len);
     void writeReg(uint8_t reg, uint8_t *pBuf, uint8_t len);
+    
+// *******************************************
+//  synchronous non-blocking data transmission
+// *******************************************
+
+    // To stay within the timing conatraints posed by the 1ms frame cycle
+    // we have to decompose reading IMU data into 3 non-blocking steps
+    // with the adress transmission and the data transmission
+    // happening interrupt-driven in between
+    
+    // It is important that no other module accesses the same bus
+    // this could interfere during the idle times between request and data handling
+    
+    // Step 1 : Initiate sending the register address to the slave (yield after this step)
+    void NonBlockingRead_init(uint8_t reg);
+    // Step 2 : check for having finished the address transmission (should take well below 1ms)
+    bool NonBlockingRead_finished();
+    // Step 3 : Initiate receiving the data (yield after this step)
+    void NonBlockingRead_request(uint8_t len);
+    // Step 4 : check if finished (6 or 8 bytes should take below 1ms)
+    // Step 5 : get the data
+    uint8_t NonBlockingRead_available();
+    void NonBlockingRead_getData(uint8_t *pBuf, uint8_t len);
 
 // *******************************
 //  variables
@@ -317,8 +340,8 @@ public:
 protected:
 
     uint8_t   _currentPage;
-    TwoWire   *_pWire;
-    uint8_t   _addr;
+    TwoWire   *_pWire;          // the I²C bus handler
+    uint8_t   _addr;            // the bus address
     
 };
 

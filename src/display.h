@@ -19,7 +19,7 @@
     For clearing the display (window) a hardware-accelerated command is used.
     All strings are generated at once but transfered character by character
     to the display, one per systick.
-    Thus, a complete display update takes about 40 ms (systicks).
+    Thus, a complete display update takes about 100 ms (systicks).
 */
 class DisplaySSD1331 : public Module
 {
@@ -32,6 +32,9 @@ public:
         float rate              // the update rate of the display
         );
 
+    // TODO: move initializations here
+    virtual void setup();
+    
     // The module is queried by the scheduler every millisecond whether it needs to run.
     // This will return true, when something needs to be drawn.
     virtual bool have_work();
@@ -47,9 +50,15 @@ private:
 
     Adafruit_SSD1331 *display;
     
+    // the data on display
+    float       heading;
+    float       pitch;
+    float       roll;
+    float       gx, gy, gz;
+    
     float       update_rate;    // the update rate of the display
     uint8_t     state;          // state machine controlling the display update
-    uint32_t    last_update;    // the time of tha last update
+    uint32_t    last_update;    // the time of the last update
     int         cycle_count;    // number of cycles performed on a display print action
     int         num_cycles;     // the number of cycles (characters) to complete the print
     char        buffer[18];     // the print buffer for one display line (max. 16 characters)
