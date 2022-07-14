@@ -10,6 +10,10 @@
 #include "i2c_driver_wire.h"
 #include "bno055.h"
 
+// SD card access
+#include <SD.h>
+#include <SPI.h>
+
 // ************************************************************
 // data and pin definitions for the IMU
 // ************************************************************
@@ -172,6 +176,44 @@ void read_IMU()
     Serial.println(" ms");
 }
 
+// calibration state
+// when fully calibrated (0xFF) read and store calibration data
+uint8_t calib;
+
+Sd2Card card;
+
+// save calibration data to SD card
+// TODO: do we need to switch to calibration mode ?
+void saveCalibration()
+{
+    // the address block 0x55 ... 0x6a contains
+    // offsets for acc, mag, and gyro (3x 16-bit each)
+    // radius acc, mag (16-bit each)
+    uint8_t data[22];
+    // switch to config mode
+    bno055.setReg(BNO055::BNO055_OPR_MODE_ADDR, 0, BNO055::OPERATION_MODE_CONFIG);
+    delay(10);
+    // read all data as one block 22 byte
+    bno055.readReg(BNO055::ACCEL_OFFSET_X_LSB_ADDR, data, 22);
+    if (!card.init(SPI_HALF_SPEED, BUILTIN_SDCARD)) {
+        Serial.println("SD card initialization failed.");
+    } else {
+        Serial.println("SD card found.");
+        File dataFile = SD.open("BNO055_calibration.dat", FILE_WRITE);
+        // if the file is available, write to it:
+        if (dataFile) {
+            // dataFile.println(dataString);
+            // size_t write(const void* buf, size_t count)
+            dataFile.write(data,sizeof(data));
+            dataFile.close();
+        } else {
+            // if the file isn't open, pop up an error:
+            Serial.println("error opening BNO055_calibration.dat");
+        }
+        Serial.println("file write done!");
+    }
+}
+
 // print IMU data (takes <1ms)
 void print_IMU()
 {
@@ -242,7 +284,7 @@ void print_IMU()
     sprintf(line,"roll/yaw           :  %8.1f deg", roll);
     Serial.println(line);
     // check the calibration status
-    uint8_t calib = bno055.getReg(BNO055::BNO055_CALIB_STAT_ADDR, 0);
+    calib = bno055.getReg(BNO055::BNO055_CALIB_STAT_ADDR, 0);
     Serial.print("calibration status : ");
     Serial.println(calib,HEX);
     Serial.println("========  analog data print end  ======== ");
@@ -257,20 +299,26 @@ void print_IMU()
 // For every loop call only one scheduled routine is executed.
 // So, the sequence of checks in the loop gives a priorization of the different tasks.
 
-// TODO:
-// sensor calibration is performed automatically in the background
-// some sensor movement(placement) is needed for that
-// check CALIB_STAT register for the status
-// switch to config mode and read the calibration data
-// store the calibration data and in the future write before switchon to NDoF
+bool written_OK = false;
 
 void loop()
 {
-    // gather IMU data
-    read_IMU();
+    // save calibration when ready
+    if (!written_OK)
+    {
+        // gather IMU data
+        read_IMU();
 
-    // print IMU data
-    print_IMU();
+        // print IMU data
+        print_IMU();
+
+        if (calib==(uint8_t)0xff)
+        {
+            Serial.println("\n  writing calibration data...\n");
+            saveCalibration();
+            written_OK = true;
+        }
+    }
 };
 
 extern "C" int main(void)
@@ -283,11 +331,13 @@ extern "C" int main(void)
 
     Serial.println("  Initializing IMU ...\n");
     setup_bno();
+
     
     // loop forever
     while (true) {
         // the loop is the worker handling all scheduled executions
         loop();
+
         delay(1000);
         // allow other (system) checks (serial connections in particular)
         yield();
