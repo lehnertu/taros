@@ -52,7 +52,17 @@ extern "C" int main(void)
     // Here the core hardware is initialized.
     // The millisecond systick interrupt is bent to out own ISR.
     setup_core_system();
-    
+
+    // we initialize the SD card here as some modules may want to read or
+    // write data during setup
+    SD_card_OK = SD.begin(BUILTIN_SDCARD);
+    if (SD_card_OK)
+        system_log->in.receive(
+            Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "found SD card.") );
+    else
+        system_log->in.receive(
+            Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "SD card not found.") );
+
     // call the setup() method for all modules in the list
     // the modules are now wired, so they can send messages
     std::list<Module*>::iterator it;

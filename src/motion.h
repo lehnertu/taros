@@ -50,6 +50,9 @@ public:
     // destructor
     virtual ~MotionSensor() {};
 
+    // port over which status messages are sent
+    SenderPort status_out;
+
     // port over which angular data is sent out at requested rate
     SenderPort AHRS_out;
     

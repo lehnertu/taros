@@ -8,6 +8,7 @@
 #include <string>
 
 #include "logger.h"
+#include <SD.h>
 
 // counting the miliseconds within one second
 extern volatile uint16_t FC_ms_count;
@@ -41,6 +42,9 @@ void setup_core_system();
 // Depending on the setup the messages will be written to a file 
 // and/or console or telemetry output when the task loop has started.
 extern Logger* system_log;
+
+// it the SD card has been found and initialized
+extern bool SD_card_OK;
 
 // miliseconds since program start (about 50 days capacity)
 uint32_t FC_time_now();

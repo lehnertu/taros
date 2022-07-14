@@ -53,6 +53,8 @@ uint32_t FC_elapsed_millis(uint32_t timestamp)
         return (0xFFFFFFFF - timestamp) + now + 1;
 }
 
+bool SD_card_OK;
+
 std::string hexbyte(char c)
 {
     uint8_t ab = (uint8_t) c;

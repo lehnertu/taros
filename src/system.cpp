@@ -5,6 +5,7 @@
 #include "serial_usb.h"
 #include "display.h"
 #include "modem.h"
+#include "motion.h"
 
 void FC_build_system(
     std::list<Module*> *module_list
@@ -30,6 +31,11 @@ void FC_build_system(
     gps->status_out.set_receiver(&(system_log->in));
     gps->tm_out.set_receiver(&(usb->in));
     module_list->push_back(gps);
+    
+    // create a motion controller
+    MotionSensor *imu = new MotionSensor(std::string("IMU_1"));
+    imu->status_out.set_receiver(&(system_log->in));
+    module_list->push_back(imu);
     
     // creste a servo controller
     Servo8chDriver *servo = new Servo8chDriver(std::string("SERVO_1"));

@@ -92,15 +92,56 @@ void MotionSensor::setup()
     // x11xxxxxb : "forced" power mode
     bno055->setReg(BNO055::MAG_CONFIG_ADDR, 1, 0x7d);
     
+    // TODO:
+    // external crystal ??
+
+    status_out.transmit(
+        Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "BNO-055 initialized.") );
+
+    // read calibration data from file
+    bool data_OK = false;
+    uint8_t data[22];
+    if (SD_card_OK and SD.exists("BNO055_calibration.dat"))
+    {
+        File dataFile = SD.open("BNO055_calibration.dat", FILE_READ);
+        if (dataFile)
+        {
+            size_t numbytes = dataFile.read(data, 22);
+            dataFile.close();
+            if (numbytes==22) data_OK = true;
+        };
+    }
+    else
+    {
+    }
+    // write calibration to the sensor
+    if (data_OK)
+    {
+        bno055->setToPage(0);
+        // switch to config mode
+        bno055->setReg(BNO055::BNO055_OPR_MODE_ADDR, 0, BNO055::OPERATION_MODE_CONFIG);
+        delay(50);
+        bno055->writeReg(BNO055::ACCEL_OFFSET_X_LSB_ADDR, data, 22);
+        status_out.transmit(
+            Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "BNO-055 calibrated.") );
+    }
+    else
+    {
+        status_out.transmit(
+            Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_CRITICAL, "error reading BNO-055 calibration data file.") );
+    };
+    
     // switch to sensor fusion mode
     bno055->setReg(BNO055::BNO055_OPR_MODE_ADDR, 0, BNO055::OPERATION_MODE_NDOF);
     delay(50);
 
-    // TODO:
-    // external crystal ??
-
     last_update = FC_time_now();
     flag_update_pending = false;
+    
+    
+    status_out.transmit(
+        Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_MILESTONE, "up and running.") );
+
     runlevel_= MODULE_RUNLEVEL_OPERATIONAL;
 }
 
