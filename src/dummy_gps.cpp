@@ -93,6 +93,7 @@ void DummyGPS::run()
         flag_telemetry_pending = false;
     };
     
+    // after 5s the GPS has acquired a lock
     if (!status_lock)
     {
         if (FC_elapsed_millis(startup_time) > 5000)

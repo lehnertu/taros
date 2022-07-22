@@ -35,6 +35,7 @@ void FC_build_system(
     // create a motion controller
     MotionSensor *imu = new MotionSensor(std::string("IMU_1"));
     imu->status_out.set_receiver(&(system_log->in));
+    imu->AHRS_out.set_receiver(&(display->data_in));
     module_list->push_back(imu);
     
     // creste a servo controller

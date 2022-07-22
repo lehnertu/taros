@@ -46,9 +46,20 @@ public:
     // port over which status messages are sent
     SenderPort status_out;
 
+    // port at which arbitrary messages are received
+    // messages that contain valid data for display are processed
+    // data are stored internally and will be updated during the next display cycle
+    ReceiverPort data_in;
+
 private:
 
     Adafruit_SSD1331 *display;
+    
+    // if an update is due or running
+    bool        flag_update_running;
+    
+    // if we have received some data
+    bool        flag_message_pending;
     
     // the data on display
     float       heading;

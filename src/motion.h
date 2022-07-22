@@ -60,10 +60,14 @@ public:
     SenderPort GYR_out;
 
 private:
-
-    double      heading;    // in degree (north=0, east=90)
-    double      pitch;      // nose angle of attack in degree (up positive)
-    double      roll;		// angle of rotation about the heading direction
+    
+    // convert raw quaternion data into AHRS angles
+    // computes heading, pitch, roll
+    void convert_Quaternion(BNO055::sQuaData_t raw);
+    
+    float       heading;    // in degree (north=0, east=90)
+    float       pitch;      // nose angle of attack in degree (up positive)
+    float       roll;		// angle of rotation about the heading direction
                             // usual roll angle in horizontal flight
                             // lean angle (yaw) in hover
 

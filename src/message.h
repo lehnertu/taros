@@ -83,6 +83,23 @@ struct MSG_DATA_GPS_POSITION {
     float altitude;
 };
 
+// in earth-fixed coordinates
+struct MSG_DATA_IMU_AHRS {
+    float   attitude;       // angle of attack with respect to horizontal flight [deg]
+                            // range  -180 ... +180 deg, positive up (hover is +90 deg)
+    float   heading;        // with respect to magnetic north [deg], range 0 ... 360 deg
+                            // nose direction for attitude=-90..+90 deg, else tail direction
+    float   roll;           // roll angle about heading (roll in horizontal flight, yaw in hover)
+                            // range -90 ... 90 deg, positive left
+};
+
+// in airframe-fixed coordinates (right, forward, up)
+struct MSG_DATA_IMU_GYRO {
+    float   nick;           // rate [deg/s] positive up
+    float   yaw;            // rate [deg/s] positive left
+    float   roll;           // rate [deg/s] positive left
+};
+
 #define NUM_SERVO_CHANNELS 8
 struct MSG_DATA_SERVO {
     short int pos[NUM_SERVO_CHANNELS];
@@ -108,6 +125,8 @@ struct MSG_TELEMETRY_VARIABLE {
 #define MSG_TYPE_DATA_FLOAT     0xcc98
 #define MSG_TYPE_DATA_DOUBLE    0xcc99
 #define MSG_TYPE_DATA_GPS       0xcca0      // double latitude, double longitude, float altitude
+#define MSG_TYPE_IMU_AHRS       0xcca1      // float attitude, heading, roll
+#define MSG_TYPE_IMU_GYRO       0xcca2      // float nick, yaw, roll
 
 /*
     This is a message the can be sent and received in between modules.
@@ -169,6 +188,12 @@ class Message {
         // type reporting function
         uint16_t type() { return m_type; };
         
+        // type reporting function
+        uint16_t size() { return m_size; };
+        
+        // data extraction fuction - get a pointer to the data struct
+        void* get_data() { return m_data; }; 
+        
         // Generate a string with a standardized format holding the content of the message.
         std::string print_content();
 
@@ -194,38 +219,5 @@ class Message {
         uint16_t    m_type;
         uint16_t    m_size;
         void*       m_data;
-};
-
-// =============== additional messages not handled yet =========================================
-
-// in airframe-fixed coordinates (right, forward, up)
-struct MESSAGE_IMU_GYRO {
-    float   nick;           // rate [deg/s] positive up
-    float   roll;           // rate [deg/s] positive left
-    float   yaw;            // rate [deg/s] positive left
-};
-
-// in airframe-fixed coordinates (right, forward, up)
-struct MESSAGE_IMU_ACCEL {
-    float   right;          // acceleration [G]
-    float   forward;        // acceleration [G]
-    float   up;             // acceleration [G]
-};
-
-// in airframe-fixed coordinates (right, forward, up)
-struct MESSAGE_IMU_MAG {
-    float   right;          // field Bx [Gs]
-    float   forward;        // field By [Gs]
-    float   up;             // field Bz [Gs]
-};
-
-// in earth-fixed coordinates
-struct MESSAGE_IMU_AHRS {
-    float   attitude;       // angle of attack with respect to horizontal flight [deg]
-                            // range  -180 ... +180 deg, positive up (hover is +90 deg)
-    float   heading;        // with respect to magnetic north [deg], range 0 ... 360 deg
-                            // nose direction for attitude=-90..+90 deg, else tail direction
-    float   roll;           // roll angle about heading (roll in horizontal flight, yaw in hover)
-                            // range -90 ... 90 deg, positive left
 };
 
