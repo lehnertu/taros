@@ -15,7 +15,6 @@ MotionSensor::MotionSensor(
     // copy the name
     id = name;
     query_state = 0;
-    Quat = {0.0, 0.0, 0.0, 0.0};
     heading = 0.0;
     pitch = 0.0;
     roll = 0.0;
@@ -32,31 +31,38 @@ void MotionSensor::setup()
     
     // set fast mode I²C
     Wire.setClock(400000);
-    Serial.println("bno055() setup");
+    status_out.transmit(
+        Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "BNO-055 setup()") );
     bno055_OK = true;
     
     // check ID registers
     uint8_t tmp = (uint8_t){0xff};
     bno055->readReg(0x00, &tmp, 1);
-    Serial.print("bno055() chip ID : ");
-    Serial.println((int)tmp,HEX);
-    if (tmp != 0xA0) bno055_OK = false;
+    if (tmp != 0xA0)
+    {
+        bno055_OK = false;
+        status_out.transmit(
+            Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_CRITICAL, "BNO-055 wrong chip ID") );
+    };
     bno055->readReg(0x36, &tmp, 1);
-    Serial.print("bno055() self test ST_RESULT : ");
-    Serial.println((int)tmp,HEX);
-    if (tmp != 0x0F) bno055_OK = false;
-    
+    if (tmp != 0x0F)
+    {
+        bno055_OK = false;
+        status_out.transmit(
+            Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_CRITICAL, "BNO-055 self-test failed.") );
+    };    
     // reset() is performed during the begin() procedure
     // remapping the axes is done inside the begin() method
     // airframe-fixed coordinates ==  x: forward (nose)  y: left (wing)  z: up
     // Thereafter the sensor is switched to NDOF fusion mode
     while(bno055->begin() != BNO055::eStatusOK) {
-        Serial.print("bno055.begin() failed - status ");
-        Serial.println(bno055->lastOperateStatus);
+        status_out.transmit(
+            Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_CRITICAL, "BNO-055 begin() failed.") );
         bno055_OK = false;
         delay(2000);
     }
-    Serial.println("bno055.begin() success");
+    status_out.transmit(
+        Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "BNO-055 begin() success.") );
 
     // configure sensor
     // the sensor settings can only be altered while in non-fusion modes
@@ -149,6 +155,9 @@ void MotionSensor::setup()
     status_out.transmit(
         Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_MILESTONE, "up and running.") );
 
+    // we have to read it once, only then the non-blocking reads will work
+    BNO055::sQuaAnalog_t Q = bno055->getQuaternion();
+
     runlevel_= MODULE_RUNLEVEL_OPERATIONAL;
 }
 
@@ -159,8 +168,8 @@ bool MotionSensor::have_work()
         bool running = (query_state != 0);
         // TODO: we may need a timeout here
         // we decrease the rate for testing
-        if (FC_elapsed_millis(last_update)>=200)
-        // if (FC_elapsed_millis(last_update)>=10)
+        // if (FC_elapsed_millis(last_update)>=200)
+        if (FC_elapsed_millis(last_update)>=12)
         {
             // if the last query is completed
             if (query_state == 0)
@@ -186,17 +195,23 @@ bool MotionSensor::have_work()
 
 void MotionSensor::run()
 {
-    BNO055::sQuaData_t raw = {0,0,0,0};
+    static BNO055::sQuaData_t raw = {0,0,0,0};
     switch (query_state)
     {
         case 1:
         {
             // initiate a non-blocking read for the quaternion data
             bno055->NonBlockingRead_init(BNO055::BNO055_QUATERNION_DATA_W_LSB_ADDR);
-            query_state = 2;
+            query_state++;
             break;
         };
         case 2:
+        {
+            // one waiting cycle
+            query_state++;
+            break;
+        };
+        case 3:
         {
             // the read should be finished by now
             if (bno055->NonBlockingRead_finished())
@@ -209,16 +224,29 @@ void MotionSensor::run()
                 status_out.transmit(
                     Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_CRITICAL, "BNO-055 read timeout.") );
             };
-            query_state = 3;
+            query_state++;
             break;
         };
-        case 3:
+        case 4:
+        {
+            // one waiting cycle
+            query_state++;
+            break;
+        };
+        case 5:
+        {
+            // seemingly we need two cycles to not get request timeouts
+            query_state++;
+            break;
+        };
+        case 6:
         {
             // the request should be fulfilled by now
             if (bno055->NonBlockingRead_finished())
             {
                 uint8_t n_bytes = bno055->NonBlockingRead_available();
                 if (n_bytes == sizeof(raw))
+                    // copy the data from buffer
                     bno055->NonBlockingRead_getData((uint8_t*) &raw, (uint8_t)sizeof(raw));
                 else
                     status_out.transmit(
@@ -229,10 +257,10 @@ void MotionSensor::run()
                 status_out.transmit(
                     Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_CRITICAL, "BNO-055 data request timeout.") );
             };
-            query_state = 4;
+            query_state++;
             break;
         };
-        case 4:
+        case 7:
         {
             // process the quaternion data
             convert_Quaternion(raw);
@@ -251,22 +279,22 @@ void MotionSensor::run()
         default:
         {
             // we should never get here
+            status_out.transmit(
+                Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_CRITICAL, "illegal internal state.") );
+            query_state = 0;
+            flag_update_pending = false;
+            break;
         };
     };
 }
 
 void MotionSensor::convert_Quaternion(BNO055::sQuaData_t raw)
 {
-    char line[80];
-    sprintf(line,"Quaternion         : w=%d x=%d y=%d z=%d",
-        raw.w, raw.x, raw.y, raw.z);
-    Serial.println(line);
     // scale : 1.0 = 2^14 lsb
     float w = raw.w * 0.000061035;
     float x = raw.x * 0.000061035;
     float y = raw.y * 0.000061035;
     float z = raw.z * 0.000061035;
-    Quat = {w,x,y,z};
     // vec(d11, d21, d31) gives the direction of the x axis (nose) in the NED coordinate system
     float d11 = - w*w - x*x + y*y + z*z;
     float d21 = 2.0*w*z + 2.0*x*y;

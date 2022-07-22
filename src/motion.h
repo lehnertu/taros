@@ -82,7 +82,6 @@ private:
     bool                    bno055_OK;      // sensor state
     
     BNO055::sAxisAnalog_t   Gyro;           // gyro reading : float x, y, z
-    BNO055::sQuaAnalog_t    Quat;           // quaternion : float  w, x, y, z;
     
     // here are some flags indicating which work is done
     
