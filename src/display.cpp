@@ -145,6 +145,13 @@ void DisplaySSD1331::run()
              pitch = data->attitude;
              roll = data->roll;
          };
+         if (msg.type()==MSG_TYPE_IMU_GYRO)
+         {
+             MSG_DATA_IMU_GYRO *data = (MSG_DATA_IMU_GYRO*) msg.get_data();
+             gx = data->roll;
+             gy = data->nick;
+             gz = data->yaw;
+         };
         // see if there are more messsages
         flag_message_pending = (data_in.count()>0);
     };
@@ -231,7 +238,7 @@ void DisplaySSD1331::run()
             {
                 if (cycle_count == 0)
                 {
-                    display->setCursor(3, 22);
+                    display->setCursor(3, 38);
                     // in the first cycle generate the string
                     num_cycles = snprintf(buffer, 16, "H: %5.1f  %5.1f", heading, gz);
                 } else {
@@ -275,7 +282,7 @@ void DisplaySSD1331::run()
             {
                 if (cycle_count == 0)
                 {
-                    display->setCursor(3, 38);
+                    display->setCursor(3, 22);
                     // in the first cycle generate the string
                     num_cycles = snprintf(buffer, 16, "R: %5.1f  %5.1f", roll, gx);
                 } else {

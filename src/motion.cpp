@@ -148,10 +148,6 @@ void MotionSensor::setup()
     bno055->setReg(BNO055::BNO055_OPR_MODE_ADDR, 0, BNO055::OPERATION_MODE_NDOF);
     delay(50);
 
-    last_update = FC_time_now();
-    flag_update_pending = false;
-    
-    
     status_out.transmit(
         Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_MILESTONE, "up and running.") );
 
@@ -161,87 +157,39 @@ void MotionSensor::setup()
     runlevel_= MODULE_RUNLEVEL_OPERATIONAL;
 }
 
-bool MotionSensor::have_work()
-{
-    if (runlevel_ == MODULE_RUNLEVEL_OPERATIONAL)
-    {
-        bool running = (query_state != 0);
-        // TODO: we may need a timeout here
-        // we decrease the rate for testing
-        // if (FC_elapsed_millis(last_update)>=200)
-        if (FC_elapsed_millis(last_update)>=12)
-        {
-            // if the last query is completed
-            if (query_state == 0)
-            {
-                // next query
-                query_state = 1;
-                last_update = FC_time_now();
-                flag_update_pending = true;
-            }
-        }
-        else
-        {
-            // wait
-            flag_update_pending = false;
-        };
-        return (flag_update_pending || running);
-    }
-    else
-    {
-        return false;
-    };
-}
-
 void MotionSensor::run()
 {
     static BNO055::sQuaData_t raw = {0,0,0,0};
+    static BNO055::sAxisData_t mag = {0,0,0};
     switch (query_state)
     {
-        case 1:
+        case 0:
         {
+            cycle_count++;
             // initiate a non-blocking read for the quaternion data
             bno055->NonBlockingRead_init(BNO055::BNO055_QUATERNION_DATA_W_LSB_ADDR);
             query_state++;
             break;
         };
-        case 2:
+        case 1:
         {
-            // one waiting cycle
-            query_state++;
-            break;
-        };
-        case 3:
-        {
+            cycle_count++;
             // the read should be finished by now
+            // most often this takes another cycle
             if (bno055->NonBlockingRead_finished())
             {
                 // request the data
                 bno055->NonBlockingRead_request(sizeof(raw));
-            }
-            else
-            {
-                status_out.transmit(
-                    Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_CRITICAL, "BNO-055 read timeout.") );
+                // we only continue when the transaction has finished
+                query_state++;
             };
-            query_state++;
             break;
         };
-        case 4:
+        case 2:
         {
-            // one waiting cycle
-            query_state++;
-            break;
-        };
-        case 5:
-        {
-            // seemingly we need two cycles to not get request timeouts
-            query_state++;
-            break;
-        };
-        case 6:
-        {
+            cycle_count++;
             // the request should be fulfilled by now
+            // most often this takes one more cycle
             if (bno055->NonBlockingRead_finished())
             {
                 uint8_t n_bytes = bno055->NonBlockingRead_available();
@@ -251,17 +199,14 @@ void MotionSensor::run()
                 else
                     status_out.transmit(
                         Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_CRITICAL, "BNO-055 data size mismatch.") );
-            }
-            else
-            {
-                status_out.transmit(
-                    Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_CRITICAL, "BNO-055 data request timeout.") );
+                // we only continue, if the request was fulfilled
+                query_state++;
             };
-            query_state++;
             break;
         };
-        case 7:
+        case 3:
         {
+            cycle_count++;
             // process the quaternion data
             convert_Quaternion(raw);
             // send out data messages
@@ -271,18 +216,82 @@ void MotionSensor::run()
                 .roll = roll };
             Message msg = Message(id, MSG_TYPE_IMU_AHRS, sizeof(data), (void*)(&data) );
             AHRS_out.transmit(msg);
-            // ready for the next query
-            query_state = 0;
-            flag_update_pending = false;
+            query_state++;
             break;
         };
+        case 4:
+        {
+            cycle_count++;
+            // initiate a non-blocking read for the magnetometer data
+            bno055->NonBlockingRead_init(BNO055::BNO055_MAG_DATA_X_LSB_ADDR);
+            query_state++;
+            break;
+        };
+        case 5:
+        {
+            cycle_count++;
+            // the read should be finished by now
+            // most often this takes another cycle
+            if (bno055->NonBlockingRead_finished())
+            {
+                // request the data
+                bno055->NonBlockingRead_request(sizeof(mag));
+                // we only continue when the transaction has finished
+                query_state++;
+            };
+            break;
+        };
+        case 6:
+        {
+            cycle_count++;
+            // the request should be fulfilled by now
+            // most often this takes one more cycle
+            if (bno055->NonBlockingRead_finished())
+            {
+                uint8_t n_bytes = bno055->NonBlockingRead_available();
+                if (n_bytes == sizeof(mag))
+                    // copy the data from buffer
+                    bno055->NonBlockingRead_getData((uint8_t*) &mag, (uint8_t)sizeof(mag));
+                else
+                    status_out.transmit(
+                        Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_CRITICAL, "BNO-055 mag data size mismatch.") );
+                // we only continue, if the request was fulfilled
+                query_state++;
+            };
+            break;
+        };
+        case 7:
+        {
+            cycle_count++;
+            // process the magnetometer data
+            gyr_x = mag.x;
+            gyr_y = mag.y;
+            gyr_z = mag.z;
+            // we use the gyro message for the magnetic field (only for testing)
+            MSG_DATA_IMU_GYRO data {
+                .nick = gyr_y,
+                .yaw = gyr_z,
+                .roll = gyr_x };
+            Message msg = Message(id, MSG_TYPE_IMU_GYRO, sizeof(data), (void*)(&data) );
+            GYR_out.transmit(msg);
+            query_state++;
+            break;
+        };
+        // typically it takes 5 cycles to get here
         default:
         {
-            // we should never get here
-            status_out.transmit(
-                Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_CRITICAL, "illegal internal state.") );
-            query_state = 0;
-            flag_update_pending = false;
+            // when first time arriving here check if it took too long
+            if (cycle_count>10)
+            {
+                status_out.transmit(
+                    Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_WARNING, "IMU loop exceeding 5 cycles.") );
+            }
+            query_state++;
+            if (query_state>=10)
+                // next loop
+                query_state = 0;
+            // reset the loop cycle count
+            cycle_count=0;
             break;
         };
     };

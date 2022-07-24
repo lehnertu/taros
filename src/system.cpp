@@ -27,7 +27,7 @@ void FC_build_system(
     module_list->push_back(display);
     
     // create a simulated GPS module
-    DummyGPS *gps = new DummyGPS(std::string("GPS_1"), 5.0, 1.0);
+    DummyGPS *gps = new DummyGPS(std::string("GPS_1"), 5.0, 0.0);
     gps->status_out.set_receiver(&(system_log->in));
     gps->tm_out.set_receiver(&(usb->in));
     module_list->push_back(gps);
@@ -36,6 +36,7 @@ void FC_build_system(
     MotionSensor *imu = new MotionSensor(std::string("IMU_1"));
     imu->status_out.set_receiver(&(system_log->in));
     imu->AHRS_out.set_receiver(&(display->data_in));
+    imu->GYR_out.set_receiver(&(display->data_in));
     module_list->push_back(imu);
     
     // creste a servo controller

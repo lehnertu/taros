@@ -41,10 +41,15 @@ public:
     
     // The module is queried by the scheduler every millisecond whether it needs to run.
     // It will have work to do almost every millisecond, as the data transfers are split
-    // into several actions that take only microseconds of CPU time.
-    virtual bool have_work();
+    // into several actions that take only microseconds of CPU time. We want to transfer data
+    // as fast as possible so we always have work to do. One loop of data transfers
+    // could be as short as 10ms (maximum update rate of the sensors) but will actually be longer.
+    // No exact loop timing is guarateed, as we may have to skip cycles if requests are not
+    // yet fulfilled.
+    virtual bool have_work() {return (runlevel_ == MODULE_RUNLEVEL_OPERATIONAL); };
 
     // This is the worker function being executed by the taskmanager.
+    // It performs a loop with query_state indicating the cycle.
     virtual void run();
 
     // destructor
@@ -85,9 +90,8 @@ private:
     
     // here are some flags indicating which work is done
     
-    uint32_t    last_update;    // the time of the last update
-    bool        flag_update_pending;
     int         query_state;    // which sensor communication is currently done
                                 // this is counting run cycles 1..10 creating the 100 Hz update rate
+    int         cycle_count;    // we count the number of cycles one loop actually takes.
     
 };
