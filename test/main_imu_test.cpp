@@ -212,21 +212,31 @@ void saveCalibration()
         }
         Serial.println("file write done!");
     }
+    delay(100);
+    // switch back to sensor fusion mode
+    bno055.setReg(BNO055::BNO055_OPR_MODE_ADDR, 0, BNO055::OPERATION_MODE_NDOF);
+    delay(100);
 }
 
 // print IMU data (takes <1ms)
 void print_IMU()
 {
     char line[80];
-    sprintf(line,"x=%8.4f y=%8.4f z=%8.4f",sMagAnalog.x, sMagAnalog.y, sMagAnalog.z);
-    Serial.print("mag analog (uT)    : "); Serial.println(line);
-    sprintf(line,"x=%8.4f y=%8.4f z=%8.4f",sGrvAnalog.x, sGrvAnalog.y, sGrvAnalog.z);
-    Serial.print("grv analog (m/s2)  : "); Serial.println(line);
+    sprintf(line,"      mag        gravity    gyro");
+    Serial.println(line);
+    sprintf(line,"      [uT]       [m/s^2]    [deg/s]");
+    Serial.println(line);
+    sprintf(line,"x=    %8.4f   %8.4f   %8.4f",sMagAnalog.x, sGrvAnalog.x, sGyrAnalog.x);
+    Serial.println(line);
+    sprintf(line,"y=    %8.4f   %8.4f   %8.4f",sMagAnalog.y, sGrvAnalog.y, sGyrAnalog.y);
+    Serial.println(line);
+    sprintf(line,"z=    %8.4f   %8.4f   %8.4f",sMagAnalog.z, sGrvAnalog.z, sGyrAnalog.z);
+    Serial.println(line);
+
     // the x-gyro gives the roll rate (to the right)
     // the y gyro gives the pitch rate (up)
     // the z gyro gives the yaw rate (heading change)
-    sprintf(line,"x=%8.2f y=%8.2f z=%8.2f",sGyrAnalog.x, sGyrAnalog.y, sGyrAnalog.z);
-    Serial.print("gyro rate (deg/s)  : "); Serial.println(line);
+    Serial.println();
     sprintf(line,"Quaternion         : w=%8.4f x=%8.4f y=%8.4f z=%8.4f  q2=%8.4f",
         Quat.w, Quat.x, Quat.y, Quat.z,
         Quat.w*Quat.w + Quat.x*Quat.x + Quat.y*Quat.y + Quat.z*Quat.z
@@ -238,14 +248,14 @@ void print_IMU()
     double y = Quat.y;
     double z = Quat.z;
     // vec(d11, d21, d31) gives the direction of the x axis (nose) in the NED coordinate system
-    double d11 = - w*w - x*x + y*y + z*z;
-    double d21 = 2.0*w*z + 2.0*x*y;
+    double d11 = 2.0*w*z + 2.0*x*y;
+    double d21 = w*w + x*x - y*y - z*z;
     double d31 = 2.0*w*y - 2.0*x*z;
     sprintf(line,"nose               :  N=%8.4f E=%8.4f down=%8.4f", d11, d21, d31);
     Serial.println(line);
     // vec(d12, d22, d32) gives the direction of the y axis (right wing) in the NED coordinate system
-    double d12 = 2.0*w*z - 2.0*x*y;
-    double d22 = w*w - x*x + y*y - z*z;
+    double d12 = w*w - x*x + y*y - z*z;
+    double d22 = -2.0*w*z + 2.0*x*y;
     double d32 = -2.0*w*x - 2.0*y*z;
     sprintf(line,"right wing         :  N=%8.4f E=%8.4f down=%8.4f", d12, d22, d32);
     Serial.println(line);
@@ -303,15 +313,15 @@ bool written_OK = false;
 
 void loop()
 {
+    // gather IMU data
+    read_IMU();
+
+    // print IMU data
+    print_IMU();
+
     // save calibration when ready
     if (!written_OK)
     {
-        // gather IMU data
-        read_IMU();
-
-        // print IMU data
-        print_IMU();
-
         if (calib==(uint8_t)0xff)
         {
             Serial.println("\n  writing calibration data...\n");

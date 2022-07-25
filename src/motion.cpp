@@ -263,10 +263,10 @@ void MotionSensor::run()
         case 7:
         {
             cycle_count++;
-            // process the magnetometer data
-            gyr_x = mag.x;
-            gyr_y = mag.y;
-            gyr_z = mag.z;
+            // process the magnetometer data 1µT/16LSB
+            gyr_x = 0.0625*mag.x;
+            gyr_y = 0.0625*mag.y;
+            gyr_z = 0.0625*mag.z;
             // we use the gyro message for the magnetic field (only for testing)
             MSG_DATA_IMU_GYRO data {
                 .nick = gyr_y,
@@ -305,13 +305,13 @@ void MotionSensor::convert_Quaternion(BNO055::sQuaData_t raw)
     float y = raw.y * 0.000061035;
     float z = raw.z * 0.000061035;
     // vec(d11, d21, d31) gives the direction of the x axis (nose) in the NED coordinate system
-    float d11 = - w*w - x*x + y*y + z*z;
-    float d21 = 2.0*w*z + 2.0*x*y;
-    float d31 = 2.0*w*y - 2.0*x*z;
+    double d11 = 2.0*w*z + 2.0*x*y;
+    double d21 = w*w + x*x - y*y - z*z;
+    double d31 = 2.0*w*y - 2.0*x*z;
     // vec(d12, d22, d32) gives the direction of the y axis (right wing) in the NED coordinate system
-    float d12 = 2.0*w*z - 2.0*x*y;
-    float d22 = w*w - x*x + y*y - z*z;
-    float d32 = -2.0*w*x - 2.0*y*z;
+    double d12 = w*w - x*x + y*y - z*z;
+    double d22 = -2.0*w*z + 2.0*x*y;
+    double d32 = -2.0*w*x - 2.0*y*z;
     // The heading is derived from the right wing vector projected into the N-E plane.
     // This gives reliable reading both in level flight and hover.
     // In inverted flight this is opposite to the flight path.
