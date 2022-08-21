@@ -108,7 +108,7 @@ void DummyGPS::run()
     {
         if (status_lock)
         {
-            runlevel_=MODULE_RUNLEVEL_LINK_OK;
+            runlevel_=MODULE_RUNLEVEL_LINK_OPEN;
             system_log->in.receive(
                 Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "acquired lock.") );
         } else {

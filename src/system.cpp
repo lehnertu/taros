@@ -25,7 +25,13 @@ void FC_build_system(
     DisplaySSD1331 *display = new DisplaySSD1331(std::string("DISPLAY"), 2.0);
     display->status_out.set_receiver(&(system_log->in));
     module_list->push_back(display);
-    
+
+    // create a logfile writer for streaming data
+    char log_filename[40];
+    sprintf(log_filename, "taros.%05d.fast.log", SD_file_No);
+    StreamFileWriter* fast_log_file_writer = new StreamFileWriter("FASTLOG",std::string(log_filename));
+    module_list->push_back(fast_log_file_writer);
+
     // create a simulated GPS module
     DummyGPS *gps = new DummyGPS(std::string("GPS_1"), 5.0, 0.0);
     gps->status_out.set_receiver(&(system_log->in));
@@ -35,8 +41,10 @@ void FC_build_system(
     // create a motion controller
     MotionSensor *imu = new MotionSensor(std::string("IMU_1"));
     imu->status_out.set_receiver(&(system_log->in));
-    imu->AHRS_out.set_receiver(&(display->data_in));
-    imu->GYR_out.set_receiver(&(display->data_in));
+    imu->AHRS_out.set_receiver(&(display->ahrs_in));
+    imu->GYRO_out.set_receiver(&(display->gyro_in));
+    imu->AHRS_out.set_receiver(&(fast_log_file_writer->ahrs_in));
+    imu->GYRO_out.set_receiver(&(fast_log_file_writer->gyro_in));
     module_list->push_back(imu);
     
     // creste a servo controller

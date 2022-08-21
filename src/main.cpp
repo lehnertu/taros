@@ -25,6 +25,7 @@ struct Task
 };
 
 Logger *system_log;
+FileWriter* system_log_file_writer;
 
 extern "C" int main(void)
 {
@@ -42,6 +43,35 @@ extern "C" int main(void)
     system_log->in.receive(
         Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE,"Teensy Flight Controller - Version 1.0") );
     
+    // we initialize the SD card here as some modules may want to read or
+    // write data during setup
+    SD_card_OK = SD.begin(BUILTIN_SDCARD);
+    if (SD_card_OK)
+    {
+        system_log->in.receive(
+            Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "found SD card.") );
+        // search through the files to determine the run number
+        SD_file_No = 0;
+        char syslog_filename[40];
+        sprintf(syslog_filename, "taros.%05d.system.log", SD_file_No);
+        while (SD.open(syslog_filename, FILE_READ))
+        {
+            // file already exists, use next number
+            SD_file_No++;
+            sprintf(syslog_filename, "taros.%05d.system.log", SD_file_No);
+        };
+        // create a file writer
+        system_log_file_writer = new FileWriter("SYSLOGF",std::string(syslog_filename));
+        module_list.push_back(system_log_file_writer);
+        // wire the syslog output to the file
+        system_log->text_out.set_receiver(&(system_log_file_writer->in));
+    }
+    else
+    {
+        system_log->in.receive(
+            Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_ERROR, "SD card not found.") );
+    };
+    
     // Now create and wire all modules and add them to the list
     // all extended initializations are not yet done but
     // have to be handled my the modules as tasks.
@@ -50,18 +80,8 @@ extern "C" int main(void)
     FC_build_system(&module_list);
 
     // Here the core hardware is initialized.
-    // The millisecond systick interrupt is bent to out own ISR.
+    // The millisecond systick interrupt is bent to our own ISR.
     setup_core_system();
-
-    // we initialize the SD card here as some modules may want to read or
-    // write data during setup
-    SD_card_OK = SD.begin(BUILTIN_SDCARD);
-    if (SD_card_OK)
-        system_log->in.receive(
-            Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "found SD card.") );
-    else
-        system_log->in.receive(
-            Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "SD card not found.") );
 
     // call the setup() method for all modules in the list
     // the modules are now wired, so they can send messages

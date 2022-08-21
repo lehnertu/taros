@@ -152,7 +152,7 @@ void MotionSensor::setup()
         Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_MILESTONE, "up and running.") );
 
     // we have to read it once, only then the non-blocking reads will work
-    BNO055::sQuaAnalog_t Q = bno055->getQuaternion();
+    bno055->getQuaternion();
 
     runlevel_= MODULE_RUNLEVEL_OPERATIONAL;
 }
@@ -160,7 +160,7 @@ void MotionSensor::setup()
 void MotionSensor::run()
 {
     static BNO055::sQuaData_t raw = {0,0,0,0};
-    static BNO055::sAxisData_t mag = {0,0,0};
+    static BNO055::sAxisData_t gyr = {0,0,0};
     switch (query_state)
     {
         case 0:
@@ -210,12 +210,11 @@ void MotionSensor::run()
             // process the quaternion data
             convert_Quaternion(raw);
             // send out data messages
-            MSG_DATA_IMU_AHRS data {
+            DATA_IMU_AHRS data {
                 .attitude = pitch,
                 .heading = heading,
                 .roll = roll };
-            Message msg = Message(id, MSG_TYPE_IMU_AHRS, sizeof(data), (void*)(&data) );
-            AHRS_out.transmit(msg);
+            AHRS_out.transmit(data);
             query_state++;
             break;
         };
@@ -223,7 +222,7 @@ void MotionSensor::run()
         {
             cycle_count++;
             // initiate a non-blocking read for the magnetometer data
-            bno055->NonBlockingRead_init(BNO055::BNO055_MAG_DATA_X_LSB_ADDR);
+            bno055->NonBlockingRead_init(BNO055::BNO055_GYRO_DATA_X_LSB_ADDR);
             query_state++;
             break;
         };
@@ -235,7 +234,7 @@ void MotionSensor::run()
             if (bno055->NonBlockingRead_finished())
             {
                 // request the data
-                bno055->NonBlockingRead_request(sizeof(mag));
+                bno055->NonBlockingRead_request(sizeof(gyr));
                 // we only continue when the transaction has finished
                 query_state++;
             };
@@ -249,12 +248,12 @@ void MotionSensor::run()
             if (bno055->NonBlockingRead_finished())
             {
                 uint8_t n_bytes = bno055->NonBlockingRead_available();
-                if (n_bytes == sizeof(mag))
+                if (n_bytes == sizeof(gyr))
                     // copy the data from buffer
-                    bno055->NonBlockingRead_getData((uint8_t*) &mag, (uint8_t)sizeof(mag));
+                    bno055->NonBlockingRead_getData((uint8_t*) &gyr, (uint8_t)sizeof(gyr));
                 else
                     status_out.transmit(
-                        Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_CRITICAL, "BNO-055 mag data size mismatch.") );
+                        Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_CRITICAL, "BNO-055 gyro data size mismatch.") );
                 // we only continue, if the request was fulfilled
                 query_state++;
             };
@@ -263,17 +262,15 @@ void MotionSensor::run()
         case 7:
         {
             cycle_count++;
-            // process the magnetometer data 1µT/16LSB
-            gyr_x = 0.0625*mag.x;
-            gyr_y = 0.0625*mag.y;
-            gyr_z = 0.0625*mag.z;
-            // we use the gyro message for the magnetic field (only for testing)
-            MSG_DATA_IMU_GYRO data {
+            // scale gyro data: 1 deg/s = 16 lsb
+            gyr_x = 0.0625*gyr.x;
+            gyr_y = 0.0625*gyr.y;
+            gyr_z = 0.0625*gyr.z;
+            DATA_IMU_GYRO data {
                 .nick = gyr_y,
                 .yaw = gyr_z,
                 .roll = gyr_x };
-            Message msg = Message(id, MSG_TYPE_IMU_GYRO, sizeof(data), (void*)(&data) );
-            GYR_out.transmit(msg);
+            GYRO_out.transmit(data);
             query_state++;
             break;
         };
@@ -284,7 +281,7 @@ void MotionSensor::run()
             if (cycle_count>10)
             {
                 status_out.transmit(
-                    Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_WARNING, "IMU loop exceeding 5 cycles.") );
+                    Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_WARNING, "IMU loop exceeding 10 cycles.") );
             }
             query_state++;
             if (query_state>=10)

@@ -75,6 +75,8 @@ bool DisplaySSD1331::have_work()
         // if there is something received in one of the input ports
         // we have to handle it
         flag_message_pending = (data_in.count()>0);
+        flag_ahrs_pending = (ahrs_in.count()>0);
+        flag_gyro_pending = (gyro_in.count()>0);
         switch(state)
         {
             // display has been cleared, need to rewrite
@@ -123,7 +125,7 @@ bool DisplaySSD1331::have_work()
                 break;
             }
         };
-        return flag_message_pending || flag_update_running;
+        return flag_message_pending || flag_ahrs_pending || flag_gyro_pending || flag_update_running;
     }
     else
     {
@@ -138,22 +140,42 @@ void DisplaySSD1331::run()
         // get the message from the queue
         Message msg = data_in.fetch();
         // process the messages we can handle
-         if (msg.type()==MSG_TYPE_IMU_AHRS)
-         {
-             MSG_DATA_IMU_AHRS *data = (MSG_DATA_IMU_AHRS*) msg.get_data();
-             heading = data->heading;
-             pitch = data->attitude;
-             roll = data->roll;
-         };
-         if (msg.type()==MSG_TYPE_IMU_GYRO)
-         {
-             MSG_DATA_IMU_GYRO *data = (MSG_DATA_IMU_GYRO*) msg.get_data();
-             gx = data->roll;
-             gy = data->nick;
-             gz = data->yaw;
-         };
+        if (msg.type()==MSG_TYPE_IMU_AHRS)
+        {
+            DATA_IMU_AHRS *data = (DATA_IMU_AHRS*) msg.get_data();
+            heading = data->heading;
+            pitch = data->attitude;
+            roll = data->roll;
+        };
+        if (msg.type()==MSG_TYPE_IMU_GYRO)
+        {
+            DATA_IMU_GYRO *data = (DATA_IMU_GYRO*) msg.get_data();
+            gx = data->roll;
+            gy = data->nick;
+            gz = data->yaw;
+        };
         // see if there are more messsages
         flag_message_pending = (data_in.count()>0);
+    };
+    while (flag_ahrs_pending)
+    {
+        // get the message from the queue
+        DATA_IMU_AHRS data = ahrs_in.fetch();
+        heading = data.heading;
+        pitch = data.attitude;
+        roll = data.roll;
+        // see if there are more messsages
+        flag_ahrs_pending = (ahrs_in.count()>0);
+    };
+    while (flag_gyro_pending)
+    {
+        // get the message from the queue
+        DATA_IMU_GYRO data = gyro_in.fetch();
+        gx = data.roll;
+        gy = data.nick;
+        gz = data.yaw;
+        // see if there are more messsages
+        flag_gyro_pending = (gyro_in.count()>0);
     };
     if (flag_update_running)
     {

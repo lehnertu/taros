@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include "global.h"
+#include "stream.h"
 #include <Adafruit_SSD1331.h>
 
 // fixed pin numbers for the display according to hardware (assume there's only one)
@@ -51,6 +52,10 @@ public:
     // data are stored internally and will be updated during the next display cycle
     ReceiverPort data_in;
 
+    // a receiver for data streams
+    StreamReceiver<DATA_IMU_AHRS> ahrs_in;
+    StreamReceiver<DATA_IMU_GYRO> gyro_in;
+    
 private:
 
     Adafruit_SSD1331 *display;
@@ -60,6 +65,8 @@ private:
     
     // if we have received some data
     bool        flag_message_pending;
+    bool        flag_ahrs_pending;
+    bool        flag_gyro_pending;
     
     // the data on display
     float       heading;

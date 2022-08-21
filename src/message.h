@@ -83,23 +83,6 @@ struct MSG_DATA_GPS_POSITION {
     float altitude;
 };
 
-// in earth-fixed coordinates
-struct MSG_DATA_IMU_AHRS {
-    float   attitude;       // angle of attack with respect to horizontal flight [deg]
-                            // range  -180 ... +180 deg, positive up (hover is +90 deg)
-    float   heading;        // with respect to magnetic north [deg], range 0 ... 360 deg
-                            // nose direction for attitude=-90..+90 deg, else tail direction
-    float   roll;           // roll angle about heading (roll in horizontal flight, yaw in hover)
-                            // range -90 ... 90 deg, positive left
-};
-
-// in airframe-fixed coordinates (right, forward, up)
-struct MSG_DATA_IMU_GYRO {
-    float   nick;           // rate [deg/s] positive up
-    float   yaw;            // rate [deg/s] positive left
-    float   roll;           // rate [deg/s] positive left
-};
-
 #define NUM_SERVO_CHANNELS 8
 struct MSG_DATA_SERVO {
     short int pos[NUM_SERVO_CHANNELS];

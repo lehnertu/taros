@@ -4,9 +4,11 @@
 #include <string>
 
 #include "global.h"
+#include "types.h"
 #include "module.h"
 #include "message.h"
 #include "port.h"
+#include "stream.h"
 
 #include "bno055.h"
 
@@ -59,10 +61,10 @@ public:
     SenderPort status_out;
 
     // port over which angular data is sent out at requested rate
-    SenderPort AHRS_out;
+    StreamSender<DATA_IMU_AHRS> AHRS_out;
     
     // port over which gyro data is sent
-    SenderPort GYR_out;
+    StreamSender<DATA_IMU_GYRO> GYRO_out;
 
 private:
     
@@ -85,8 +87,6 @@ private:
     BNO055                  *bno055;        // the IMU sensor
     uint8_t                 BNO055_I2C;     // BNO-055 slave address
     bool                    bno055_OK;      // sensor state
-    
-    BNO055::sAxisAnalog_t   Gyro;           // gyro reading : float x, y, z
     
     // here are some flags indicating which work is done
     

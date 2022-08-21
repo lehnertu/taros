@@ -1,6 +1,12 @@
 #include "global.h"
 #include <Arduino.h>
 
+
+bool SD_card_OK;
+int SD_file_No;
+
+/***** the core timing/interrupt system *****/
+
 volatile uint16_t FC_ms_count;
 volatile uint32_t FC_systick_millis_count;
 volatile uint32_t FC_systick_cycle_count;
@@ -52,8 +58,6 @@ uint32_t FC_elapsed_millis(uint32_t timestamp)
         // wrap around
         return (0xFFFFFFFF - timestamp) + now + 1;
 }
-
-bool SD_card_OK;
 
 std::string hexbyte(char c)
 {
