@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <cstdint>
+#include <string>
 #include <list>
 
 // the main program is independent from the Arduino core system and libraries
@@ -132,8 +133,6 @@ extern "C" int main(void)
 	                    .schedule_time = FC_time_now()
 	                    };
 	                task_list.push_back(task);
-	                // Serial.print("scheduling Module at ");
-	                // Serial.println((uint64_t)task.module);
 	            }
 	        };
 	        
@@ -150,13 +149,25 @@ extern "C" int main(void)
             // Serial.print("calling Module at ");
             // Serial.println((uint64_t)task.module);
             // execute the task
+            uint32_t start = micros();
             task.module->run();
+            uint32_t stop = micros();
+            // if execution time exceeds 500µs the offending module is reported
+            if (stop-start>500)
+            {
+                char numStr[20];
+                sprintf(numStr,"%d",(int)(stop-start));
+                std::string text(task.module->id+" runtime "+std::string(numStr)+" µs\r\n");
+                system_log->in.receive(
+                    Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_CRITICAL, text) );;
+            };
+            
             // if the tasklist is empty now, we store the time is took to complete
             if (task_list.empty())
             {
                 // TODO : prevent overruns when wrapping around
                 FC_time_to_completion = ARM_DWT_CYCCNT - FC_systick_cycle_count;
-                // is is reset when an output is created (either log or display)
+                // the max is reset when an output is created (either log or display)
                 if (FC_time_to_completion > FC_max_time_to_completion)
                     FC_max_time_to_completion = FC_time_to_completion;
                 // FC_max_time_to_completion is reset when printed to the display

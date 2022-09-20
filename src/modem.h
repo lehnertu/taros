@@ -31,14 +31,6 @@
     It sends all received messages to the ground station.
     It receives command messages from the ground station.
     
-    We use the runlevel to encode the state of the setup actions
-    1 : hardware serial port has been opened
-    2 : modem put into command mode
-    3 : modem configuration has been sent
-    4 : configuration has been acknowledged
-    5 : modem put into transceiver mode
-   16 : up and running
-   
     At 9600 baud over-the-air rate a single character takes 1ms transmission time.
     Before starting a transmission one should check, that the transmission buffer
     has been empty for 8ms. A duration of 5ms during which no character
@@ -54,8 +46,12 @@ public:
         std::string name,
         uint32_t baud_rate);
     
-    // TODO: move initializations here
-    virtual void setup() { runlevel_ = MODULE_RUNLEVEL_SETUP_OK; };
+    // initialization of the modem
+    // the modem gets configured for 115200,8N1 serial communication
+    // air 9600,8N1   freq ch18 = 868.125 MHz
+    // it returns in either MODULE_RUNLEVEL_ERROR or MODULE_RUNLEVEL_OPERATIONAL state
+    // TODO: switch to MODULE_RUNLEVEL_LINK_OPEN when a communication to ground station has been established
+    virtual void setup();
     
     // The module is queried by the scheduler every millisecond whether it needs to run.
     // This will return true, when a new dataset from the GPS has been received.
@@ -72,6 +68,7 @@ public:
     ReceiverPort downlink;
 
     // port over which received messages are delivered
+    // TODO: we do not create the messages yet
     SenderPort uplink;
     
     // port over which status messages are sent
@@ -86,7 +83,8 @@ private:
     bool        busy();
     
     // here are some flags indicating which work is due
-    bool        flag_setup_pending;
+    bool        flag_ping_pending;
+    bool        flag_flush_pending;
     bool        flag_msg_pending;
     bool        flag_received;
     bool        flag_received_completely;
@@ -98,4 +96,10 @@ private:
     uint16_t    uplink_num_chars;
     char        message_buffer[200];
     uint16_t    message_num_chars;
+    
+    // for debugging we log all downlink transmissions
+    char        log_filename[40];
+    File        myFile;
+    uint32_t    last_flush;
+    
 };

@@ -42,12 +42,17 @@ void FileWriter::run()
         Message msg = in.fetch();
         if (runlevel_== MODULE_RUNLEVEL_LINK_OPEN)
         {
+            uint32_t start = micros();
             // write to file
             std::string buffer = msg.printout();
             buffer += std::string("\r\n");
             // write out
             // the write is buffered and returns immediately
             myFile.write(buffer.c_str(), buffer.size());
+            uint32_t stop = micros();
+            char numStr[20];
+            int n = sprintf(numStr,"%d µs\r\n",(int)(stop-start));
+            myFile.write(numStr, n);
         };
         flag_msg_pending = (in.count()>0);
     }
