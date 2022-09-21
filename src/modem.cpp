@@ -20,7 +20,6 @@ Modem::Modem(
     flag_received = false;
     flag_received_completely = false;
     last_time = FC_time_now();
-    last_flush = FC_time_now();
     // nothing received yet
     uplink_num_chars = 0;
     message_num_chars = 0;
@@ -42,13 +41,9 @@ bool Modem::busy()
 
 void Modem::setup()
 {
-    // for debugging we log all downlink transmissions
-    sprintf(log_filename, "taros.%05d.downlink.log", SD_file_No);
-    myFile = SD.open(log_filename, FILE_WRITE);
 
     runlevel_ = 0;
     last_time = FC_time_now();
-    last_flush = FC_time_now();
     // internal initialization
     while(busy())
     {
@@ -149,11 +144,6 @@ void Modem::setup()
     status_out.transmit(
         Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_MILESTONE, "up and running.") );
     runlevel_ =  MODULE_RUNLEVEL_OPERATIONAL;
-    // send out a wakeup message
-    std::string buffer("TAROS : "+id+" up and running.\r\n");
-    Serial1.write(buffer.c_str(), buffer.size());
-    // write to file
-    myFile.write(buffer.c_str(), buffer.size());
 }
 
 // TODO: handle uplink messages
@@ -164,11 +154,6 @@ void Modem::setup()
 bool Modem::have_work()
 {
     uint32_t elapsed = FC_elapsed_millis(last_time);
-    if (FC_elapsed_millis(last_flush) > 2000)
-    {
-        last_flush = FC_time_now();
-        flag_flush_pending = true;
-    };
     // we detect the time elapsed as long as there is no activity at the modem
     if(busy())
     {
@@ -187,7 +172,7 @@ bool Modem::have_work()
     if ((runlevel_>=16) and (downlink.count()>0) and (elapsed>10)) flag_msg_pending = true;
     // if there is no activity for longer than 2s send a ping to the ground station
     if ((runlevel_>=16) and elapsed>2000) flag_ping_pending = true;
-    return flag_flush_pending | flag_ping_pending | flag_received | flag_received_completely | flag_msg_pending;
+    return flag_ping_pending | flag_received | flag_received_completely | flag_msg_pending;
 }
 
 void Modem::run()
@@ -198,24 +183,10 @@ void Modem::run()
         // send a ping
         std::string buffer("ping.\r\n");
         Serial1.write(buffer.c_str(), buffer.size());
-        // write to file
-        myFile.write(buffer.c_str(), buffer.size());
         // reset the flag
         flag_ping_pending = false;
         // record the time
         last_time = FC_time_now();
-    }
-
-    if (flag_flush_pending)
-    {
-        // send a ping
-        std::string buffer("flush.\r\n");
-        myFile.write(buffer.c_str(), buffer.size());
-        myFile.flush();
-        // reset the flag
-        flag_flush_pending = false;
-        // record the time
-        last_flush = FC_time_now();
     }
 
     if (flag_received)
@@ -254,10 +225,6 @@ void Modem::run()
         // write out
         // the write is buffered and returns immediately
         Serial1.write(message_buffer, message_num_chars);
-        // write to file
-        message_buffer[message_num_chars++] = 10;
-        message_buffer[message_num_chars++] = 13;
-        myFile.write(message_buffer, message_num_chars);
         // reset the flag
         flag_msg_pending = false;
         // record the time

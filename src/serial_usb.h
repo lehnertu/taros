@@ -11,6 +11,13 @@
 /*  
     This is a module simulating a telemetry transmission channel.
     It outputs all received messages to the USB serial connection.
+    
+    TODO:
+    There seems to be a problem if the USB communication fails.
+    If the receiver modem is connected to the same computer
+    and no USB receiver is running, the
+    flight controller hangs after transmitting the first message.
+    If there is no USB connection, sometimes, the first boot fails.
 */
 class USB_Serial : public Module
 {
@@ -27,11 +34,15 @@ public:
     
     // The module is queried by the scheduler every millisecond whether it needs to run.
     // This will return true, when a new dataset from the GPS has been received.
-    virtual bool have_work();
+    virtual bool have_work() { return false; };
+    virtual void interrupt();
 
     // This is the worker function being executed by the taskmanager.
     // It writes all pending messages to the bus unless a limit of execution time is exceeded.
-    virtual void run();
+    virtual void run() {};
+
+    // print an incoming message to the USB serial connection
+    virtual void handle_MSG();
 
     // destructor
     virtual ~USB_Serial() {};
@@ -40,8 +51,5 @@ public:
     ReceiverPort in;
 
 private:
-
-    // here are some flags indicating which work is due
-    bool  flag_msg_pending;
 
 };

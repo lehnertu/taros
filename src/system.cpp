@@ -27,12 +27,10 @@ void FC_build_system(
     module_list->push_back(display);
 
     // create a logfile writer for streaming data
-    /*
-    char log_filename[40];
-    sprintf(log_filename, "taros.%05d.fast.log", SD_file_No);
-    StreamFileWriter* fast_log_file_writer = new StreamFileWriter("FASTLOG",std::string(log_filename));
-    module_list->push_back(fast_log_file_writer);
-    */
+    // char log_filename[40];
+    // sprintf(log_filename, "taros.%05d.fast.log", SD_file_No);
+    // StreamFileWriter* fast_log_file_writer = new StreamFileWriter("FASTLOG",std::string(log_filename));
+    // module_list->push_back(fast_log_file_writer);
 
     // create a simulated GPS module
     DummyGPS *gps = new DummyGPS(std::string("GPS_1"), 5.0, 0.0);
@@ -41,25 +39,20 @@ void FC_build_system(
     module_list->push_back(gps);
     
     // create a motion controller
-    /*
     MotionSensor *imu = new MotionSensor(std::string("IMU_1"));
     imu->status_out.set_receiver(&(system_log->in));
     imu->AHRS_out.set_receiver(&(display->ahrs_in));
     imu->GYRO_out.set_receiver(&(display->gyro_in));
-    imu->AHRS_out.set_receiver(&(fast_log_file_writer->ahrs_in));
-    imu->GYRO_out.set_receiver(&(fast_log_file_writer->gyro_in));
+    // imu->AHRS_out.set_receiver(&(fast_log_file_writer->ahrs_in));
+    // imu->GYRO_out.set_receiver(&(fast_log_file_writer->gyro_in));
     module_list->push_back(imu);
-    */
     
     // creste a servo controller
     Servo8chDriver *servo = new Servo8chDriver(std::string("SERVO_1"));
     
     // create a modem for comminication with a ground station
     Modem *modem = new Modem(std::string("MODEM_1"), 9600);
-    // we send the modem system messages directly to the file writer
-    // sending it to system_log would create a loop
-    modem->status_out.set_receiver(&(system_log_file_writer->in));
-    // modem->status_out.set_receiver(&(system_log->in));
+    modem->status_out.set_receiver(&(system_log->in));
     module_list->push_back(modem);
     // wire the syslog output to it
     // TODO : this leads to lots of systick overruns

@@ -61,6 +61,8 @@ public:
     // No actual work should be performed here,
     // just determined if there is something that needs to be done.
     virtual bool have_work() = 0;
+    // This will be replaced by an interrupt routine.
+    virtual void interrupt() {};
     
     // This is the worker routine that gets executed by the taskmanager.
     // Here all the work of the module should be done.
@@ -68,9 +70,6 @@ public:
     // If necessary, larger amounts of work need to be distributed into
     // several chunks, that means several calls of run()
     virtual void run() = 0;
-    
-    // All message ports, that a module may have should be declared public
-    // so they can be wired easily during system build
     
     // we need a virtual destructor for destroying lists of objects
     virtual ~Module() {};
@@ -84,6 +83,9 @@ public:
     // should have 8 characters at max.
     std::string id;
 
+    // All message ports, that a module may have should be declared public
+    // so they can be wired easily during system build
+    
 protected:
 
     // All modules have an operational state that encodes for its initialization

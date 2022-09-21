@@ -33,11 +33,18 @@ public:
     
     // The module is queried by the scheduler every millisecond whether it needs to run.
     // This will return true, when a new dataset has been received.
-    virtual bool have_work();
+    virtual bool have_work() { return false; };
+    virtual void interrupt();
 
+    // process an incoming message
+    virtual void handle_MSG();
+    
     // This is the worker function being executed by the taskmanager.
     // It writes all pending messages to the bus unless a limit of execution time is exceeded.
-    virtual void run();
+    virtual void run() {};
+    
+    // Once per second we make sure all buffered data is flushed to the card
+    virtual void flush();
 
     // destructor
     // it should be called to actually cleanly close the file
@@ -53,9 +60,6 @@ private:
     std::string fileName;
     File myFile;
     
-    // here are some flags indicating which work is due
-    bool  flag_msg_pending;
-
     // we flush once per second
     uint32_t last_flush;
     
@@ -87,11 +91,21 @@ public:
     
     // The module is queried by the scheduler every millisecond whether it needs to run.
     // This will return true, when a new dataset has been received.
-    virtual bool have_work();
-
+    virtual bool have_work() { return false; };
+    virtual void interrupt();
+    
     // This is the worker function being executed by the taskmanager.
     // It writes all pending data blocks to the file unless a limit of execution time is exceeded.
-    virtual void run();
+    virtual void run() {};
+
+    // handle incomming messages on ahrs_in
+    virtual void handle_AHRS();
+
+    // handle incomming messages on gyro_in
+    virtual void handle_GYRO();
+
+    // Once per second we make sure all buffered data is flushed to the card
+    virtual void flush();
 
     // destructor
     // it should be called to actually cleanly close the file
@@ -108,10 +122,6 @@ private:
     std::string fileName;
     File myFile;
     
-    // here are some flags indicating which work is due
-    bool        flag_ahrs_pending;
-    bool        flag_gyro_pending;
-
     // we flush once per second
     uint32_t last_flush;
     

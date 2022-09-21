@@ -38,8 +38,9 @@ public:
     
     // The module is queried by the scheduler every millisecond whether it needs to run.
     // This will return true, when something needs to be drawn.
-    virtual bool have_work();
-
+    virtual bool have_work() { return false; };
+    virtual void interrupt();
+    
     // This is the worker function being executed by the taskmanager.
     // It manages all drawing.
     virtual void run();
@@ -62,11 +63,6 @@ private:
     
     // if an update is due or running
     bool        flag_update_running;
-    
-    // if we have received some data
-    bool        flag_message_pending;
-    bool        flag_ahrs_pending;
-    bool        flag_gyro_pending;
     
     // the data on display
     float       heading;

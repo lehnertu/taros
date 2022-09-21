@@ -84,7 +84,6 @@ private:
     
     // here are some flags indicating which work is due
     bool        flag_ping_pending;
-    bool        flag_flush_pending;
     bool        flag_msg_pending;
     bool        flag_received;
     bool        flag_received_completely;
@@ -96,10 +95,5 @@ private:
     uint16_t    uplink_num_chars;
     char        message_buffer[200];
     uint16_t    message_num_chars;
-    
-    // for debugging we log all downlink transmissions
-    char        log_filename[40];
-    File        myFile;
-    uint32_t    last_flush;
     
 };

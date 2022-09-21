@@ -1,5 +1,6 @@
 #include <cstdio>
 
+#include "base.h"
 #include "global.h"
 #include "dummy_gps.h"
 
@@ -32,7 +33,7 @@ DummyGPS::DummyGPS(
     runlevel_=MODULE_RUNLEVEL_OPERATIONAL;
 }
 
-bool DummyGPS::have_work()
+void DummyGPS::interrupt()
 {
     float elapsed = FC_elapsed_millis(last_update);
     flag_update_pending = (elapsed*gps_rate >= 1000.0);
@@ -40,7 +41,16 @@ bool DummyGPS::have_work()
     elapsed = FC_elapsed_millis(last_telemetry);
     flag_telemetry_pending = (elapsed*telemetry_rate >= 1000.0);
 
-    return flag_state_change | flag_update_pending | flag_telemetry_pending;
+    // insert the run() routine into the tasklist
+    if (flag_state_change | flag_update_pending | flag_telemetry_pending)
+    {
+        Task task = {
+            .module = this,
+            .schedule_time = FC_time_now(),
+            .funct = std::bind(&DummyGPS::run, this)
+            };
+        task_list.push_back(task);
+    };
 }
 
 #define DEGREE_PER_METER 9e-6

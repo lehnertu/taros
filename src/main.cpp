@@ -7,35 +7,18 @@
 // TODO: it comes in idirectly via display.h -> Adafruit_SSD1331.h
 // TODO: we need ARM_DWT_CYCCNT
 
+#include "base.h"
 #include "global.h"
 #include "display.h"
 #include "module.h"
 #include "message.h"
 #include "system.h"
 
-/*
-    This is a task descriptor
-    TODO: this needs extensions: priority, maybe different entry points
-*/
-struct Task 
-{
-    // the module which has started this task
-    Module* module;
-    // the system time at which the task has been started
-    uint32_t schedule_time;
-};
-
 Logger *system_log;
-FileWriter* system_log_file_writer;
+FileWriter* system_log_file_writer = 0;
 
 extern "C" int main(void)
 {
-
-    // all modules are registered in a list
-    std::list<Module*> module_list;
-    
-    // all tasks that have been scheduled for execution
-    std::list<Task> task_list;
 
     // the logger has to be added to the list of modules so it will be scheduled for execution
     system_log = new Logger("SYSLOG");
@@ -63,6 +46,7 @@ extern "C" int main(void)
         };
         // create a file writer
         system_log_file_writer = new FileWriter("SYSLOGF",std::string(syslog_filename));
+        // TODO: what if a problem occurs ?
         module_list.push_back(system_log_file_writer);
         // wire the syslog output to the file
         system_log->text_out.set_receiver(&(system_log_file_writer->in));
@@ -71,6 +55,7 @@ extern "C" int main(void)
     {
         system_log->in.receive(
             Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_ERROR, "SD card not found.") );
+        // TODO: in this case we have to create a dummy FileWriter
     };
     
     // Now create and wire all modules and add them to the list
@@ -79,7 +64,7 @@ extern "C" int main(void)
     // Modules cannot yet send messages during system build,
     // initializations that require messages should be delayed to the module setup().
     FC_build_system(&module_list);
-
+    
     // Here the core hardware is initialized.
     // The millisecond systick interrupt is bent to our own ISR.
     setup_core_system();
@@ -130,7 +115,8 @@ extern "C" int main(void)
 	            {
 	                Task task = {
 	                    .module = mod,
-	                    .schedule_time = FC_time_now()
+	                    .schedule_time = FC_time_now(),
+	                    .funct = std::bind(&Module::run, mod)
 	                    };
 	                task_list.push_back(task);
 	            }
@@ -150,27 +136,17 @@ extern "C" int main(void)
             // Serial.println((uint64_t)task.module);
             // execute the task
             uint32_t start = micros();
-            task.module->run();
+            // task.module->run();
+            task.funct();
             uint32_t stop = micros();
-            // if execution time exceeds 500µs the offending module is reported
-            if (stop-start>500)
+            // if execution time exceeds 5ms the offending module is reported
+            if (stop-start>5000)
             {
                 char numStr[20];
                 sprintf(numStr,"%d",(int)(stop-start));
-                std::string text(task.module->id+" runtime "+std::string(numStr)+" µs\r\n");
+                std::string text(task.module->id+" runtime "+std::string(numStr)+" us");
                 system_log->in.receive(
                     Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_CRITICAL, text) );;
-            };
-            
-            // if the tasklist is empty now, we store the time is took to complete
-            if (task_list.empty())
-            {
-                // TODO : prevent overruns when wrapping around
-                FC_time_to_completion = ARM_DWT_CYCCNT - FC_systick_cycle_count;
-                // the max is reset when an output is created (either log or display)
-                if (FC_time_to_completion > FC_max_time_to_completion)
-                    FC_max_time_to_completion = FC_time_to_completion;
-                // FC_max_time_to_completion is reset when printed to the display
             };
         };
 
