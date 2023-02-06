@@ -43,7 +43,9 @@ public:
     
     // This is the worker function being executed by the taskmanager.
     // It manages all drawing.
-    virtual void run();
+    virtual void redraw();
+    
+    virtual void run() {};
         
     // port over which status messages are sent
     SenderPort status_out;

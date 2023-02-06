@@ -54,7 +54,7 @@ public:
     virtual void setup();
     
     // The module is queried by the scheduler every millisecond whether it needs to run.
-    // This will return true, when a new dataset from the GPS has been received.
+    // This will return true, when a new message from the ground station has been received.
     virtual bool have_work();
 
     // This is the worker function being executed by the taskmanager.
@@ -83,7 +83,6 @@ private:
     bool        busy();
     
     // here are some flags indicating which work is due
-    bool        flag_ping_pending;
     bool        flag_msg_pending;
     bool        flag_received;
     bool        flag_received_completely;

@@ -40,6 +40,14 @@ public:
     
     // initialize the data bus to the sensors and setup the sensors
     virtual void setup();
+
+    // check if the internal calibration has completed
+    // and switch to run state if this has been accomplished
+    void check_calibration();
+    
+    // This hooks into the 1ms systick interrupt service routine.
+    // At present it is not used anymore when the modeule has reached MODULE_RUNLEVEL_OPERATIONAL state.
+    virtual void interrupt();
     
     // The module is queried by the scheduler every millisecond whether it needs to run.
     // It will have work to do almost every millisecond, as the data transfers are split
@@ -54,6 +62,12 @@ public:
     // It performs a loop with query_state indicating the cycle.
     virtual void run();
 
+    // While the data acquisition from the sensor is done within the interrupt routine
+    // for sending messages we use tasks.
+    void report_quat_size_mismatch();
+    void report_gyro_size_mismatch();
+    void report_cycles_overrun();
+    
     // destructor
     virtual ~MotionSensor() {};
 
@@ -89,6 +103,9 @@ private:
     bool                    bno055_OK;      // sensor state
     
     // here are some flags indicating which work is done
+    
+    uint32_t    last_calib_check;           // the time when the last calibration check has beed done
+    uint8_t     last_cal_state;
     
     int         query_state;    // which sensor communication is currently done
                                 // this is counting run cycles 1..10 creating the 100 Hz update rate

@@ -48,7 +48,7 @@ void FC_build_system(
     module_list->push_back(imu);
     
     // creste a servo controller
-    Servo8chDriver *servo = new Servo8chDriver(std::string("SERVO_1"));
+    // Servo8chDriver *servo = new Servo8chDriver(std::string("SERVO_1"));
     
     // create a modem for comminication with a ground station
     Modem *modem = new Modem(std::string("MODEM_1"), 9600);
@@ -59,13 +59,15 @@ void FC_build_system(
     system_log->system_out.set_receiver(&(modem->downlink));
     
     // create a logger capturing telemetry data at specified rate
+    /*
     Requester *req = new Requester(std::string("LOG_5S"), 0.2);
     req->out.set_receiver(&(usb->in));
     req->out.set_receiver(&(modem->downlink));
     auto callback = std::bind(&DummyGPS::get_position, gps); 
     req->register_server_callback(callback,"GPS_1");
     module_list->push_back(req);
-
+    */
+    
     // All start-up messages are still just queued in the Logger and USB_serial module.
     // They will get sent now, when the scheduler and taskmanager pick up their work.
     system_log->in.receive(

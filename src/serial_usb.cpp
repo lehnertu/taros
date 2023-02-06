@@ -21,14 +21,7 @@ void USB_Serial::interrupt()
 {
     if (runlevel_ == MODULE_RUNLEVEL_OPERATIONAL)
         if (in.count()>0)
-        {
-            Task task = {
-                .module = this,
-                .schedule_time = FC_time_now(),
-                .funct = std::bind(&USB_Serial::handle_MSG, this)
-                };
-            task_list.push_back(task);
-        };
+            schedule_task(this, std::bind(&USB_Serial::handle_MSG, this));
 }
 
 void USB_Serial::handle_MSG()

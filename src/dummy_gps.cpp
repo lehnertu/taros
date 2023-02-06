@@ -43,14 +43,7 @@ void DummyGPS::interrupt()
 
     // insert the run() routine into the tasklist
     if (flag_state_change | flag_update_pending | flag_telemetry_pending)
-    {
-        Task task = {
-            .module = this,
-            .schedule_time = FC_time_now(),
-            .funct = std::bind(&DummyGPS::run, this)
-            };
-        task_list.push_back(task);
-    };
+        schedule_task(this, std::bind(&DummyGPS::run, this));
 }
 
 #define DEGREE_PER_METER 9e-6

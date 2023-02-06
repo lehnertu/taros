@@ -1,5 +1,6 @@
 #include <cstdio>
 
+#include "base.h"
 #include "global.h"
 #include "motion.h"
 
@@ -21,6 +22,8 @@ MotionSensor::MotionSensor(
     gyr_x = 0.0;
     gyr_y = 0.0;
     gyr_z = 0.0;
+    last_calib_check = 0;
+    last_cal_state = 0;
     runlevel_= MODULE_RUNLEVEL_STOP;
 }
 
@@ -123,10 +126,7 @@ void MotionSensor::setup()
             dataFile.close();
             if (numbytes==22) data_OK = true;
         };
-    }
-    else
-    {
-    }
+    };
     // write calibration to the sensor
     if (data_OK)
     {
@@ -136,7 +136,7 @@ void MotionSensor::setup()
         delay(50);
         bno055->writeReg(BNO055::ACCEL_OFFSET_X_LSB_ADDR, data, 22);
         status_out.transmit(
-            Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "BNO-055 calibrated.") );
+            Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "BNO-055 calibrated from file.") );
     }
     else
     {
@@ -146,15 +146,69 @@ void MotionSensor::setup()
     
     // switch to sensor fusion mode
     bno055->setReg(BNO055::BNO055_OPR_MODE_ADDR, 0, BNO055::OPERATION_MODE_NDOF);
-    delay(50);
+    delay(100);
 
-    status_out.transmit(
-        Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_MILESTONE, "up and running.") );
+    // TODO: check the calibration status before switching to operation
+    // system calib status must be 3 (bit 6 and 7 set)
+    check_calibration();
 
     // we have to read it once, only then the non-blocking reads will work
     bno055->getQuaternion();
 
-    runlevel_= MODULE_RUNLEVEL_OPERATIONAL;
+    // now the interrups becomes active
+    runlevel_= MODULE_RUNLEVEL_SETUP_OK;
+
+}
+
+void MotionSensor::check_calibration()
+{
+    // TODO: only report calibration status when it has changed
+    last_calib_check = FC_time_now();
+    // system calib status must be 3 (bit 6 and 7 set)
+    uint8_t cal = bno055->getCalibrationStatus();
+    if (cal != last_cal_state)
+    {
+        last_cal_state = cal;
+        std::string report("calibration status : ");
+        report += hexbyte(cal);
+        status_out.transmit(
+            Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, report) );
+    }
+    if (cal>=(uint8_t)0xc0)
+    {
+        status_out.transmit(
+            Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_MILESTONE, "up and running.") );
+        runlevel_= MODULE_RUNLEVEL_OPERATIONAL;
+    }    
+}
+
+// this is a transition version only
+// as long as the sensor is not yet in MODULE_RUNLEVEL_OPERATIONAL
+// we schedule tasks to check the calibration
+// later on the old run() method takes over
+void MotionSensor::interrupt()
+{
+    if ((runlevel_ >= MODULE_RUNLEVEL_SETUP_OK) && (runlevel_ < MODULE_RUNLEVEL_OPERATIONAL))
+        if (FC_elapsed_millis(last_calib_check)>1000)
+            schedule_task(this, std::bind(&MotionSensor::check_calibration, this));
+}
+
+void MotionSensor::report_quat_size_mismatch()
+{
+    status_out.transmit(
+        Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_CRITICAL, "BNO-055 quaternion data size mismatch.") );
+}
+
+void MotionSensor::report_gyro_size_mismatch()
+{
+    status_out.transmit(
+        Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_CRITICAL, "BNO-055 gyro data size mismatch.") );
+}
+
+void MotionSensor::report_cycles_overrun()
+{
+    status_out.transmit(
+        Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_WARNING, "IMU loop exceeding 10 cycles.") );
 }
 
 void MotionSensor::run()
@@ -197,9 +251,9 @@ void MotionSensor::run()
                     // copy the data from buffer
                     bno055->NonBlockingRead_getData((uint8_t*) &raw, (uint8_t)sizeof(raw));
                 else
-                    status_out.transmit(
-                        Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_CRITICAL, "BNO-055 data size mismatch.") );
+                    schedule_task(this, std::bind(&MotionSensor::report_quat_size_mismatch, this));
                 // we only continue, if the request was fulfilled
+                // TODO: this could lead to too many reports
                 query_state++;
             };
             break;
@@ -252,9 +306,9 @@ void MotionSensor::run()
                     // copy the data from buffer
                     bno055->NonBlockingRead_getData((uint8_t*) &gyr, (uint8_t)sizeof(gyr));
                 else
-                    status_out.transmit(
-                        Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_CRITICAL, "BNO-055 gyro data size mismatch.") );
+                    schedule_task(this, std::bind(&MotionSensor::report_gyro_size_mismatch, this));
                 // we only continue, if the request was fulfilled
+                // TODO: this could lead to too many reports
                 query_state++;
             };
             break;
@@ -274,15 +328,13 @@ void MotionSensor::run()
             query_state++;
             break;
         };
-        // typically it takes 5 cycles to get here
+        // this case handles 8 and all above
         default:
         {
-            // when first time arriving here check if it took too long
+            // typically it takes 8 cycles to get here
+            // when arriving here check if it took too long
             if (cycle_count>10)
-            {
-                status_out.transmit(
-                    Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_WARNING, "IMU loop exceeding 10 cycles.") );
-            }
+                schedule_task(this, std::bind(&MotionSensor::report_cycles_overrun, this));
             query_state++;
             if (query_state>=10)
                 // next loop
@@ -294,6 +346,8 @@ void MotionSensor::run()
     };
 }
 
+// this is called within the interrupt service routine
+// TODO: make local variabes static
 void MotionSensor::convert_Quaternion(BNO055::sQuaData_t raw)
 {
     // scale : 1.0 = 2^14 lsb

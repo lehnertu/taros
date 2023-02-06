@@ -7,6 +7,7 @@
 
 /*  
     Make the LED on the Teensy board blink.
+    This conflicts with the OLED - it uses its SCL pin
 */
 class Blink : public Module
 {

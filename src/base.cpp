@@ -1,12 +1,19 @@
 #include "base.h"
+#include "module.h"
+#include "global.h"
 #include <Arduino.h>
 
 /***** the core timing/interrupt system *****/
 
 volatile uint32_t FC_systick_millis_count;
 volatile uint32_t FC_systick_cycle_count;
-uint32_t FC_time_to_completion;
-uint32_t FC_max_time_to_completion;
+volatile uint32_t FC_max_isr_spacing;
+
+volatile uint32_t FC_max_isr_time_to_completion;
+std::string FC_max_isr_time_module;
+volatile uint32_t FC_max_task_time_to_completion;
+std::string FC_max_task_time_module;
+
 uint32_t FC_systick_flag;
 
 std::list<Module*> module_list;
@@ -25,7 +32,10 @@ void FC_systick_isr(void)
     systick_cycle_count = ARM_DWT_CYCCNT;
     systick_millis_count++;
     // --- end original code
+    uint32_t last_count = FC_systick_cycle_count;
     FC_systick_cycle_count = ARM_DWT_CYCCNT;
+    uint32_t spacing = FC_systick_cycle_count-last_count;
+    if (spacing > FC_max_isr_spacing) FC_max_isr_spacing=spacing;
     FC_systick_millis_count++;
     FC_systick_flag++;
     // call all module interrupts - record timing
@@ -33,25 +43,41 @@ void FC_systick_isr(void)
     for (it = module_list.begin(); it != module_list.end(); it++)
     {
         Module* mod = *it;
+        // we check timing for every module call
+        // TODO: report anything longer than 50us (30000 CPU cycles)
+        uint32_t isr_start = ARM_DWT_CYCCNT;
         mod->interrupt();
+        uint32_t isr_stop = ARM_DWT_CYCCNT;
+        // the difference automaticall wraps around
+        uint32_t cycles = isr_stop - isr_start;
+        if (cycles>FC_max_isr_time_to_completion)
+        {
+            // the max is reset when an output is created (either log or display)
+            FC_max_isr_time_module = mod->id;
+            FC_max_isr_time_to_completion = cycles;
+        };
     };
-    // TODO : prevent overruns when wrapping around
-    FC_time_to_completion = ARM_DWT_CYCCNT - FC_systick_cycle_count;
-    // the max is reset when an output is created (either log or display)
-    if (FC_time_to_completion > FC_max_time_to_completion)
-        FC_max_time_to_completion = FC_time_to_completion;
-    // FC_max_time_to_completion is reset when printed to the display
 }
-
 
 void setup_core_system()
 {
     FC_systick_flag = 0;
     FC_systick_millis_count = 0;
     FC_systick_cycle_count = ARM_DWT_CYCCNT;
+    FC_max_isr_spacing = 0;
+    FC_max_isr_time_to_completion = 0;
     // bend the systick ISR to our own
     _VectorsRam[15] = &FC_systick_isr;
 }
 
+void schedule_task(Module *mod, TaskFunct f)
+{
+    Task task = {
+        .module = mod,
+        .schedule_time = FC_systick_millis_count,
+        .funct = f
+        };
+    task_list.push_back(task);
+}
 
 

@@ -39,7 +39,7 @@
     that communicate among each other sending and receiving messages.
     
     Modules sit in the background and are periodically queried by the scheduler
-    whether they have some work to do. They will decide based on the
+    whether they have some work to do. They will answer based on the
     system clock, on received messages or hardware generated events.
 */
 class Module
@@ -60,8 +60,16 @@ public:
     // This method needs to answer and return immediately.
     // No actual work should be performed here,
     // just determined if there is something that needs to be done.
+    // TODO: this will diappear soon
     virtual bool have_work() = 0;
+    
     // This will be replaced by an interrupt routine.
+    // The calls to the interrupt routines are already active.
+    // The following modules already use this feature :
+    //   dummy_gps
+    //   display
+    //   file_writer
+    //   serial_usb
     virtual void interrupt() {};
     
     // This is the worker routine that gets executed by the taskmanager.
@@ -69,12 +77,14 @@ public:
     // Every call should return in well below a millisecond.
     // If necessary, larger amounts of work need to be distributed into
     // several chunks, that means several calls of run()
+    // TODO: this will soon disappear from the header as modules can schedule arbitrary task functions
     virtual void run() = 0;
     
     // we need a virtual destructor for destroying lists of objects
     virtual ~Module() {};
     
-    int8_t runlevel() { return runlevel_; };
+    // query the internal state of the module
+    int8_t state() { return runlevel_; };
     
 public:
     

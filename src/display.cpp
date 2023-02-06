@@ -19,10 +19,10 @@
 #define DISPLAY_UNINITIALIZED   0
 #define DISPLAY_CLEAR           2
 #define DISPLAY_CLOCK           3
-#define DISPLAY_TTC             4
-#define DISPLAY_HEADING         5
-#define DISPLAY_PITCH           6
-#define DISPLAY_ROLL            7
+#define DISPLAY_ITC             4
+#define DISPLAY_TTC             5
+#define DISPLAY_HEADING         6
+#define DISPLAY_PITCH           7
 #define DISPLAY_COMPLETE       10
 
 DisplaySSD1331::DisplaySSD1331(
@@ -109,13 +109,8 @@ void DisplaySSD1331::interrupt()
         // If there is an update running we have to request a task for that
         if (flag_update_running)
         {
-            // insert the run() routine into the tasklist
-            Task task = {
-                .module = this,
-                .schedule_time = FC_time_now(),
-                .funct = std::bind(&Module::run, this)
-                };
-            task_list.push_back(task);
+            // insert the redraw() routine into the tasklist
+            schedule_task(this, std::bind(&DisplaySSD1331::redraw, this));
         } else {
             // when due, start a new update
             if (FC_elapsed_millis(last_update)*update_rate>1000)
@@ -130,8 +125,8 @@ void DisplaySSD1331::interrupt()
     }
 }
 
-// run gets called many times until the full display refresh has been accomplished
-void DisplaySSD1331::run()
+// redraw gets called many times until the full display refresh has been accomplished
+void DisplaySSD1331::redraw()
 {
     switch(state)
     {
@@ -181,20 +176,22 @@ void DisplaySSD1331::run()
             {
                 // we are done with the clock
                 cycle_count = 0;
-                state=DISPLAY_TTC;
+                state=DISPLAY_ITC;
             }
             break;
         }
-        // handle the ttc display
-        case DISPLAY_TTC :
+        // handle the interrupt timing display
+        case DISPLAY_ITC :
         {
             if (cycle_count == 0)
             {
                 display->setCursor(3, 11);
                 // in the first cycle generate the string
-                float ttc = 1.0e6 * (float)FC_max_time_to_completion / (float)F_CPU_ACTUAL;
-                FC_max_time_to_completion = 0;
-                num_cycles = snprintf(buffer, 16, "ttc : %6.1f us", ttc);
+                float ttc = 1.0e6 * (float)FC_max_isr_time_to_completion / (float)F_CPU_ACTUAL;
+                num_cycles = snprintf(buffer, 16, "%8s %4.1fus", FC_max_isr_time_module.c_str(), ttc);
+                // clear the stored value once it is diaplayed
+                // TODO: if exceedingly large generate a warning message
+                FC_max_isr_time_to_completion = 0;
             } else {
                 // in all subsequent cycles each display one character
                 display->print(buffer[cycle_count-1]);
@@ -202,7 +199,32 @@ void DisplaySSD1331::run()
             cycle_count++;
             if (cycle_count > num_cycles)
             {
-                // we are done with the ttc
+                // we are done with the ITC
+                cycle_count = 0;
+                state=DISPLAY_TTC;
+            }
+            break;
+        }
+        // handle the task timing display
+        case DISPLAY_TTC :
+        {
+            if (cycle_count == 0)
+            {
+                display->setCursor(3, 19);
+                // in the first cycle generate the string
+                float ttc = 0.001*(float)FC_max_task_time_to_completion;
+                num_cycles = snprintf(buffer, 16, "%8s %4.1fms", FC_max_task_time_module.c_str(), ttc);
+                // clear the stored value once it is diaplayed
+                // TODO: if exceedingly large generate a warning message
+                FC_max_task_time_to_completion = 0;
+            } else {
+                // in all subsequent cycles each display one character
+                display->print(buffer[cycle_count-1]);
+            }
+            cycle_count++;
+            if (cycle_count > num_cycles)
+            {
+                // we are done with the TTC
                 cycle_count = 0;
                 state=DISPLAY_HEADING;
             }
@@ -213,7 +235,7 @@ void DisplaySSD1331::run()
         {
             if (cycle_count == 0)
             {
-                display->setCursor(3, 38);
+                display->setCursor(3, 30);
                 // in the first cycle generate the string
                 num_cycles = snprintf(buffer, 16, "H: %5.1f  %5.1f", heading, gz);
             } else {
@@ -234,7 +256,7 @@ void DisplaySSD1331::run()
         {
             if (cycle_count == 0)
             {
-                display->setCursor(3, 30);
+                display->setCursor(3, 38);
                 // in the first cycle generate the string
                 num_cycles = snprintf(buffer, 16, "P: %5.1f  %5.1f", pitch, gy);
             } else {
@@ -246,11 +268,15 @@ void DisplaySSD1331::run()
             {
                 // we are done with pitch
                 cycle_count = 0;
-                state=DISPLAY_ROLL;
+                state=DISPLAY_COMPLETE;
+                // we are done completely, update is finished
+                flag_update_running = false;
+                last_update = FC_time_now();
             }
             break;
         }
         // handle the ROLL display
+        /*
         case DISPLAY_ROLL :
         {
             if (cycle_count == 0)
@@ -274,6 +300,7 @@ void DisplaySSD1331::run()
             }
             break;
         }
+        */
     };
 }
 

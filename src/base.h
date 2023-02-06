@@ -28,7 +28,8 @@
 #include <list>
 #include <functional>
 
-#include <module.h>
+// include <module.h>
+class Module;
 
 // uint32_t systick_millis_count is used as timestamp
 // miliseconds since program start (about 50 days capacity)
@@ -38,9 +39,17 @@ extern volatile uint32_t FC_systick_millis_count;
 // we store its value with every systick to procide sub-millisecond timing
 extern volatile uint32_t FC_systick_cycle_count;
 
-// we compute the time it took to complete all tasks for one systick
-extern uint32_t FC_time_to_completion;
-extern uint32_t FC_max_time_to_completion;
+// we record the maximum number of CPU cycles between 2 interrupts
+// (should be about 600000)
+extern volatile uint32_t FC_max_isr_spacing;
+
+// we record the longest time it took to complete an interrupt request
+extern volatile uint32_t FC_max_isr_time_to_completion;
+extern std::string FC_max_isr_time_module;
+
+// we record the longest time it takes to complete a task (in microseconds)
+extern volatile uint32_t FC_max_task_time_to_completion;
+extern std::string FC_max_task_time_module;
 
 // we use our own ISR for the systick interrupt
 // it is copied from EventRecorder.cpp (previously startup.c)
@@ -73,4 +82,8 @@ extern std::list<Module*> module_list;
 
 // all tasks that have been scheduled for execution
 extern std::list<Task> task_list;
+
+// this function can be called by the interrupt routine of any modeul
+// to request one of the module functions to be scheduled for execution
+void schedule_task(Module *mod, TaskFunct f);
 

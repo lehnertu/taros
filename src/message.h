@@ -38,6 +38,7 @@
 #define MSG_TYPE_TELEMETRY      0xcc83
 #define MSG_TYPE_GPS_POSITION   0xcc84
 #define MSG_TYPE_SERVO          0xcc85
+#define MSG_TYPE_COMMAND        0xcc86
 /*
     All messages have a data body which has to be interpreted depending on the message type.
     These data bodies are structs declared here.

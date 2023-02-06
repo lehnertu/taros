@@ -33,23 +33,9 @@ void FileWriter::interrupt()
     if (runlevel_ == MODULE_RUNLEVEL_LINK_OPEN)
     {
         if (in.count()>0)
-        {
-            Task task = {
-                .module = this,
-                .schedule_time = FC_time_now(),
-                .funct = std::bind(&FileWriter::handle_MSG, this)
-                };
-            task_list.push_back(task);
-        };
-        if (FC_elapsed_millis(last_flush) > 1000)
-        {
-            Task task = {
-                .module = this,
-                .schedule_time = FC_time_now(),
-                .funct = std::bind(&FileWriter::flush, this)
-                };
-            task_list.push_back(task);
-        };
+            schedule_task(this, std::bind(&FileWriter::handle_MSG, this));
+        if (FC_elapsed_millis(last_flush) > 5000)
+            schedule_task(this, std::bind(&FileWriter::flush, this));
     };
 }
 
@@ -111,32 +97,11 @@ void StreamFileWriter::interrupt()
     if (runlevel_ == MODULE_RUNLEVEL_LINK_OPEN)
     {
         if (ahrs_in.count()>0)
-        {
-            Task task = {
-                .module = this,
-                .schedule_time = FC_time_now(),
-                .funct = std::bind(&StreamFileWriter::handle_AHRS, this)
-                };
-            task_list.push_back(task);
-        };
+            schedule_task(this, std::bind(&StreamFileWriter::handle_AHRS, this));
         if (gyro_in.count()>0)
-        {
-            Task task = {
-                .module = this,
-                .schedule_time = FC_time_now(),
-                .funct = std::bind(&StreamFileWriter::handle_GYRO, this)
-                };
-            task_list.push_back(task);
-        };
-        if (FC_elapsed_millis(last_flush) > 1000)
-        {
-            Task task = {
-                .module = this,
-                .schedule_time = FC_time_now(),
-                .funct = std::bind(&StreamFileWriter::flush, this)
-                };
-            task_list.push_back(task);
-        };
+            schedule_task(this, std::bind(&StreamFileWriter::handle_GYRO, this));
+        if (FC_elapsed_millis(last_flush) > 5000)
+            schedule_task(this, std::bind(&StreamFileWriter::flush, this));
     };
 }
 

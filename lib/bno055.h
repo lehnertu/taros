@@ -289,6 +289,14 @@ public:
     // read the quaternion orientation
     sQuaAnalog_t getQuaternion();
     
+    // read the calibration status
+    // these are 4 values with 2 bits each
+    // 7:6 SYS,  5:4 GYR,  3:2 ACC,  1:0 MAG
+    uint8_t getCalibrationStatus();
+    
+    // after the setup is finished only the non-blocking
+    // read functions should be used
+    
 // *******************************
 //  internal use member functions
 // *******************************

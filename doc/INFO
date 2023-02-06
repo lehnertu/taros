@@ -78,7 +78,8 @@ Response C1 + ... : WrongFormat -> FF FF FF
 my present configuration:
     mode = 0xE4 : 115200,8N1 air rate 9.6k
     freq = 0x12 : ch18 = 868.125 MHz
-    command : 0xC0 0x00 0x05 0x00 0x00 0xE4 0x00 0x12
+    RSSI = 0x80 : RSSI enabled
+    command : 0xC0 0x00 0x06 0x00 0x00 0xE4 0x00 0x12 0x80
 
 USB stick (black=GND, red=+5V, white=RXD, green=TXD) : cross-cable RXD/TXD with modem
 

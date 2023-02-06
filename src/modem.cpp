@@ -15,7 +15,6 @@ Modem::Modem(
     // copy the name
     id = name;
     runlevel_= MODULE_RUNLEVEL_STOP;
-    flag_ping_pending = false;
     flag_msg_pending = false;
     flag_received = false;
     flag_received_completely = false;
@@ -74,13 +73,14 @@ void Modem::setup()
     // send the configuration command
     Serial1.write(0xc0);
     Serial1.write(0x00);
-    Serial1.write(0x05);    // 5 command bytes
+    Serial1.write(0x06);    // 6 command bytes
     Serial1.write(0x00);
     Serial1.write(0x00);
     Serial1.write(0xE4);    // modem 115200,8N1 air=9600bps
     // Serial1.write(0x64);    // modem 9600,8N1 air=9600bps
     Serial1.write(0x00);
     Serial1.write(0x12);    // freq ch18 = 868.125 MHz
+    Serial1.write(0x80);    // enable RSSI
     // check the response from the modem
     last_time = FC_time_now();
     while (Serial1.available() < 3)
@@ -115,7 +115,7 @@ void Modem::setup()
     status_out.transmit(
         Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_STATUSREPORT, report) );
     // check for correct configuration
-    if ((uplink_num_chars==8) and (uplink_buffer[0]==0xC1))
+    if ((uplink_num_chars==9) and (uplink_buffer[0]==0xC1))
     {
         status_out.transmit(
             Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "configured OK.") );
@@ -149,7 +149,7 @@ void Modem::setup()
 // TODO: handle uplink messages
 // these should be command messages (with a unique identifier)
 // we should respond with a confirmation containing the UID and RSI
-// an empty command could be used as a ping
+// an empty command is used as a ping
 
 bool Modem::have_work()
 {
@@ -170,24 +170,11 @@ bool Modem::have_work()
     // we have to handle it unless the modem is busy()
     // we wait 10 ms after busy() giving receiving messages higher priority than sending
     if ((runlevel_>=16) and (downlink.count()>0) and (elapsed>10)) flag_msg_pending = true;
-    // if there is no activity for longer than 2s send a ping to the ground station
-    if ((runlevel_>=16) and elapsed>2000) flag_ping_pending = true;
-    return flag_ping_pending | flag_received | flag_received_completely | flag_msg_pending;
+    return flag_received | flag_received_completely | flag_msg_pending;
 }
 
 void Modem::run()
 {
-
-    if (flag_ping_pending)
-    {
-        // send a ping
-        std::string buffer("ping.\r\n");
-        Serial1.write(buffer.c_str(), buffer.size());
-        // reset the flag
-        flag_ping_pending = false;
-        // record the time
-        last_time = FC_time_now();
-    }
 
     if (flag_received)
     {
@@ -208,7 +195,27 @@ void Modem::run()
     if (flag_received_completely)
     {
         // there is something in the uplink buffer but the port is idle for 5ms (complete message)
-        // TODO: create an uplink message
+        std::string report("received command : ");
+        for (int i=0; i<uplink_num_chars; i++)
+        {
+            report += hexbyte(uplink_buffer[i]);
+        };
+        // check for and answer a ping
+        // TODO: this check should be a method of the Message class
+        if (uplink_num_chars>=7)
+            if (uplink_buffer[0] == 0xcc)
+                if (uplink_buffer[1] == 0x86)
+                    if (uplink_buffer[2] == 0x03)
+                    {
+                        // send back the uplink RSI
+                        if (uplink_num_chars>=7) uplink_buffer[5] = uplink_buffer[6];
+                        // send downlink packet
+                        Serial1.write(uplink_buffer, 6);
+                        report += " answered.";
+                    };
+        status_out.transmit(
+            Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_STATUSREPORT, report) );
+        // TODO: create an uplink message to be sent to the commander
         uplink_num_chars = 0;
         flag_received_completely = false;
         // record the time

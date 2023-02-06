@@ -102,6 +102,12 @@ BNO055::sQuaAnalog_t BNO055::getQuaternion()
     return qua;
 }
 
+uint8_t BNO055::getCalibrationStatus()
+{
+    uint8_t calib = getReg(BNO055_CALIB_STAT_ADDR, 0);
+    return calib;
+}
+
 void BNO055::setToPage(uint8_t pageId)
 {
     if(_currentPage != pageId) {
