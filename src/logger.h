@@ -30,7 +30,8 @@ public:
     // The module is queried by the scheduler every millisecond whether it needs to run.
     // This will return true, when a new dataset from the GPS has been received.
     virtual bool have_work();
-
+    virtual void interrupt() {};
+    
     // This is the worker function being executed by the taskmanager.
     // It writes all pending messages to the bus unless a limit of execution time is exceeded.
     virtual void run();

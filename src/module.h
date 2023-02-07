@@ -63,14 +63,28 @@ public:
     // TODO: this will diappear soon
     virtual bool have_work() = 0;
     
-    // This will be replaced by an interrupt routine.
+    // All registered modules receive calls to this interrupt service routine
+    // from the 1ms systick interrupt.
+    // The interrupt routine should do no significant amount of work.
+    // It should take no more than 50us (30000 CPU cycles), otherwise,
+    // this will reported as a timing violation to the system log.
     // The calls to the interrupt routines are already active.
     // The following modules already use this feature :
     //   dummy_gps
     //   display
     //   file_writer
     //   serial_usb
-    virtual void interrupt() {};
+    //   blink
+    // The following modules still use the old have_work()/run() system:
+    //   logger
+    //   modem
+    //   motion
+    //   servo
+    // From the interrupt routine modules can schedule arbitrary
+    // worker functions for execution using the schedule_task() call.
+    // Every call to a worker function should return in well below a millisecond.
+    // If necessary, larger amounts of work need to be distributed over several calls.
+    virtual void interrupt() = 0;
     
     // This is the worker routine that gets executed by the taskmanager.
     // Here all the work of the module should be done.

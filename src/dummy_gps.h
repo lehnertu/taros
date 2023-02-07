@@ -34,7 +34,7 @@ public:
     virtual void interrupt();
 
     // This is the worker function being executed by the taskmanager.
-    // It switches on the LED and sends a message to all registered receivers.
+    // It simulates GPS coordinates and sends according messages.
     virtual void run();
 
     // destructor

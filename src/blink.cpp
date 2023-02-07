@@ -5,6 +5,7 @@
 #include <Arduino.h>
 
 #include "global.h"
+#include "base.h"
 #include "blink.h"
 
 Blink::Blink(
@@ -20,37 +21,27 @@ Blink::Blink(
 	// initialize the variables
 	state_on = false;
     last_on_time = FC_time_now();
-    flag_on_pending=false;
-    flag_off_pending = false;
 }
 
-bool Blink::have_work()
+void Blink::interrupt()
 {
     float elapsed = FC_elapsed_millis(last_on_time);
-    if (state_on and (elapsed >= 50.0)) flag_off_pending=true;
-    if (elapsed*blink_rate >= 1000.0) flag_on_pending=true;
-    // if we need to switch either on or off we have work to do
-    return flag_off_pending | flag_on_pending;
+    if (state_on and (elapsed >= 50.0))
+        schedule_task(this, std::bind(&Blink::switch_off, this));
+    if (elapsed*blink_rate >= 1000.0)
+        schedule_task(this, std::bind(&Blink::switch_on, this));
 }
 
-void Blink::run()
+void Blink::switch_on()
 {
-    
-    if (flag_on_pending)
-    {
-        last_on_time = FC_time_now();
-        digitalWriteFast(13, HIGH);
-        state_on = true;
-        flag_on_pending=false;
-    };
+    last_on_time = FC_time_now();
+    digitalWriteFast(13, HIGH);
+    state_on = true;
+}
 
-    if (flag_off_pending)
-    {
-        digitalWriteFast(13, LOW);
-        state_on = false;
-        flag_off_pending = false;
-    };
- 
-    
+void Blink::switch_off()
+{
+    digitalWriteFast(13, LOW);
+    state_on = false;
 }
 

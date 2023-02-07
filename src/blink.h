@@ -17,29 +17,34 @@ public:
     // constructor sets the rate
     Blink(
         std::string name,    // the ID of the module
-        float rate           // the blink rate
+        float rate           // the blink rate in Hz
             );
 
     // nothing to do
     virtual void setup() { runlevel_ = MODULE_RUNLEVEL_OPERATIONAL; };
     
     // The module is queried by the scheduler every millisecond whether it needs to run.
-    virtual bool have_work();
+    virtual bool have_work()  { return false; };
 
-    // This is the worker function being executed by the taskmanager.
-    // It switches the LED on or off.
-    virtual void run();
+    // This gets called once per millisecond from the systick interrupt.
+    // When necessary worker tasks are scheduled to switch the LED.
+    virtual void interrupt();
+    
+    // These are the worker function being executed by the taskmanager.
+    // They switch the LED on or off.
+    // It is quite a bit overkill to use worker functions for this - immediate
+    // switching could well be performed within the timing constraints of the interrupt.
+    // This serves as an example for more expensive modules where this approach is necessary.
+    void switch_on();
+    void switch_off();
+    
+    virtual void run() {};
 
+    
 private:
 
     float       blink_rate;
     bool        state_on;
     uint32_t    last_on_time;
     
-    // It is quite a bit overkill to set flags when the LED needs to be toggled
-    // and have a worker funktion scheduled to actually do it.
-    // This serves as an example for more expensive modules where this approach is necessary.
-    bool        flag_on_pending;
-    bool        flag_off_pending;
-
 };
