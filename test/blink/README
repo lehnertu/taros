@@ -1,0 +1,9 @@
+To compile a simple test (blinking on-board LED) the following files have to be copied
+into the src/ folder
+
+blink.h
+blink.cpp
+system.cpp
+
+The last of these files overwrites the present system description of the TAROS system
+which must be restored when returning to the full system.

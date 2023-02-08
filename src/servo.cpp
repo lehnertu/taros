@@ -6,6 +6,7 @@
 
 #include <cstdio>
 
+#include "base.h"
 #include "global.h"
 #include "servo.h"
 
@@ -15,14 +16,8 @@ Servo8chDriver::Servo8chDriver(
 {
     // copy the name
     id = name;
-    // set the port pins as output
-    for (int i=0; i<NUM_SERVO_CHANNELS; i++)
-	    pinMode(pins[i], OUTPUT);
-	// 12-bit resolution - value 0 to 4095
-	analogWriteResolution(12);
-	// PWM frequency 100 Hz
-    for (int i=0; i<NUM_SERVO_CHANNELS; i++)
-    	analogWriteFrequency(pins[i], 100);
+    // set the port pins as input (not active)
+    activate(0);
 	
 	// a value of 0 is mapped to 1.5 ms pulse length
 	// 12-bit resolution at 100 Hz yield a time step of 2.44 µs
@@ -30,26 +25,74 @@ Servo8chDriver::Servo8chDriver(
 	// an input step corresponding to 0.5µs mappes to 0.2048 output steps
     for (int i=0; i<NUM_SERVO_CHANNELS; i++)
     {
+        pinMode(pins[i], INPUT_PULLDOWN);
+        is_active[i] = false;
+        // for testing every channel gets a different intial value
+        // differing by 200 steps channel to channel
+        // TODO: finally we will need sane presets
     	double pwm = 614.4 + (i-4)*200 * 0.2048;
-    	analogWrite(pins[i], (int)round(pwm));
+    	current_pos[i] = (short int)round(pwm);
 	};
-    flag_message_pending = false;
 }
 
-bool Servo8chDriver::have_work()
+void Servo8chDriver::interrupt()
 {
-    // if there is something received we have to handle it
-    if (in.count()>0) flag_message_pending = true;
-    return flag_message_pending;
+    // a message is pending - schedule handler
+    if (in.count()>0)
+        schedule_task(this, std::bind(&Servo8chDriver::handle_message, this));
 }
 
-void Servo8chDriver::run()
+void Servo8chDriver::handle_message()
 {
-    while (flag_message_pending)
+    // we go through all messages pending
+    while (in.count()>0)
     {
         Message msg = in.fetch();
-        // TODO: set servos
-        flag_message_pending = (in.count()>0);
+        // handle only servo messages
+        if (msg.type() == MSG_TYPE_SERVO)
+        {
+            // get a pointer to the data struct
+            MSG_DATA_SERVO *data = (MSG_DATA_SERVO *) msg.get_data();
+            // update the settings
+            set_pos(data->pos);
+        }
     }
+}
+
+void Servo8chDriver::set_pos(short int value[NUM_SERVO_CHANNELS])
+{
+    for (int i=0; i<NUM_SERVO_CHANNELS; i++)
+    {
+        // update those channels that are within sane limits
+        short int setpoint = value[i];
+        if ((setpoint>=-1000) and (setpoint<=1000) and is_active[i])
+        {
+        	double pwm = 614.4 + setpoint * 0.2048;
+        	current_pos[i] = (short int)round(pwm);
+        	analogWrite(pins[i], current_pos[i]);
+        };
+    };
+}
+
+void Servo8chDriver::activate(uint8_t mask)
+{
+    // set the port pins as output
+    for (int i=0; i<NUM_SERVO_CHANNELS; i++)
+    {
+        uint8_t test_bit = 1 << i;
+        if ((mask & test_bit) != 0)
+        {
+            is_active[i] = true;
+    	    pinMode(pins[i], OUTPUT);
+            analogWriteResolution(12);
+            analogWriteFrequency(pins[i], 100);
+            analogWrite(pins[i], current_pos[i]);
+	    }
+    	else
+    	{
+    	    is_active[i] = false;
+    	    pinMode(pins[i], INPUT_PULLDOWN);
+	    };
+    };
 }
 

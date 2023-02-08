@@ -57,6 +57,9 @@ public:
     // This will return true, when a new message from the ground station has been received.
     virtual bool have_work();
 
+    // TODO: use this
+    virtual void interrupt() {};
+    
     // This is the worker function being executed by the taskmanager.
     // It writes all pending messages to the bus unless a limit of execution time is exceeded.
     virtual void run();
