@@ -3,6 +3,7 @@
 
 #include <functional>
 
+#include "base.h"
 #include "module.h"
 #include "message.h"
 #include "port.h"

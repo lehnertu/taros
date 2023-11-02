@@ -1,0 +1,31 @@
+    To-Do list : TAROS
+===========================
+
+
+system cleanup for monolithic build
+-----------------------------------
+
+- base.h includes:
+	- message.h
+	- module.h
+	- port.h
+- global.h
+	- all global variabes defined in main.cpp
+	- logger.h
+	- file_writer.h
+- system.h includes:
+	- all modules
+	- all setup (link building)
+
+- system.h should include all module headers
+	- all modules should have permanent public pointers (not encapsulated to the setup)
+	- every module that include system.h should have full call capability of the other modules
+- messages should be more limited (tamplate based typing)
+- define a port(queue) input for streaming data between modules (source driven, receiver stored)
+	(these are messages now, but use headerless binary data instead, data types defined in receiver module)
+
+	
+possibly use LITTLEFS insted of FAT on the SD card
+--------------------------------------------------
+- small (and fast?)
+- resilient to power failures

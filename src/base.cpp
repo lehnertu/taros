@@ -1,6 +1,5 @@
 #include "base.h"
 #include "module.h"
-#include "global.h"
 #include <Arduino.h>
 
 /***** the core timing/interrupt system *****/
@@ -23,6 +22,21 @@ std::list<Task> task_list;
 // They are only included for the systick interupt service routine.
 extern "C" volatile uint32_t systick_cycle_count;
 extern "C" volatile uint32_t systick_millis_count;
+
+uint32_t FC_time_now()
+{
+    return FC_systick_millis_count;
+}
+
+uint32_t FC_elapsed_millis(uint32_t timestamp)
+{
+    uint32_t now = FC_systick_millis_count;
+    if (now>=timestamp)
+        return now - timestamp;
+    else
+        // wrap around
+        return (0xFFFFFFFF - timestamp) + now + 1;
+}
 
 void FC_systick_isr(void)
 {
@@ -74,7 +88,7 @@ void schedule_task(Module *mod, TaskFunct f)
 {
     Task task = {
         .module = mod,
-        .schedule_time = FC_systick_millis_count,
+        .request_time = FC_systick_millis_count,
         .funct = f
         };
     task_list.push_back(task);

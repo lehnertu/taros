@@ -3,6 +3,7 @@
 #include "base.h"
 #include "global.h"
 #include "motion.h"
+#include "util.h"
 
 // using a modified version of the BNO055 library
 // the I²C bus is accessed via the teensy4_i2c library by Richard Gemmell

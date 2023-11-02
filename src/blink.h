@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include "global.h"
 #include "module.h"
 
 

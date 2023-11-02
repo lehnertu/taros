@@ -1,57 +1,57 @@
 #include "global.h"
 #include "system.h"
-#include "dummy_gps.h"
-#include "servo.h"
-#include "serial_usb.h"
-#include "display.h"
-#include "modem.h"
-#include "motion.h"
+
+DisplaySSD1331 *display;
+StreamFileWriter* fast_log_file_writer;
+DummyGPS *gps;
+MotionSensor *imu;
+Modem *modem;
 
 void FC_build_system(
     std::list<Module*> *module_list
 )
 {
     // create the USB serial output channel
-    USB_Serial *usb = new USB_Serial(std::string("USB_1"), 115200);
-    module_list->push_back(usb);
+    // USB_Serial *usb = new USB_Serial(std::string("USB_1"), 115200);
+    // module_list->push_back(usb);
     // wire the syslog output to it
-    system_log->text_out.set_receiver(&(usb->in));
+    // system_log->text_out.set_receiver(&(usb->in));
 
     // create a module for LED blinking
     // Blink *bl = new Blink(std::string("LED1"), 5.0);
     // module_list->push_back(bl);
     
     // create a display with 2Hz update
-    DisplaySSD1331 *display = new DisplaySSD1331(std::string("DISPLAY"), 2.0);
+    display = new DisplaySSD1331(std::string("DISPLAY"), 2.0);
     display->status_out.set_receiver(&(system_log->in));
     module_list->push_back(display);
 
     // create a logfile writer for streaming data
-    // char log_filename[40];
-    // sprintf(log_filename, "taros.%05d.fast.log", SD_file_No);
-    // StreamFileWriter* fast_log_file_writer = new StreamFileWriter("FASTLOG",std::string(log_filename));
-    // module_list->push_back(fast_log_file_writer);
+    char log_filename[40];
+    sprintf(log_filename, "taros.%05d.fast.log", SD_file_No);
+    fast_log_file_writer = new StreamFileWriter("FASTLOG",std::string(log_filename));
+    module_list->push_back(fast_log_file_writer);
 
     // create a simulated GPS module
-    DummyGPS *gps = new DummyGPS(std::string("GPS_1"), 5.0, 0.0);
+    gps = new DummyGPS(std::string("GPS_1"), 5.0, 0.0);
     gps->status_out.set_receiver(&(system_log->in));
-    gps->tm_out.set_receiver(&(usb->in));
+    gps->tm_out.set_receiver(&(system_log->in));
     module_list->push_back(gps);
     
     // create a motion controller
-    MotionSensor *imu = new MotionSensor(std::string("IMU_1"));
+    imu = new MotionSensor(std::string("IMU_1"));
     imu->status_out.set_receiver(&(system_log->in));
     imu->AHRS_out.set_receiver(&(display->ahrs_in));
     imu->GYRO_out.set_receiver(&(display->gyro_in));
-    // imu->AHRS_out.set_receiver(&(fast_log_file_writer->ahrs_in));
-    // imu->GYRO_out.set_receiver(&(fast_log_file_writer->gyro_in));
+    imu->AHRS_out.set_receiver(&(fast_log_file_writer->ahrs_in));
+    imu->GYRO_out.set_receiver(&(fast_log_file_writer->gyro_in));
     module_list->push_back(imu);
     
     // creste a servo controller
     // Servo8chDriver *servo = new Servo8chDriver(std::string("SERVO_1"));
     
     // create a modem for comminication with a ground station
-    Modem *modem = new Modem(std::string("MODEM_1"), 9600);
+    modem = new Modem(std::string("MODEM_1"), 9600);
     modem->status_out.set_receiver(&(system_log->in));
     module_list->push_back(modem);
     // wire the syslog output to it

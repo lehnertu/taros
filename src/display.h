@@ -1,8 +1,9 @@
 #pragma once
 
 #include <cstdint>
-
-#include "global.h"
+#include "module.h"
+#include "port.h"
+ 
 #include "stream.h"
 #include <Adafruit_SSD1331.h>
 

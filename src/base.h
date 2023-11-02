@@ -27,13 +27,20 @@
 #include <cstdlib>
 #include <list>
 #include <functional>
+#include <string>
 
-// include <module.h>
 class Module;
 
 // uint32_t systick_millis_count is used as timestamp
 // miliseconds since program start (about 50 days capacity)
 extern volatile uint32_t FC_systick_millis_count;
+
+// miliseconds since program start (about 50 days capacity)
+uint32_t FC_time_now();
+
+// report the time elapsed since the timestamp
+// if current FC_systick_millis_count is small than timestamp wrap-around
+uint32_t FC_elapsed_millis(uint32_t timestamp);
 
 // ARM_DWT_CYCCNT is a 32-bit unsigned counter for processor cycles (600 MHz)
 // we store its value with every systick to procide sub-millisecond timing
@@ -72,7 +79,7 @@ struct Task
     // the module which has started this task
     Module* module;
     // the system time at which the task has been started
-    uint32_t schedule_time;
+    uint32_t request_time;
     // a pointer to the procedure to be executed
     TaskFunct funct;
 };

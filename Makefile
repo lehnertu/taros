@@ -9,7 +9,7 @@
 # on fwl78
 HOME                = /home/ulf
 PROJECT_HOME        = $(HOME)/Programming/taros
-ARDUINO_HOME        = $(HOME)/Elektronik/Arduino/arduino-1.8.13
+ARDUINO_HOME        = $(HOME)/Programming/arduino-1.8.19
 
 # on fwl56
 # HOME                = /home/lehnertu

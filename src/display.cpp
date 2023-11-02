@@ -2,7 +2,6 @@
 #include <SPI.h>
 
 #include "base.h"
-#include "global.h"
 #include "display.h"
 
 // Color definitions

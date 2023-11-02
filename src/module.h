@@ -1,6 +1,6 @@
 /*  
     A module is a software object handling one particular task or subsystem
-    in the FlightController system. Besides scheduler and taskmanager
+    in the FlightController system. Apart from scheduler and taskmanager
     everything is a module. Here we declare an abstract class from which
     all modules will be derived.
     
@@ -29,6 +29,8 @@
 // it could immediately go to OPERATIONAL if no further initializations aree necessary
 #define MODULE_RUNLEVEL_SETUP_OK 1
 #define MODULE_RUNLEVEL_INITALIZED 10
+// a fully usable module reports OPERATIONAL
+// higher numbers can be used to report module-specific information (like link status)
 #define MODULE_RUNLEVEL_OPERATIONAL 16
 #define MODULE_RUNLEVEL_LINK_OPEN 17
 
@@ -52,7 +54,7 @@ public:
     // This may be reset procedures, configurations or loading
     // calibration data. This will be called once per module
     // before the system loop is started. It will never be called
-    // later on, as it could break the system timimg.
+    // later on, as it could break the system timing.
     virtual void setup() = 0;
     
     // The module is queried by the scheduler every millisecond whether it needs to run.

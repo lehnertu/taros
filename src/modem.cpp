@@ -1,6 +1,7 @@
 #include "modem.h"
 
 #include "HardwareSerial.h"
+#include "util.h"
 
 // this is the RTS pin for the modem, used for M0 and M1 wired in parallel
 // high means config mode, low is transceiver mode

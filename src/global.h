@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <string>
-
 #include "logger.h"
 #include "file_writer.h"
 
@@ -21,18 +19,12 @@ extern Logger* system_log;
 extern FileWriter* system_log_file_writer;
 
 // it the SD card has been found and initialized
+// -- actually defined in main.cpp --
 extern bool SD_card_OK;
 
 // this is the run number used to name log files
 // it is assigned when opening the 'taros.0000.system.log'
 // and should be used for all other log files of the same run
+// -- actually defined in main.cpp --
 extern int SD_file_No;
 
-// miliseconds since program start (about 50 days capacity)
-uint32_t FC_time_now();
-
-// report the time elapsed since the timestamp
-// if current FC_systick_millis_count is small than timestamp wrap-around
-uint32_t FC_elapsed_millis(uint32_t timestamp);
-
-std::string hexbyte(char c);

@@ -18,6 +18,8 @@
 #include "message.h"
 #include "system.h"
 
+bool SD_card_OK;
+int SD_file_No;
 Logger *system_log;
 FileWriter* system_log_file_writer = 0;
 
@@ -26,8 +28,8 @@ extern "C" int main(void)
 
     // the logger has to be added to the list of modules so it will be scheduled for execution
     system_log = new Logger("SYSLOG");
-    // the logger can queue messages even before its setup() is run
     module_list.push_back(system_log);
+    // the logger can queue messages even before its setup() is run
     system_log->in.receive(
         Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE,"Teensy Flight Controller - Version 1.0") );
     
@@ -88,7 +90,7 @@ extern "C" int main(void)
 
 	// infinite system loop
 	// while (FC_time_now()<12000)
-	for(;;)
+	while(true)
 	{
 	
 	    // watchdog - once per second
@@ -140,7 +142,7 @@ extern "C" int main(void)
             // remove it from the list
             task_list.pop_front();
             // check how much time has elapsed from the request of the task
-            uint32_t start_delay = FC_systick_millis_count-task.schedule_time;
+            uint32_t start_delay = FC_systick_millis_count-task.request_time;
             // report anything exceeding 10 ms
             if (start_delay>10000)
             {
