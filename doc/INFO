@@ -99,8 +99,10 @@ ARM_DWT_CYCCNT is a 32-bit unsigned counter for processor cycles (600 MHz), defi
  testing with USB serial
  -----------------------
 
+# for modem
 minicom -D /dev/ttyACM0 -b 9600
-
+# for USB serial
+minicom -D /dev/ttyACM0 -b 115200
 
 gdb ./DemoSystem
 (gdb) handle SIG34 noprint
