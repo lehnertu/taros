@@ -1,9 +1,15 @@
-To compile a simple test (blinking on-board LED) the following files have to be copied
-into the src/ folder
+To compile a simple test (all servos running periodically)
+all files have to be copied into the src/ folder
 
-blink.h
-blink.cpp
+servo_tester.h
+servo_tester.cpp
+system.h
 system.cpp
+
+mv *.h ../../src/
+cp *.cpp ../../src/
+cd ../..
+make
 
 The last of these files overwrites the present system description of the TAROS system
 which must be restored when returning to the full system.

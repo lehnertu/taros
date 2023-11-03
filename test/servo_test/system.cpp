@@ -4,17 +4,16 @@
 #include "servo.h"
 #include "servo_tester.h"
 
+Servo8chDriver *servo;
+ServoTester *tester;
+
 void FC_build_system(
     std::list<Module*> *module_list
 )
 {
 
-    // create the blinker
-    Blink *blink = new Blink(std::string("blink"), 5.0);
-    module_list->push_back(blink);
-
     // create the servo driver
-    Servo8chDriver *servo = new Servo8chDriver(std::string("SERVO"));
+    servo = new Servo8chDriver(std::string("SERVO"));
     module_list->push_back(servo);
     // set sane defaults
     short int defaults[] = {0,200,0,0,-1000,-800,0,0};
@@ -24,7 +23,7 @@ void FC_build_system(
 
     // create the servo tester
     // only first channel is influenced
-    ServoTester *tester = new ServoTester(std::string("TESTER"),0x01);
+    tester = new ServoTester(std::string("TESTER"),0x01);
     module_list->push_back(tester);
     tester->servo_out.set_receiver(&(servo->in));
 
