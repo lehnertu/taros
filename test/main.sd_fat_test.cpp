@@ -2,6 +2,8 @@
 #include <cstdint>
 #include <list>
 
+// Test the access of files in a FAT32 file system on SD card
+
 // the main program is independent from the Arduino core system and libraries
 // TODO: it comes in idirectly via display.h -> Adafruit_SSD1331.h
 
