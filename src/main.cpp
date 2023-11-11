@@ -52,6 +52,7 @@ extern "C" int main(void)
         };
         // create a file writer
         system_log_file_writer = new FileWriter("SYSLOGF",std::string(syslog_filename));
+        system_log_file_writer->setup();
         // TODO: what if a problem occurs ?
         module_list.push_back(system_log_file_writer);
         // wire the syslog output to the file
@@ -69,25 +70,17 @@ extern "C" int main(void)
     // for some (unclear) reason this needs to be done before the module setup.
     setup_core_system();
 
-    // Now create and wire all modules and add them to the list
-    // all extended initializations are not yet done but
-    // have to be handled my the modules as tasks.
-    // Modules cannot yet send messages during system build,
-    // initializations that require messages should be delayed to the module setup().
-    FC_build_system(&module_list);
-    
-    // call the setup() method for all modules in the list
-    // the modules are now wired, so they can send messages
-    std::list<Module*>::iterator it;
-    for (it = module_list.begin(); it != module_list.end(); it++)
-    {
-        Module* mod = *it;
-        mod->setup();
-    };
+	// Now we create all modules
+	FC_init_system();
+    // Call the setup() method for all modules.
+    // All modules that are properly initialized get included in the list
+    FC_setup_system(&module_list);
+    // Now we wire all modules into the final system
+    FC_build_system();
+    // Complete system ready to go
     
     system_log->in.receive(
         Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "entering event loop.") );
-
 	// infinite system loop
 	// while (FC_time_now()<12000)
 	while(true)

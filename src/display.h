@@ -74,7 +74,7 @@ private:
     float       gx, gy, gz;
     
     float       update_rate;    // the update rate of the display
-    uint8_t     state;          // state machine controlling the display update
+    uint8_t     update_state;   // state machine controlling the display update
     uint32_t    last_update;    // the time of the last update
     int         cycle_count;    // number of cycles performed on a display print action
     int         num_cycles;     // the number of cycles (characters) to complete the print

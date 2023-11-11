@@ -100,10 +100,10 @@ class CommunicationsView(QWidget):
         """
         msg = bytes(self.serial.readAll())
         self.receive_buffer.extend(msg)
-        line = ""
-        for c in msg:
-            line += (" %0.2X" % c)
-        print(line)
+        # line = ""
+        # for c in msg:
+        #     line += (" %0.2X" % c)
+        # print(line)
         
         found = False
         empty = len(self.receive_buffer) < 3
@@ -167,7 +167,7 @@ class CommunicationsView(QWidget):
                     self.table.setCurrentCell(self.next_index, 0)
                 # if it is a ping response
                 elif lsb == 134:
-                    print("ping received")
+                    # print("ping received")
                     self.next_index = self.table.rowCount()
                     self.table.insertRow(self.next_index)
                     self.table.setRowCount(self.next_index+1)

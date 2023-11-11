@@ -20,16 +20,34 @@ extern Modem *modem;
 
 // -- actually defined in main.cpp --
 extern Logger* system_log;
+// extern USB_Serial *usb;
 extern FileWriter* system_log_file_writer;
 
 /*
     This is the system definition. All modules are created and
-    inserted into the list. The connections between modules are defined
-    and registered along with the message type.
+    wired to the system_log. This only calls the constructors - nothing
+    should go wrong here. No connections other than to system_log are made yet.
 */
-void FC_build_system(
+void FC_init_system();
+
+/*
+	This fills the list of modules making up the system.
+    For every module the setup() method is called.
+    At that time messages to system_log are possible.
+    Only modules that report a state of MODULE_RUNLEVEL_SETUP_OK after setup()
+    will be included in the system and included in the list of modules.
+*/
+void FC_setup_system(
     std::list<Module*> *module_list
 );
+
+/*
+    This is the system definition.
+    All modules (if properly active) are wired to each other.
+    This has to be done in an appropriate sequence, such that modules are
+    setup only after other modules they may rely on.
+*/
+void FC_build_system();
 
 /*
     This cleans up the system. In a practical environment there is an

@@ -26,7 +26,10 @@
 #define MODULE_RUNLEVEL_ERROR -1
 #define MODULE_RUNLEVEL_STOP 0
 // after running the setup() method the runlevel should change to SETUP_OK
-// it could immediately go to OPERATIONAL if no further initializations aree necessary
+// it could immediately go to OPERATIONAL if no further initializations are necessary
+// setup() will be called for all modeules during system build
+// if the module does not report a state MODULE_RUNLEVEL_SETUP_OK fter setup()
+// it will not be included in the system and reportrd accordingly
 #define MODULE_RUNLEVEL_SETUP_OK 1
 #define MODULE_RUNLEVEL_INITALIZED 10
 // a fully usable module reports OPERATIONAL
@@ -55,6 +58,7 @@ public:
     // calibration data. This will be called once per module
     // before the system loop is started. It will never be called
     // later on, as it could break the system timing.
+    // During setup, only messages to system_log are possible.
     virtual void setup() = 0;
     
     // The module is queried by the scheduler every millisecond whether it needs to run.

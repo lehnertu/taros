@@ -14,7 +14,7 @@
 #define YELLOW          0xFFE0
 #define WHITE           0xFFFF
 
-// Display states
+// Display update_states
 #define DISPLAY_UNINITIALIZED   0
 #define DISPLAY_CLEAR           2
 #define DISPLAY_CLOCK           3
@@ -42,9 +42,9 @@ DisplaySSD1331::DisplaySSD1331(
     gy = -5.3;
     gz = 13.2;
 
-    // initialize the state
+    // initialize the update_state
     last_update = FC_time_now();
-    state = DISPLAY_UNINITIALIZED;
+    update_state = DISPLAY_UNINITIALIZED;
     flag_update_running = false;
 }
 
@@ -58,7 +58,7 @@ void DisplaySSD1331::setup()
     display->fillScreen(BLACK);
     status_out.transmit(
         Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_STATE_CHANGE, "initialized.") );
-    state=DISPLAY_COMPLETE;
+    update_state=DISPLAY_COMPLETE;
     
     flag_update_running = false;
     
@@ -115,7 +115,7 @@ void DisplaySSD1331::interrupt()
             if (FC_elapsed_millis(last_update)*update_rate>1000)
             {
                 last_update = FC_time_now();
-                state = DISPLAY_CLEAR;
+                update_state = DISPLAY_CLEAR;
                 cycle_count = 0;
                 // this will become effective with the next interrupt
                 flag_update_running = true;
@@ -127,7 +127,7 @@ void DisplaySSD1331::interrupt()
 // redraw gets called many times until the full display refresh has been accomplished
 void DisplaySSD1331::redraw()
 {
-    switch(state)
+    switch(update_state)
     {
         // the time since the last update has expired, clear the display
         case DISPLAY_CLEAR :
@@ -148,7 +148,7 @@ void DisplaySSD1331::redraw()
             display->sendCommand(0);    // fill R
             display->sendCommand(0);    // fill G
             display->sendCommand(10);   // fill B
-            state=DISPLAY_CLOCK;
+            update_state=DISPLAY_CLOCK;
             cycle_count = 0;
             break;
         }
@@ -175,7 +175,7 @@ void DisplaySSD1331::redraw()
             {
                 // we are done with the clock
                 cycle_count = 0;
-                state=DISPLAY_ITC;
+                update_state=DISPLAY_ITC;
             }
             break;
         }
@@ -200,7 +200,7 @@ void DisplaySSD1331::redraw()
             {
                 // we are done with the ITC
                 cycle_count = 0;
-                state=DISPLAY_TTC;
+                update_state=DISPLAY_TTC;
             }
             break;
         }
@@ -225,7 +225,7 @@ void DisplaySSD1331::redraw()
             {
                 // we are done with the TTC
                 cycle_count = 0;
-                state=DISPLAY_HEADING;
+                update_state=DISPLAY_HEADING;
             }
             break;
         }
@@ -246,7 +246,7 @@ void DisplaySSD1331::redraw()
             {
                 // we are done with the heading
                 cycle_count = 0;
-                state=DISPLAY_PITCH;
+                update_state=DISPLAY_PITCH;
             }
             break;
         }
@@ -267,7 +267,7 @@ void DisplaySSD1331::redraw()
             {
                 // we are done with pitch
                 cycle_count = 0;
-                state=DISPLAY_COMPLETE;
+                update_state=DISPLAY_COMPLETE;
                 // we are done completely, update is finished
                 flag_update_running = false;
                 last_update = FC_time_now();
@@ -292,7 +292,7 @@ void DisplaySSD1331::redraw()
             {
                 // we are done with roll
                 cycle_count = 0;
-                state=DISPLAY_COMPLETE;
+                update_state=DISPLAY_COMPLETE;
                 // we are done completely, update is finished
                 flag_update_running = false;
                 last_update = FC_time_now();
