@@ -4,10 +4,8 @@
 #include "logger.h"
 #include "message.h"
 
-Logger::Logger(std::string name)
+Logger::Logger(std::string name) : Module(name)
 {
-    // copy the name
-    id = name;
     runlevel_= MODULE_RUNLEVEL_OPERATIONAL;
     // open the connection
     flag_message_pending = false;
@@ -38,10 +36,8 @@ void Logger::run()
     }
 }
 
-Requester::Requester(std::string name, float rate)
+Requester::Requester(std::string name, float rate) : Module(name)
 {
-    // copy the name
-    id = name;
     runlevel_= MODULE_RUNLEVEL_OPERATIONAL;
     // save the startup time and rate
     last_update = FC_time_now();

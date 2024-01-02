@@ -4,10 +4,8 @@
 
 USB_Serial::USB_Serial(
     std::string name,
-    uint32_t baud_rate )
+    uint32_t baud_rate ) : Module(name)
 {
-    // copy the name
-    id = name;
     runlevel_= MODULE_RUNLEVEL_INITALIZED;
     // open the connection
     Serial.begin(baud_rate);

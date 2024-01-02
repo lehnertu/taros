@@ -1,0 +1,48 @@
+pip install littlefs-python
+	--> Successfully installed littlefs-python-0.8.0
+
+fusermount -V
+	fusermount3 version: 3.10.5
+	>= 2.6 required
+sudo apt-get install libfuse-dev
+
+install fuse driver from sources
+--------------------------------
+git clone https://github.com/littlefs-project/littlefs-fuse.git
+cd littlefs-fuse
+make
+cp lfs ~/bin/
+
+
+use /dev/loop0 for file-based fs
+--------------------------------
+# use lsblk to find a loop device that's not in use
+sudo chmod a+rw /dev/loop14                 # make loop device user accessible
+dd if=/dev/zero of=image bs=512 count=2048  # create a 1MB image
+losetup /dev/loop14 image                   # attach the loop device
+# format the device
+lfs --format /dev/loop14
+# mount the device
+mkdir ~/mnt/littlefs
+lfs /dev/loop14 ~/mnt/littlefs
+# test
+cd ~/mnt/littlefs
+echo "hello world" > hello.txt
+ls
+cat hello.txt
+# release
+
+
+losetup -d /dev/loop14
+
+use littlefs on SD card
+---------------------------
+sudo /home/ulf/bin/lfs --format /dev/mmcblk0
+sudo chmod a+rw /dev/mmcblk0
+lfs /dev/mmcblk0 ~/mnt/littlefs/
+cd mnt/littlefs/
+mkdir 001
+echo "empty" > 001/system.log
+cd
+umount mnt/littlefs
+

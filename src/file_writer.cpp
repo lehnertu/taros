@@ -4,7 +4,7 @@
 
 FileWriter::FileWriter(
         std::string name,
-        std::string file_name)
+        std::string file_name) : Module(name)
 {
     // copy the name
     id = name;
@@ -68,7 +68,7 @@ FileWriter::~FileWriter()
 
 StreamFileWriter::StreamFileWriter(
         std::string name,
-        std::string file_name)
+        std::string file_name) : Module(name)
 {
     // copy the name
     id = name;

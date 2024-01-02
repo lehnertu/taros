@@ -20,6 +20,7 @@
 
 #include <cstddef>
 #include <string>
+#include "port.h"
 
 // after the constructor of a module has been executed,
 // the module status can either be ERROR or STOP
@@ -52,6 +53,13 @@ class Module
 
 public:
 
+	// This is the constructor of the base class.
+	// All derived modules should call it from their constructors.
+	Module(std::string name) {
+		id = name;
+		runlevel_ = MODULE_RUNLEVEL_ERROR;
+	};
+	
     // All modules have a setup() method that is intended for
     // initializations which cannot easily proceed in the background.
     // This may be reset procedures, configurations or loading
@@ -126,4 +134,8 @@ protected:
     // Modules may define their own mappings
     int8_t runlevel_;
     
+    // All modules have a port over which status messages are sent.
+    // This is usually wired to the system log but that's handled during system setup.
+    SenderPort status_out;
+
 };

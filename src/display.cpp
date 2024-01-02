@@ -27,10 +27,8 @@
 DisplaySSD1331::DisplaySSD1331(
     std::string name,       // the ID of the module
     float rate              // the update rate of the display
-    )
+    ) : Module(name)
 {
-    // copy the name
-    id = name;
     update_rate = rate;
     // create the display
     display = new Adafruit_SSD1331(&SPI, DISPLAY_CS, DISPLAY_DC, DISPLAY_RST);

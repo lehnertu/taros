@@ -9,7 +9,7 @@
 
 Blink::Blink(
     std::string name,
-    float rate )
+    float rate ) : Module(name)
 {
     // copy the name
     id = name;

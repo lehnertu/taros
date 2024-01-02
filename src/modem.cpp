@@ -11,10 +11,9 @@
 
 Modem::Modem(
     std::string name,
-    uint32_t baud_rate )
+    uint32_t baud_rate ) :
+    Module(name)
 {
-    // copy the name
-    id = name;
     runlevel_= MODULE_RUNLEVEL_STOP;
     flag_msg_pending = false;
     flag_received = false;

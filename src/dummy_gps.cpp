@@ -6,10 +6,8 @@
 DummyGPS::DummyGPS(
     std::string name,
     float rate,
-    float tm_rate )
+    float tm_rate ) : Module(name)
 {
-    // copy the name
-    id = name;
     runlevel_= MODULE_RUNLEVEL_INITALIZED;
     gps_rate = rate;
     telemetry_rate = tm_rate;

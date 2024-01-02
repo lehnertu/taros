@@ -12,10 +12,8 @@
 #include "bno055.h"
 
 MotionSensor::MotionSensor(
-    std::string name)
+    std::string name) : Module(name)
 {
-    // copy the name
-    id = name;
     query_state = 0;
     heading = 0.0;
     pitch = 0.0;

@@ -12,10 +12,8 @@
 
 Servo8chDriver::Servo8chDriver(
     std::string name
-    )
+    ) : Module(name)
 {
-    // copy the name
-    id = name;
     // set the port pins as input (not active)
     activate(0);
 	
