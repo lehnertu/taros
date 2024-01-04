@@ -69,44 +69,16 @@ public:
     // During setup, only messages to system_log are possible.
     virtual void setup() = 0;
     
-    // The module is queried by the scheduler every millisecond whether it needs to run.
-    // If the overall workload is low this can also happen much more often.
-    // This method needs to answer and return immediately.
-    // No actual work should be performed here,
-    // just determined if there is something that needs to be done.
-    // TODO: this will diappear soon
-    virtual bool have_work() = 0;
-    
     // All registered modules receive calls to this interrupt service routine
     // from the 1ms systick interrupt.
     // The interrupt routine should do no significant amount of work.
     // It should take no more than 50us (30000 CPU cycles), otherwise,
     // this will reported as a timing violation to the system log.
-    // The calls to the interrupt routines are already active.
-    // The following modules already use this feature :
-    //   dummy_gps
-    //   display
-    //   file_writer
-    //   serial_usb
-    //   blink
-    // The following modules still use the old have_work()/run() system:
-    //   logger
-    //   modem
-    //   motion
-    //   servo
     // From the interrupt routine modules can schedule arbitrary
     // worker functions for execution using the schedule_task() call.
     // Every call to a worker function should return in well below a millisecond.
     // If necessary, larger amounts of work need to be distributed over several calls.
     virtual void interrupt() = 0;
-    
-    // This is the worker routine that gets executed by the taskmanager.
-    // Here all the work of the module should be done.
-    // Every call should return in well below a millisecond.
-    // If necessary, larger amounts of work need to be distributed into
-    // several chunks, that means several calls of run()
-    // TODO: this will soon disappear from the header as modules can schedule arbitrary task functions
-    virtual void run() = 0;
     
     // we need a virtual destructor for destroying lists of objects
     virtual ~Module() {};

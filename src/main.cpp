@@ -102,27 +102,6 @@ extern "C" int main(void)
 	        
 	    }
 	    
-	    // systick interrupt has occured - run scheduler
-	    if (FC_systick_flag>0)
-	    {
-	        // reset the flag
-	        FC_systick_flag=0;
-	        
-	        // SCHEDULER:
-	        // The scheduler runs through the complete list of modules.
-	        // All modules which have work to do get a task scheduled
-	        // at appropriate position (priority) in the (ordered) task list.
-	        // TODO: this will disappear - all modules should schedule their tasks from the interrupt() routine
-	        std::list<Module*>::iterator it;
-	        for (it = module_list.begin(); it != module_list.end(); it++)
-	        {
-	            Module* mod = *it;
-	            if (mod->have_work())
-	                schedule_task(mod, std::bind(&Module::run, mod));
-	        };
-	        
-	    };
-	    
 	    // TASKMANAGER:
 	    // All scheduled tasks get executed based on priority (list position).
 	    // It should be guaranteed that any scheduled task is executed within 10 ms.

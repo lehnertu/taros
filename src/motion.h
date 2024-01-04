@@ -46,21 +46,21 @@ public:
     void check_calibration();
     
     // This hooks into the 1ms systick interrupt service routine.
-    // At present it is not used anymore when the modeule has reached MODULE_RUNLEVEL_OPERATIONAL state.
+    // It schedules a check_calibration() task until the module has reached MODULE_RUNLEVEL_OPERATIONAL state.
     virtual void interrupt();
     
-    // The module is queried by the scheduler every millisecond whether it needs to run.
-    // It will have work to do almost every millisecond, as the data transfers are split
+    // The module will have work to do almost every millisecond, as the data transfers are split
     // into several actions that take only microseconds of CPU time. We want to transfer data
     // as fast as possible so we always have work to do. One loop of data transfers
     // could be as short as 10ms (maximum update rate of the sensors) but will actually be longer.
     // No exact loop timing is guarateed, as we may have to skip cycles if requests are not
-    // yet fulfilled.
-    virtual bool have_work() {return (runlevel_ == MODULE_RUNLEVEL_OPERATIONAL); };
+    // yet fulfilled. To save overhead, this function is directly called from the interrupt() routine
+    // and not schedules as a task. In case of errors tasks are scheduled to do the reporting.
+    void read_sensor();
 
     // This is the worker function being executed by the taskmanager.
     // It performs a loop with query_state indicating the cycle.
-    virtual void run();
+    virtual void run() {};
 
     // While the data acquisition from the sensor is done within the interrupt routine
     // for sending messages we use tasks.

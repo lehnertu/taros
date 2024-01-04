@@ -32,9 +32,6 @@ public:
     // nothing to do
     virtual void setup() { runlevel_ = MODULE_RUNLEVEL_OPERATIONAL; };
     
-    // TODO: This can be removed as soon as all modules exclusively use the inetrrupt method
-    virtual bool have_work() { return false; };
-
     // This gets called once per millisecond from the systick interrupt.
     // When necessary worker tasks are scheduled to switch the LED.
     virtual void interrupt();

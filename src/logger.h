@@ -28,10 +28,7 @@ public:
     // nothing to do
     virtual void setup() { runlevel_ = MODULE_RUNLEVEL_OPERATIONAL; };
     
-    // The module is queried by the scheduler every millisecond whether it needs to run.
-    // This will return true, when a new dataset from the GPS has been received.
-    virtual bool have_work();
-    virtual void interrupt() {};
+    virtual void interrupt();
     
     // This is the worker function being executed by the taskmanager.
     // It writes all pending messages to the bus unless a limit of execution time is exceeded.
@@ -72,12 +69,9 @@ public:
     // nothing to do
     virtual void setup() { runlevel_ = MODULE_RUNLEVEL_SETUP_OK; };
     
-    // The module is queried by the scheduler every millisecond whether it needs to run.
-    // This will return true, when a new dataset from the GPS has been received.
-    virtual bool have_work();
+    virtual void interrupt();
 
-    // This is the worker function being executed by the taskmanager.
-    // It writes all pending messages to the bus unless a limit of execution time is exceeded.
+    // This is the worker function being executed by the taskmanager when the interval has elapsed.
     virtual void run();
 
     // destructor

@@ -11,12 +11,13 @@ Logger::Logger(std::string name) : Module(name)
     flag_message_pending = false;
 }
 
-bool Logger::have_work()
+void Logger::interrupt()
 {
     // if there is something received in one of the input ports
     // we have to handle it
     if (in.count()>0) flag_message_pending = true;
-    return flag_message_pending;
+    if (flag_message_pending)
+    	schedule_task(this, std::bind(&Logger::run, this));
 }
 
 void Logger::run()
@@ -44,11 +45,12 @@ Requester::Requester(std::string name, float rate) : Module(name)
     log_rate = rate;
 }
 
-bool Requester::have_work()
+void Requester::interrupt()
 {
     float elapsed = FC_elapsed_millis(last_update);
     flag_update_pending = (elapsed*log_rate >= 1000.0);
-    return flag_update_pending;
+    if (flag_update_pending)
+    	schedule_task(this, std::bind(&Requester::run, this));
 }
 
 void Requester::run()

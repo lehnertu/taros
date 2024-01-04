@@ -31,9 +31,6 @@ public:
     // here the file is actually opened
     virtual void setup();
     
-    // The module is queried by the scheduler every millisecond whether it needs to run.
-    // This will return true, when a new dataset has been received.
-    virtual bool have_work() { return false; };
     virtual void interrupt();
 
     // process an incoming message
@@ -89,9 +86,6 @@ public:
     // here the file is actually opened
     virtual void setup();
     
-    // The module is queried by the scheduler every millisecond whether it needs to run.
-    // This will return true, when a new dataset has been received.
-    virtual bool have_work() { return false; };
     virtual void interrupt();
     
     // This is the worker function being executed by the taskmanager.

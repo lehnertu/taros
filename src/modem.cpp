@@ -151,7 +151,7 @@ void Modem::setup()
 // we should respond with a confirmation containing the UID and RSI
 // an empty command is used as a ping
 
-bool Modem::have_work()
+void Modem::interrupt()
 {
     uint32_t elapsed = FC_elapsed_millis(last_time);
     // we detect the time elapsed as long as there is no activity at the modem
@@ -170,7 +170,8 @@ bool Modem::have_work()
     // we have to handle it unless the modem is busy()
     // we wait 10 ms after busy() giving receiving messages higher priority than sending
     if ((runlevel_>=16) and (downlink.count()>0) and (elapsed>10)) flag_msg_pending = true;
-    return flag_received | flag_received_completely | flag_msg_pending;
+    if (flag_received | flag_received_completely | flag_msg_pending)
+    	schedule_task(this, std::bind(&Modem::run, this));
 }
 
 void Modem::run()

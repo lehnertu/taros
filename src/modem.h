@@ -53,15 +53,11 @@ public:
     // TODO: switch to MODULE_RUNLEVEL_LINK_OPEN when a communication to ground station has been established
     virtual void setup();
     
-    // The module is queried by the scheduler every millisecond whether it needs to run.
-    // This will return true, when a new message from the ground station has been received.
-    virtual bool have_work();
-
-    // TODO: use this
-    virtual void interrupt() {};
+    virtual void interrupt();
     
     // This is the worker function being executed by the taskmanager.
     // It writes all pending messages to the bus unless a limit of execution time is exceeded.
+    // TODO: use different worker functions depending on the type of action to be run
     virtual void run();
 
     // destructor

@@ -22,9 +22,6 @@ public:
     // nothing to do
     virtual void setup() { runlevel_ = MODULE_RUNLEVEL_OPERATIONAL; };
     
-    // The module is queried by the scheduler every millisecond whether it needs to run.
-    virtual bool have_work()  { return false; };
-
     // This gets called once per millisecond from the systick interrupt.
     // When necessary worker tasks are scheduled to switch the LED.
     virtual void interrupt();

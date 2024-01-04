@@ -181,13 +181,11 @@ void MotionSensor::check_calibration()
     }    
 }
 
-// this is a transition version only
-// as long as the sensor is not yet in MODULE_RUNLEVEL_OPERATIONAL
-// we schedule tasks to check the calibration
-// later on the old run() method takes over
 void MotionSensor::interrupt()
 {
-    if ((runlevel_ >= MODULE_RUNLEVEL_SETUP_OK) && (runlevel_ < MODULE_RUNLEVEL_OPERATIONAL))
+    if (runlevel_ >= MODULE_RUNLEVEL_OPERATIONAL)
+    	read_sensor();
+    else if (runlevel_ >= MODULE_RUNLEVEL_SETUP_OK)
         if (FC_elapsed_millis(last_calib_check)>1000)
             schedule_task(this, std::bind(&MotionSensor::check_calibration, this));
 }
@@ -210,7 +208,7 @@ void MotionSensor::report_cycles_overrun()
         Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_WARNING, "IMU loop exceeding 10 cycles.") );
 }
 
-void MotionSensor::run()
+void MotionSensor::read_sensor()
 {
     static BNO055::sQuaData_t raw = {0,0,0,0};
     static BNO055::sAxisData_t gyr = {0,0,0};
