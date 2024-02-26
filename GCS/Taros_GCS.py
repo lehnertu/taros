@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-import numpy as np
+# import numpy as np
 from struct import *
 import random
 
 import PySide6
+from PySide6.QtCore import Qt
 from PySide6 import QtWidgets
 from PySide6.QtSerialPort import *
 from PySide6.QtGui import QColor
@@ -24,8 +25,9 @@ def format_time(t):
 
 class CommunicationsView(QWidget):
     
-    def __init__(self):
+    def __init__(self, main_window):
         QWidget.__init__(self)
+        self.mv = main_window
         layout = QHBoxLayout()
         layout.setContentsMargins(20,20,20,20)
         self.setLayout(layout)
@@ -111,8 +113,8 @@ class CommunicationsView(QWidget):
             msb, lsb, n_bytes = unpack('BBB', self.receive_buffer[:3])
             # if it ihas a message header
             if msb == 204:
-                # if it is a system message or a ping
-                if lsb == 129 or lsb == 134:
+                # if it is a system message or a ping response
+                if lsb == 129 or lsb == 136:
                     if len(self.receive_buffer) >= n_bytes+3:
                         found = True
                     else:
@@ -166,7 +168,7 @@ class CommunicationsView(QWidget):
                     # print("%3d"%level, sender, format_time(time), text)
                     self.table.setCurrentCell(self.next_index, 0)
                 # if it is a ping response
-                elif lsb == 134:
+                elif lsb == 136:
                     # print("ping received")
                     self.next_index = self.table.rowCount()
                     self.table.insertRow(self.next_index)
@@ -191,22 +193,130 @@ class CommunicationsView(QWidget):
                     rsi_item.setBackground(col)
                     self.table.setItem(self.next_index, 3, rsi_item)
                     self.table.setCurrentCell(self.next_index, 0)
+
+class MissionControlView(QWidget):
+    
+    def __init__(self, main_window):
+        QWidget.__init__(self)
+        self.mv = main_window
+        self.cv = main_window.cv
+        layout = QGridLayout()
+        layout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        ping_button = QPushButton("Ping")
+        ping_button.setFixedSize(200,50)
+        ping_button.clicked.connect(self.send_ping)
+        layout.addWidget(ping_button, 0, 0)
+        full_button = QPushButton("Motors full")
+        full_button.setFixedSize(200,50)
+        full_button.clicked.connect(self.motor_full)
+        layout.addWidget(full_button, 1, 1)
+        zero_button = QPushButton("Motors off")
+        zero_button.setFixedSize(200,50)
+        zero_button.clicked.connect(self.motor_off)
+        layout.addWidget(zero_button, 1, 0)
+        calsave_button = QPushButton("Save Calibration")
+        calsave_button.setFixedSize(200,50)
+        calsave_button.clicked.connect(self.calsave)
+        layout.addWidget(calsave_button, 2, 0)
+        self.setLayout(layout)
+
+    def send_ping(self):
+        if hasattr(self.cv, 'serial'):
+            # assemple an empty command message header (3 payload bytes)
+            msg_buffer = bytearray(b'\xCC\x87\x03')
+            # generate a random 16-bit hash
+            hash = random.randint(0,65535)
+            msg_buffer.extend(hash.to_bytes(2,'big'))
+            msg_buffer.extend([0])
+            # transmit
+            self.cv.serial.write(msg_buffer)
+            line = "sent ping "
+            for c in msg_buffer:
+                line += (" %0.2X" % c)
+            print(line)
+        else:
+            print('port not open.')
+
+    def calc_crc(self, payload):
+        """
+        Calculate a simple checksum over the payload.
+        If one later on calculates the checksum over the payload plus this checksum, zero must be obtained.
+        """
+        crc = 0
+        for byte in payload: crc ^= byte
+        return crc
         
+    def motor_off(self):
+        if hasattr(self.cv, 'serial'):
+            # assemple a command message header (4 payload bytes)
+            msg_buffer = bytearray(b'\xCC\x86')
+            payload = bytearray(b'MOFF')
+            crc = self.calc_crc(payload)
+            payload.extend([crc])
+            # transmit
+            msg_buffer.extend([len(payload)])
+            msg_buffer.extend(payload)
+            self.cv.serial.write(msg_buffer)
+            line = "sent command "
+            for c in msg_buffer:
+                line += (" %0.2X" % c)
+            print(line)
+        else:
+            print('port not open.')
+
+    def motor_full(self):
+        if hasattr(self.cv, 'serial'):
+            # assemple a command message header (4 payload bytes)
+            msg_buffer = bytearray(b'\xCC\x86')
+            payload = bytearray(b'MFULL')
+            crc = self.calc_crc(payload)
+            payload.extend([crc])
+            # transmit
+            msg_buffer.extend([len(payload)])
+            msg_buffer.extend(payload)
+            self.cv.serial.write(msg_buffer)
+            line = "sent command "
+            for c in msg_buffer:
+                line += (" %0.2X" % c)
+            print(line)
+        else:
+            print('port not open.')
+
+    def calsave(self):
+        if hasattr(self.cv, 'serial'):
+            # assemple a command message header (4 payload bytes)
+            msg_buffer = bytearray(b'\xCC\x86')
+            payload = bytearray(b'CALSAVE')
+            crc = self.calc_crc(payload)
+            payload.extend([crc])
+            # transmit
+            msg_buffer.extend([len(payload)])
+            msg_buffer.extend(payload)
+            self.cv.serial.write(msg_buffer)
+            line = "sent command "
+            for c in msg_buffer:
+                line += (" %0.2X" % c)
+            print(line)
+        else:
+            print('port not open.')
+
+
 class MainWindow(QWidget):
+    
     def __init__(self, rect):
         QWidget.__init__(self)
+        self.app = app
         self.setWindowTitle("TAROS ground control station")
         self.setGeometry(100,100,0.6*rect.width(),0.8*rect.height())
         layout = QGridLayout()
         self.setLayout(layout)
-        label1 = QLabel("Widget in Tab 1.")
-        label2 = QLabel("Widget in Tab 2.")
-        self.cv = CommunicationsView()
-        label3 = QLabel("Widget in Tab 3.")
         tabwidget = QTabWidget()
+        label1 = QLabel("Widget in Tab 1.")
         tabwidget.addTab(label1, "Primary Flight Display")
+        self.cv = CommunicationsView(self)
         tabwidget.addTab(self.cv, "Communications")
-        tabwidget.addTab(label3, "Mission Control")
+        self.mcv = MissionControlView(self)
+        tabwidget.addTab(self.mcv, "Mission Control")
         layout.addWidget(tabwidget, 0, 0)
 
 if __name__ == '__main__':

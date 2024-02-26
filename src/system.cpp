@@ -1,6 +1,7 @@
 #include "global.h"
 #include "system.h"
 
+Commander *commander;
 DisplaySSD1331 *display;
 StreamFileWriter* fast_log_file_writer;
 DummyGPS *gps;
@@ -13,14 +14,17 @@ void FC_init_system()
     // usb = new USB_Serial(std::string("USB_1"), 115200);
 	// system_log->text_out.set_receiver(&(usb->in));
 
+    commander = new Commander(std::string("CMD"));
+    commander->status_out.set_receiver(&(system_log->in));
+    
     // create a display with 2Hz update
     display = new DisplaySSD1331(std::string("DISPLAY"), 2.0);
     display->status_out.set_receiver(&(system_log->in));
 
     // create a logfile writer for streaming data
-    char log_filename[40];
-    sprintf(log_filename, "taros.%05d.fast.log", SD_file_No);
-    fast_log_file_writer = new StreamFileWriter("FASTLOG",std::string(log_filename));
+    // char log_filename[40];
+    // sprintf(log_filename, "taros.%05d.fast.log", SD_file_No);
+    // fast_log_file_writer = new StreamFileWriter("FASTLOG",std::string(log_filename));
 
     // create a modem for communication with a ground station
     modem = new Modem(std::string("MODEM_1"), 9600);
@@ -55,15 +59,19 @@ void FC_setup_system(
     // if (usb->state() >= MODULE_RUNLEVEL_SETUP_OK)
     //  	module_list->push_back(usb);
     
+    commander->setup();
+    if (commander->state() >= MODULE_RUNLEVEL_SETUP_OK)
+        module_list->push_back(commander);
+    
     // create a display with 2Hz update
     display->setup();
     if (display->state() >= MODULE_RUNLEVEL_SETUP_OK)
     	module_list->push_back(display);
 
     // create a logfile writer for streaming data
-    fast_log_file_writer->setup();
-    if (fast_log_file_writer->state() >= MODULE_RUNLEVEL_SETUP_OK)
-    	module_list->push_back(fast_log_file_writer);
+    // fast_log_file_writer->setup();
+    // if (fast_log_file_writer->state() >= MODULE_RUNLEVEL_SETUP_OK)
+    // 	module_list->push_back(fast_log_file_writer);
     
     // create a modem for communication with a ground station
     modem->setup();
@@ -96,7 +104,7 @@ void FC_setup_system(
 	
     // All start-up messages are just queued in the Logger
     system_log->in.receive(
-        Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "setup() complete.")
+        Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "all setup() complete.")
     );
 	
 }
@@ -104,15 +112,17 @@ void FC_setup_system(
 void FC_build_system()
 {
 
-    // create a modem for communication with a ground station
-    // wire the syslog output to it
+    // wire the syslog output to the modem for communication with a ground station
     // TODO : this leads to lots of systick overruns
     system_log->system_out.set_receiver(&(modem->downlink));
 
-    // create a simulated GPS module
+    // wire the modem uplink to the commander
+    // modem->uplink.set_receiver(&(commander->command_in));
+    
+    // wire the simulated GPS module
     gps->tm_out.set_receiver(&(system_log->in));
     
-    // create a motion controller
+    // wire the motion controller
     imu->AHRS_out.set_receiver(&(display->ahrs_in));
     imu->GYRO_out.set_receiver(&(display->gyro_in));
     imu->AHRS_out.set_receiver(&(fast_log_file_writer->ahrs_in));

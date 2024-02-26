@@ -39,6 +39,9 @@
 #define MSG_TYPE_GPS_POSITION   0xcc84
 #define MSG_TYPE_SERVO          0xcc85
 #define MSG_TYPE_COMMAND        0xcc86
+#define MSG_TYPE_PING           0xcc87
+#define MSG_TYPE_PINGRESPONSE   0xcc88
+
 /*
     All messages have a data body which has to be interpreted depending on the message type.
     These data bodies are structs declared here.
@@ -66,6 +69,7 @@ struct MSG_DATA_SYSTEM {
 #define MSG_LEVEL_ERROR 8
 #define MSG_LEVEL_STATE_CHANGE 10
 #define MSG_LEVEL_WARNING 12
+#define MSG_LEVEL_READBACK 15
 #define MSG_LEVEL_STATUSREPORT 30
 
 struct MSG_DATA_TEXT {
@@ -143,6 +147,7 @@ class Message {
         // This is used to re-create a message from the compact binary format
         // which is used for transmission over low-bandwidth channels (e.g. modem)
         // All information is contained in the buffer (sender id, message type, length).
+        // TODO: no implementation yet
         Message(char* buffer);
         
         // named Constructor for a MSG_TYPE_TEXT message

@@ -56,11 +56,9 @@ public:
     // No exact loop timing is guarateed, as we may have to skip cycles if requests are not
     // yet fulfilled. To save overhead, this function is directly called from the interrupt() routine
     // and not schedules as a task. In case of errors tasks are scheduled to do the reporting.
+    // TODO: this poses problems if the runtime exceeds 1ms and may be the reason of crashes
+    // change back to task scheduling
     void read_sensor();
-
-    // This is the worker function being executed by the taskmanager.
-    // It performs a loop with query_state indicating the cycle.
-    virtual void run() {};
 
     // While the data acquisition from the sensor is done within the interrupt routine
     // for sending messages we use tasks.

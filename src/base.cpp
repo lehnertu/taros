@@ -48,6 +48,7 @@ void FC_systick_isr(void)
     // --- end original code
     uint32_t last_count = FC_systick_cycle_count;
     FC_systick_cycle_count = ARM_DWT_CYCCNT;
+    // keep track of potentially delayed interrupts
     uint32_t spacing = FC_systick_cycle_count-last_count;
     if (spacing > FC_max_isr_spacing) FC_max_isr_spacing=spacing;
     FC_systick_millis_count++;

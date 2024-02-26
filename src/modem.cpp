@@ -15,9 +15,6 @@ Modem::Modem(
     Module(name)
 {
     runlevel_= MODULE_RUNLEVEL_STOP;
-    flag_msg_pending = false;
-    flag_received = false;
-    flag_received_completely = false;
     last_time = FC_time_now();
     // nothing received yet
     uplink_num_chars = 0;
@@ -161,83 +158,93 @@ void Modem::interrupt()
         last_time = FC_time_now();
     };
     // see if we have received something
-    if (Serial1.available() > 0) flag_received = true;
+    if (Serial1.available() > 0)
+    	schedule_task(this, std::bind(&Modem::receive, this));
     // when we have received something, but the receeiver is idle for 5ms
     // then we have the complete message
     // this implies the modem is not busy()
-    if ((uplink_num_chars>0) and elapsed>5) flag_received_completely = true;
+    if ((uplink_num_chars>0) and elapsed>5)
+    	schedule_task(this, std::bind(&Modem::process_message, this));
     // if there is something received in one of the input ports
     // we have to handle it unless the modem is busy()
     // we wait 10 ms after busy() giving receiving messages higher priority than sending
-    if ((runlevel_>=16) and (downlink.count()>0) and (elapsed>10)) flag_msg_pending = true;
-    if (flag_received | flag_received_completely | flag_msg_pending)
-    	schedule_task(this, std::bind(&Modem::run, this));
+    if ((runlevel_>=16) and (downlink.count()>0) and (elapsed>10))
+    	schedule_task(this, std::bind(&Modem::send_message, this));
 }
 
-void Modem::run()
+void Modem::receive()
 {
+    // something is in the incoming FIFO - read it
+    while (Serial1.available() > 0)
+    {
+        int incoming = Serial1.read();
+        char c = incoming & 0xFF;
+        uplink_buffer[uplink_num_chars] = c;
+        uplink_num_chars++;
+    }
+    // record the time
+    last_time = FC_time_now();
+}
 
-    if (flag_received)
-    {
-        // something is in the incoming FIFO - read it
-        while (Serial1.available() > 0)
-        {
-            int incoming = Serial1.read();
-            char c = incoming & 0xFF;
-            uplink_buffer[uplink_num_chars] = c;
-            uplink_num_chars++;
-        }
-        // reset the flag
-        flag_received = false;
-        // record the time
-        last_time = FC_time_now();
-    }
-    
-    if (flag_received_completely)
-    {
-        // there is something in the uplink buffer but the port is idle for 5ms (complete message)
-        std::string report("received command : ");
-        for (int i=0; i<uplink_num_chars; i++)
-        {
-            report += hexbyte(uplink_buffer[i]);
-        };
-        // check for and answer a ping
-        // TODO: this check should be a method of the Message class
-        if (uplink_num_chars>=7)
-            if (uplink_buffer[0] == 0xcc)
-                if (uplink_buffer[1] == 0x86)
-                    if (uplink_buffer[2] == 0x03)
-                    {
-                        // send back the uplink RSI
-                        if (uplink_num_chars>=7) uplink_buffer[5] = uplink_buffer[6];
-                        // send downlink packet
-                        Serial1.write(uplink_buffer, 6);
-                        report += " answered.";
-                    };
-        status_out.transmit(
-            Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_STATUSREPORT, report) );
-        // TODO: create an uplink message to be sent to the commander
-        uplink_num_chars = 0;
-        flag_received_completely = false;
-        // record the time
-        last_time = FC_time_now();
-    }
-    
-    // it is not possible, to send out all pending messages at once
-    // one message per millisecond is more than the air channel can handle
-    // as we reset last_time, the next message will be processed after 10 ms
-    if (flag_msg_pending)
-    {
-        Message msg = downlink.fetch();
-        message_num_chars = msg.buffer(message_buffer, 200);
-        // write out
-        // the write is buffered and returns immediately
-        Serial1.write(message_buffer, message_num_chars);
-        // reset the flag
-        flag_msg_pending = false;
-        // record the time
-        last_time = FC_time_now();
-    }
-    
+void Modem::process_message()
+{
+	// there is something in the uplink buffer but the port is idle for 5ms (complete message)
+	std::string report("received command : ");
+	for (int i=0; i<uplink_num_chars; i++)
+	{
+	    report += hexbyte(uplink_buffer[i]);
+	};
+	status_out.transmit(
+	    Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_STATUSREPORT, report) );
+	// check for and answer a ping
+	// TODO: this check could be a method of the Message class
+	if (uplink_num_chars>=7)
+	    if (uplink_buffer[0] == 0xcc)
+	        if (uplink_buffer[1] == 0x87)
+	        {
+	        	// this is a ping
+	            if (uplink_buffer[2] == 0x03)
+	            {
+	                // respond with the uplink RSI
+	                uplink_buffer[1] = 0x88;
+	                if (uplink_num_chars>=7) uplink_buffer[5] = uplink_buffer[6];
+	                // send downlink packet
+	                Serial1.write(uplink_buffer, 6);
+	            };
+	        };
+	// if it is a command message it should be sent to the commander
+	// TODO: this check could be a method of the Message class
+	if (uplink_num_chars>=4)
+	    if (uplink_buffer[0] == 0xcc)
+	        if (uplink_buffer[1] == 0x86)
+	        {
+	            // there is only an 8-bit message length for air transmission
+	            uint16_t msg_len = uplink_buffer[2];
+	            if (uplink_num_chars >= (msg_len+3))
+	            {
+	                Message command = Message(
+	                    std::string("UPLINK"),
+	                    MSG_TYPE_COMMAND,
+	                    msg_len,
+	                    uplink_buffer+3
+	                    );
+                    uplink.transmit(command);
+                };
+            };	
+	// empty the buffer
+	uplink_num_chars = 0;
+	// record the time
+	last_time = FC_time_now();
+ }
+
+void Modem::send_message()
+{
+    Message msg = downlink.fetch();
+    message_num_chars = msg.buffer(message_buffer, 200);
+    // write out
+    // the write is buffered and returns immediately
+    Serial1.write(message_buffer, message_num_chars);
+    // record the time
+    last_time = FC_time_now();
 }
 

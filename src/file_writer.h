@@ -36,10 +36,6 @@ public:
     // process an incoming message
     virtual void handle_MSG();
     
-    // This is the worker function being executed by the taskmanager.
-    // It writes all pending messages to the bus unless a limit of execution time is exceeded.
-    virtual void run() {};
-    
     // Once per second we make sure all buffered data is flushed to the card
     virtual void flush();
 
@@ -88,10 +84,6 @@ public:
     
     virtual void interrupt();
     
-    // This is the worker function being executed by the taskmanager.
-    // It writes all pending data blocks to the file unless a limit of execution time is exceeded.
-    virtual void run() {};
-
     // handle incomming messages on ahrs_in
     virtual void handle_AHRS();
 

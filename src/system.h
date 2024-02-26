@@ -5,6 +5,8 @@
 
 #include "module.h"
 #include "message.h"
+
+#include "commander.h"
 #include "dummy_gps.h"
 #include "display.h"
 #include "modem.h"
@@ -12,6 +14,7 @@
 #include "servo.h"
 
 // all modules that will be included during the system build
+extern Commander *commander;
 extern DisplaySSD1331 *display;
 extern StreamFileWriter* fast_log_file_writer;
 extern DummyGPS *gps;

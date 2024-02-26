@@ -47,9 +47,6 @@ public:
     // only MESSAGE_SERVO type messages are evaluated
     ReceiverPort in;
 
-    // TODO: This can be removed as soon as all modules exclusively use the inetrrupt method
-    virtual void run() {};
-    
     // Set the output values.
     // This could be used during setup before the module can process messages
     // but also later on circumventing the message system.

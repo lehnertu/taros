@@ -34,10 +34,6 @@ public:
     
     virtual void interrupt();
 
-    // This is the worker function being executed by the taskmanager.
-    // It writes all pending messages to the bus unless a limit of execution time is exceeded.
-    virtual void run() {};
-
     // print an incoming message to the USB serial connection
     virtual void handle_MSG();
 

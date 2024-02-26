@@ -43,8 +43,6 @@ public:
     // It manages all drawing.
     virtual void redraw();
     
-    virtual void run() {};
-        
     // port over which status messages are sent
     SenderPort status_out;
 

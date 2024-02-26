@@ -127,6 +127,7 @@ void MotionSensor::setup()
         };
     };
     // write calibration to the sensor
+    // TODO: this should be done immediately after POR, before all other settings? 
     if (data_OK)
     {
         bno055->setToPage(0);
@@ -183,8 +184,11 @@ void MotionSensor::check_calibration()
 
 void MotionSensor::interrupt()
 {
+    // this is the normal operation mode with fast queries
+    // directly within the interrupt routine
     if (runlevel_ >= MODULE_RUNLEVEL_OPERATIONAL)
-    	read_sensor();
+        schedule_task(this, std::bind(&MotionSensor::read_sensor, this));
+    // when we don't have reached fully operational state yet, check the calibration
     else if (runlevel_ >= MODULE_RUNLEVEL_SETUP_OK)
         if (FC_elapsed_millis(last_calib_check)>1000)
             schedule_task(this, std::bind(&MotionSensor::check_calibration, this));
@@ -248,7 +252,7 @@ void MotionSensor::read_sensor()
                     // copy the data from buffer
                     bno055->NonBlockingRead_getData((uint8_t*) &raw, (uint8_t)sizeof(raw));
                 else
-                    schedule_task(this, std::bind(&MotionSensor::report_quat_size_mismatch, this));
+                    report_quat_size_mismatch();
                 // we only continue, if the request was fulfilled
                 // TODO: this could lead to too many reports
                 query_state++;
@@ -303,7 +307,7 @@ void MotionSensor::read_sensor()
                     // copy the data from buffer
                     bno055->NonBlockingRead_getData((uint8_t*) &gyr, (uint8_t)sizeof(gyr));
                 else
-                    schedule_task(this, std::bind(&MotionSensor::report_gyro_size_mismatch, this));
+                    report_gyro_size_mismatch();
                 // we only continue, if the request was fulfilled
                 // TODO: this could lead to too many reports
                 query_state++;
@@ -331,7 +335,7 @@ void MotionSensor::read_sensor()
             // typically it takes 8 cycles to get here
             // when arriving here check if it took too long
             if (cycle_count>10)
-                schedule_task(this, std::bind(&MotionSensor::report_cycles_overrun, this));
+                report_cycles_overrun();
             query_state++;
             if (query_state>=10)
                 // next loop
@@ -347,6 +351,7 @@ void MotionSensor::read_sensor()
 // TODO: make local variabes static
 void MotionSensor::convert_Quaternion(BNO055::sQuaData_t raw)
 {
+	// TODO: according to one source we'd have to normalize the quaternion
     // scale : 1.0 = 2^14 lsb
     float w = raw.w * 0.000061035;
     float x = raw.x * 0.000061035;

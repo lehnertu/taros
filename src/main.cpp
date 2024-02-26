@@ -54,9 +54,9 @@ extern "C" int main(void)
         system_log_file_writer = new FileWriter("SYSLOGF",std::string(syslog_filename));
         system_log_file_writer->setup();
         // TODO: what if a problem occurs ?
-        module_list.push_back(system_log_file_writer);
+        // module_list.push_back(system_log_file_writer);
         // wire the syslog output to the file
-        system_log->text_out.set_receiver(&(system_log_file_writer->in));
+        // system_log->text_out.set_receiver(&(system_log_file_writer->in));
     }
     else
     {
@@ -67,7 +67,11 @@ extern "C" int main(void)
     
     // Here the core hardware is initialized.
     // The millisecond systick interrupt is bent to our own ISR.
+    // TODO: this should be done only just before entering the event loop
+    // the interrupt shouldn't be active during the setup stage
     // for some (unclear) reason this needs to be done before the module setup.
+    // If that's true, we should introduce a flag that indicates whether our own
+    // systick interrupt can actually call modules.
     setup_core_system();
 
 	// Now we create all modules
@@ -78,6 +82,10 @@ extern "C" int main(void)
     // Now we wire all modules into the final system
     FC_build_system();
     // Complete system ready to go
+    
+    // now is the time to hand the flow control to the commander
+    // TODO: the commander should do that himself when he gets a chance to work
+    // commander.activate();
     
     system_log->in.receive(
         Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "entering event loop.") );
@@ -126,7 +134,6 @@ extern "C" int main(void)
             };
             // execute the task
             uint32_t start = micros();
-            // task.module->run();
             task.funct();
             uint32_t stop = micros();
             // the difference automaticall wraps around

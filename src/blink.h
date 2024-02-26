@@ -34,8 +34,6 @@ public:
     void switch_on();
     void switch_off();
     
-    virtual void run() {};
-
     
 private:
 

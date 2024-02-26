@@ -55,10 +55,24 @@ public:
     
     virtual void interrupt();
     
-    // This is the worker function being executed by the taskmanager.
-    // It writes all pending messages to the bus unless a limit of execution time is exceeded.
-    // TODO: use different worker functions depending on the type of action to be run
-    virtual void run();
+	// This is one worker function to be executed by te task manager.
+	// It is scheduled whenever any characters are received via the uplink.
+	// It puts read characters into the uplink_buffer.
+	void receive();
+
+	// This is one worker function to be executed by te task manager.
+	// When the channel is idle for 5m but has received something,
+	// the message is assumed to be complete.
+	// Here is it processed.
+	void process_message();
+
+	// This is one worker function to be executed by te task manager.
+	// It is scheduled when a message waits in the downlink queue and
+	// enough time has elapsed from the last transmission.
+    // It is not possible, to send out all pending messages at once -
+    // one message per millisecond is more than the air channel can handle.
+    // The next message will be processed after 10 ms.
+	void send_message();
 
     // destructor
     virtual ~Modem() {};
@@ -81,10 +95,6 @@ private:
     // check the AUX pin
     bool        busy();
     
-    // here are some flags indicating which work is due
-    bool        flag_msg_pending;
-    bool        flag_received;
-    bool        flag_received_completely;
     // time of the last setup or channel test action
     uint32_t    last_time;
 
