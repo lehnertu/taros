@@ -33,7 +33,7 @@ void Commander::interrupt()
     if (runlevel_ == MODULE_RUNLEVEL_COMMANDER_PIC)
     {
         // If there is something received in one of the input ports we have to handle it.
-        // We can do that right here as it takes almost no time
+        // We could do that right here as it takes almost no time
         if (command_in.count()>0)
         {
             schedule_task(this, std::bind(&Commander::handle_uplink, this));

@@ -1,0 +1,14 @@
+This is a test case for the communication and the modeule interrupt timing.
+
+To compile the test all files have to be copied into the src/ folder
+
+system.h
+system.cpp
+
+cp *.h ../../src/
+cp *.cpp ../../src/
+cd ../..
+make
+
+Some of these files overwrites the present system description of the TAROS system
+which must be restored when returning to the full system.

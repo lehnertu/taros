@@ -128,7 +128,7 @@ extern "C" int main(void)
             {
                 char numStr[20];
                 sprintf(numStr,"%5.1f",0.001*(float)start_delay);
-                std::string text(task.module->id+" task delayed by  "+std::string(numStr)+" ms");
+                std::string text(task.module->id+" task start delayed by  "+std::string(numStr)+" ms");
                 system_log->in.receive(
                     Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_CRITICAL, text) );;
             };

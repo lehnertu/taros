@@ -5,25 +5,17 @@
 
 #include "module.h"
 #include "message.h"
-
-#include "commander.h"
-#include "dummy_gps.h"
-#include "display.h"
 #include "modem.h"
-#include "motion.h"
-#include "servo.h"
+#include "commander.h"
+#include "watchdog.h"
 
 // all modules that will be included during the system build
 extern Commander *commander;
-extern DisplaySSD1331 *display;
-extern StreamFileWriter* fast_log_file_writer;
-extern DummyGPS *gps;
-extern MotionSensor *imu;
+extern Watchdog *watchdog;
 extern Modem *modem;
 
 // -- actually defined in main.cpp --
 extern Logger* system_log;
-// extern USB_Serial *usb;
 extern FileWriter* system_log_file_writer;
 
 /*
@@ -61,4 +53,3 @@ void FC_build_system();
 void FC_destroy_system(
     std::list<Module*> *module_list
 );
-
