@@ -13,17 +13,26 @@
     -----------
     EBYTE e220-900t22d
 
+    wiring   modem <==> Teensy
+        modem pin0 "M0" <== pin 22 "RTS"
+        modem pin1 "M1" <== pin 22
+        modem pin2 "RXD" <== pin1 "TX1"
+        modem pin3 "TXD" ==> pin0 "RX1"
+        modem pin4 "AUX" ==> pin 23 "CTS"
+        
+                
     normal operation M0=M1=0, config mode M0=M1=1
         M0, M1 have an internal pull-up resitor, they are read as high when not connected -> config mode
-        (wire with one common GPIO pin, could be RTS) => pin 22
+        (wire with one common GPIO pin, could be RTS)
         
     read AUX with GPIO pin (detect start-up sequence)
         low during startup, pulled high when normal operation is reached
         low during init (when leaving config mode), pulled high when normal operation is reached
         low during transmition, pulled high when block is fully sent
         low 2m before received data is sent over TXD, pulled high when block is fully sent
-        (could use CTS) => pin 23
+        (could use CTS)
 
+    
 */
 
 /*  
@@ -34,7 +43,7 @@
     At 9600 baud over-the-air rate a single character takes 1ms transmission time.
     Before starting a transmission one should check, that the transmission buffer
     has been empty for 8ms. A duration of 5ms during which no character
-    has bee received is recognized as the end of one message.
+    has been received is recognized as the end of one message.
 */
 class Modem : public Module
 {
