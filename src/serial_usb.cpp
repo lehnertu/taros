@@ -1,5 +1,6 @@
 #include "serial_usb.h"
-#include "base.h"
+#include "kernel.h"
+#include "kernel.h"
 #include <Arduino.h>
 
 USB_Serial::USB_Serial(

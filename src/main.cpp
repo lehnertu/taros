@@ -11,7 +11,8 @@
 // it reproducibly stops, when the terminal connection is broken from computer side
 // maybe also when the SD card is missing - not sure
 
-#include "base.h"
+#include "kernel.h"
+#include "kernel.h"
 #include "global.h"
 #include "display.h"
 #include "module.h"

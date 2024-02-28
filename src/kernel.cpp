@@ -1,4 +1,5 @@
-#include "base.h"
+#include "kernel.h"
+#include "kernel.h"
 #include "module.h"
 #include <Arduino.h>
 
@@ -40,6 +41,7 @@ uint32_t FC_elapsed_millis(uint32_t timestamp)
 
 void FC_systick_isr(void)
 {
+    __disable_irq();
     // we keep the original code in place
     // in order not to break functionality of the core
     // --- begin original code
@@ -72,6 +74,7 @@ void FC_systick_isr(void)
             FC_max_isr_time_to_completion = cycles;
         };
     };
+    __enable_irq();
 }
 
 void setup_core_system()

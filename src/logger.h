@@ -3,7 +3,8 @@
 
 #include <functional>
 
-#include "base.h"
+#include "kernel.h"
+#include "kernel.h"
 #include "module.h"
 #include "message.h"
 #include "port.h"

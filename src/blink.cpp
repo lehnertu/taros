@@ -4,7 +4,8 @@
  */
 #include <Arduino.h>
 
-#include "base.h"
+#include "kernel.h"
+#include "kernel.h"
 #include "blink.h"
 
 Blink::Blink(

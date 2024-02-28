@@ -1,6 +1,7 @@
 #include <cstdio>
 
-#include "base.h"
+#include "kernel.h"
+#include "kernel.h"
 #include "dummy_gps.h"
 
 DummyGPS::DummyGPS(

@@ -1,7 +1,8 @@
 #include <Adafruit_GFX.h>
 #include <SPI.h>
 
-#include "base.h"
+#include "kernel.h"
+#include "kernel.h"
 #include "display.h"
 
 // Color definitions
