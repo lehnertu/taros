@@ -5,13 +5,11 @@
 
 // the main program is independent from the Arduino core system and libraries
 // TODO: it comes in idirectly via display.h -> Adafruit_SSD1331.h
-// TODO: we need ARM_DWT_CYCCNT
 
 // TODO: the program seems to crash, when the serial USB connection is not present
 // it reproducibly stops, when the terminal connection is broken from computer side
 // maybe also when the SD card is missing - not sure
 
-#include "kernel.h"
 #include "kernel.h"
 #include "global.h"
 #include "display.h"
@@ -90,33 +88,49 @@ extern "C" int main(void)
     
     system_log->in.receive(
         Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "entering event loop.") );
+        
+    delayMicroseconds(100);
+    
 	// infinite system loop
-	// while (FC_time_now()<12000)
 	while(true)
 	{
 	
-	    // watchdog - once per second
-	    if (FC_systick_millis_count % 1000 == 837)
-	    {
-	        float delay = 1.0e6 * (float)FC_max_isr_spacing / (float)F_CPU_ACTUAL;
-	        FC_max_isr_spacing = 0;
-	        if (delay>1100.0)
-	        {
-	            char numStr[20];
+	    // delayMicroseconds(10);
+	    
+        // TODO: removing this watchdog code breaks the system -- why ???
+        // maybe some litte delay is necessary before we can check the tasklist again,
+        // otherwise overrunning it ?
+        // the delay for 10 us did not improve it
+        // or could we be finding something in the tasklist, befoer the task definition is actually complete ?
+    
+        // watchdog - once per second
+        if (FC_systick_millis_count % 1000 == 837)
+        {
+            float delay = 1.0e6 * (float)FC_max_isr_spacing / (float)F_CPU_ACTUAL;
+            // FC_max_isr_spacing = 0;
+            if (delay>1100.0)
+            {
+                char numStr[20];
                 sprintf(numStr,"%7.1f", delay);
                 std::string text("delayed systick (spacing "+std::string(numStr)+" us)!");
                 system_log->in.receive(
                     Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_CRITICAL, text) );
-	        }
-	        
-	    }
-	    
+            }
+            
+        }
+
 	    // TASKMANAGER:
 	    // All scheduled tasks get executed based on priority (list position).
 	    // It should be guaranteed that any scheduled task is executed within 10 ms.
         // No task should run longer than 5ms.
-        // Both constraints are not actively inforced, but any violations are reported.	    
-        if (!task_list.empty())
+        // Both constraints are not actively inforced, but any violations are reported.
+        
+        if (task_list.empty())
+        {
+            // this is a busy wait for 10us determined by the number of CPU cycles elapsed
+            delayMicroseconds(10);
+        }
+        else
         {
             // get the first entry in the task list
             Task task = task_list.front();

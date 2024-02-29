@@ -8,7 +8,7 @@ Modem *modem;
 void FC_init_system()
 {
     // create a watchdog generating health analyzes every 2 seconds
-    watchdog = new Watchdog(std::string("CERBERUS"), 2000);
+    watchdog = new Watchdog(std::string("WATCHDOG"), 2000);
     watchdog->status_out.set_receiver(&(system_log->in));
     
     commander = new Commander(std::string("COMMAND"));

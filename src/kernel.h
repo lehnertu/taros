@@ -29,6 +29,9 @@
 #include <functional>
 #include <string>
 
+// this is needed to have ARM_DWT_CYCCNT and F_CPU_ACTUAL
+#include "../core/core_pins.h"
+
 class Module;
 
 // uint32_t systick_millis_count is used as timestamp
@@ -50,6 +53,11 @@ extern volatile uint32_t FC_systick_cycle_count;
 // (should be about 600000)
 extern volatile uint32_t FC_max_isr_spacing;
 
+// we record the total time the systick interrupt routine needs for completion
+// this is updated with every interrupt
+// the watchdog can use these values
+extern volatile uint32_t FC_isr_duration;
+
 // we record the longest time it took to complete an interrupt request
 extern volatile uint32_t FC_max_isr_time_to_completion;
 extern std::string FC_max_isr_time_module;
@@ -62,8 +70,6 @@ extern std::string FC_max_task_time_module;
 // it is copied from EventRecorder.cpp (previously startup.c)
 // and added with our own functionality
 extern "C" void FC_systick_isr(void);
-
-extern uint32_t FC_systick_flag;
 
 // Here are the main initializations that are needed to access the processor hardware.
 // 1) bend the interrupt vector to our own ISR

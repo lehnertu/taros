@@ -34,5 +34,7 @@ private:
 
     uint32_t health_delay_ms;
     uint32_t health_delay_counter;
+
+    uint32_t max_isr_duration;
     
 };
