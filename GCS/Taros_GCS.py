@@ -31,6 +31,9 @@ class CommunicationsView(QWidget):
         layout = QHBoxLayout()
         layout.setContentsMargins(20,20,20,20)
         self.setLayout(layout)
+        # port for listening
+        self.port_available = False
+        self.port = None
         # receive buffer for the messages
         self.receive_buffer = bytearray(b'')
         # the left side - message table
@@ -48,12 +51,13 @@ class CommunicationsView(QWidget):
         # the right side - column of buttons
         rlayout = QVBoxLayout()
         layout.addLayout(rlayout,25)
+        clear_button = QPushButton("Clear")
+        clear_button.clicked.connect(self.clear_list)
         self.status = QLabel("None.")
-        self.port_available = False
-        self.port = None
         refresh_button = QPushButton("Refresh")
         refresh_button.clicked.connect(self.refresh)
         open_button = QPushButton("Open Port")
+        rlayout.addWidget(clear_button)
         rlayout.addWidget(self.status)
         rlayout.addWidget(refresh_button)
         rlayout.addWidget(open_button)
@@ -193,6 +197,12 @@ class CommunicationsView(QWidget):
                     rsi_item.setBackground(col)
                     self.table.setItem(self.next_index, 3, rsi_item)
                     self.table.setCurrentCell(self.next_index, 0)
+
+    def clear_list(self):
+        """
+        Clear the list of received messages.
+        """
+        self.table.setRowCount(0)
 
 class MissionControlView(QWidget):
     
