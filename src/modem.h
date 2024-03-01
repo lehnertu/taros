@@ -35,6 +35,10 @@
     
 */
 
+// the buffer size in HardwareSerial is set at 64
+// but we can transmit larger messages in several chunks
+#define MODEM_BUFFER_SIZE 200
+
 /*  
     This is a class encapsulating the transmission channel.
     It sends all received messages to the ground station.
@@ -108,9 +112,10 @@ private:
     uint32_t    last_time;
 
     // where to store incoming transmissions
-    char        uplink_buffer[200];
+    char        uplink_buffer[MODEM_BUFFER_SIZE];
     uint16_t    uplink_num_chars;
-    char        message_buffer[200];
-    uint16_t    message_num_chars;
+    char        message_buffer[MODEM_BUFFER_SIZE];
+    uint16_t    message_num_chars_pending;
+    char*		message_buf_next;
     
 };

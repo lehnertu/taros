@@ -18,7 +18,7 @@ Modem::Modem(
     last_time = FC_time_now();
     // nothing received yet
     uplink_num_chars = 0;
-    message_num_chars = 0;
+    message_num_chars_pending = 0;
 }
 
 /*
@@ -170,6 +170,9 @@ void Modem::interrupt()
     // we wait 10 ms after busy() giving receiving messages higher priority than sending
     if ((runlevel_>=16) and (downlink.count()>0) and (elapsed>10))
     	schedule_task(this, std::bind(&Modem::send_message, this));
+	// if the message is not yet completely sent, we try to continue
+    if (message_num_chars_pending>0)
+    	schedule_task(this, std::bind(&Modem::send_message, this));
 }
 
 void Modem::receive()
@@ -239,11 +242,29 @@ void Modem::process_message()
 
 void Modem::send_message()
 {
-    Message msg = downlink.fetch();
-    message_num_chars = msg.buffer(message_buffer, 200);
-    // write out
-    // the write is buffered and returns immediately
-    Serial1.write(message_buffer, message_num_chars);
+	if (message_num_chars_pending>0)
+	{
+		// continue sending an incompletely transmitted message
+	}
+	else
+	{
+		// start to transmit a new message
+		Message msg = downlink.fetch();
+		message_num_chars_pending = msg.buffer(message_buffer, MODEM_BUFFER_SIZE);
+		message_buf_next = message_buffer;
+	}
+    // see if we can send something
+	uint16_t available = Serial1.availableForWrite();
+    if (available > 8)
+    {
+    	uint16_t transmit_count = message_num_chars_pending;
+    	if (transmit_count>available) transmit_count=available;
+		// write out
+		// the write is buffered and returns immediately
+		Serial1.write(message_buf_next, transmit_count);
+		message_num_chars_pending -= transmit_count;
+		message_buf_next += transmit_count;
+    }
     // record the time
     last_time = FC_time_now();
 }

@@ -43,7 +43,7 @@ uint32_t FC_elapsed_millis(uint32_t timestamp)
 
 void FC_systick_isr(void)
 {
-    __disable_irq();
+    // __disable_irq();
     // we keep the original code in place
     // in order not to break functionality of the core
     // --- begin original code
@@ -78,7 +78,7 @@ void FC_systick_isr(void)
     };
     // record the total time the interrupt took
     FC_isr_duration = ARM_DWT_CYCCNT - FC_systick_cycle_count;
-    __enable_irq();
+    // __enable_irq();
 }
 
 void setup_core_system()

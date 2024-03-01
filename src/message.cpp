@@ -332,8 +332,10 @@ uint8_t Message::buffer(char* buffer, size_t size)
             // Serial.print("\nMSG_DATA_SYSTEM size=");
             // Serial.println(count);
             // check for buffer size (keep one byte for checksum)
-            if (remaining > 1+4+count)
+            if (remaining > 5)
             {
+	            // if we can at least send a single character we go with a truncated message
+            	if (count>remaining-5) count=remaining-5;
                 *ptr = md->severity_level;
                 std::memcpy(ptr+1, &(md->time), 4);
                 n_bytes += 5;
