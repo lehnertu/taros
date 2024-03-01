@@ -18,6 +18,9 @@ git checkout <branch to apply to>
 git cherry-pick <commitSha>
 
 
+ Get dependency information within the source tree
+ -------------------------------------------------
+gcc -M -nostdinc -isystem /dev/null core/HardwareSerial.cpp 2> /dev/null
 
 
  Display

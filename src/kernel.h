@@ -62,9 +62,13 @@ extern volatile uint32_t FC_isr_duration;
 extern volatile uint32_t FC_max_isr_time_to_completion;
 extern std::string FC_max_isr_time_module;
 
-// we record the longest time it takes to complete a task (in microseconds)
-extern volatile uint32_t FC_max_task_time_to_completion;
-extern std::string FC_max_task_time_module;
+// we record the longest time it takes from scheduling a task
+// until the task execution is actually started in CPU cycles
+extern volatile uint32_t FC_max_task_delay;
+
+// we record the longest time it takes to complete a task (in CPU cycles)
+extern volatile uint32_t FC_max_task_runtime;
+extern std::string FC_max_task_runtime_module;
 
 // we use our own ISR for the systick interrupt
 // it is copied from EventRecorder.cpp (previously startup.c)
@@ -84,7 +88,7 @@ struct Task
 {
     // the module which has started this task
     Module* module;
-    // the system time at which the task has been started
+    // the CPU cycle when the task has bee requested
     uint32_t request_time;
     // a pointer to the procedure to be executed
     TaskFunct funct;
@@ -99,4 +103,10 @@ extern std::list<Task> task_list;
 // this function can be called by the interrupt routine of any modeul
 // to request one of the module functions to be scheduled for execution
 void schedule_task(Module *mod, TaskFunct f);
+
+// This is the main loop of the kernel.
+// After setup the main program calls this function which then runs in foreground forever.
+// All system modules are regularly call by the interrupt system and
+// may schedule tasks to be run by the kernel.
+void kernel_loop();
 

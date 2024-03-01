@@ -33,6 +33,12 @@ COMPILERPATH        = $(ARDUINO_HOME)/hardware/tools/arm/bin
 # path location for Teensy Loader, teensy_post_compile and teensy_reboot (on Linux)
 TOOLSPATH           = $(ARDUINO_HOME)/hardware/tools
 
+VERSION_INFO := $(shell cat version.info)
+VERSION_MAJOR := $(word 1, $(VERSION_INFO))
+VERSION_MINOR := $(word 2, $(VERSION_INFO))
+VERSION_BUILD := $(word 3, $(VERSION_INFO))
+NEW_BUILD := $(shell expr $(VERSION_BUILD) + 1)
+
 #******************************************************************************
 # Hardware references
 #******************************************************************************
@@ -62,6 +68,7 @@ LIBS        = $(CORE_BIN)/$(CORE_LIB) -larm_cortexM7lfsp_math -lm -lstdc++
 # Settings below this point usually do not need to be edited
 #************************************************************************
 
+DEFINES    += -DVERSION_MAJOR=$(VERSION_MAJOR) -DVERSION_MINOR=$(VERSION_MINOR) -DVERSION_BUILD=$(VERSION_BUILD) 
 # CPP_FLAGS = compiler options for C and C++
 CPP_FLAGS   = $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_COM) $(DEFINES) $(FLAGS_CPP)
 S_FLAGS     = $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_COM) $(DEFINES) $(FLAGS_S)
@@ -120,7 +127,10 @@ INCLUDE         = -I$(USR_SRC) -I$(CORE_SRC) -I$(LIB_LOCAL_BASE)
 
 all: $(TARGET).hex
 
-$(TARGET).elf: $(CORE_LIB) $(USR_OBJ) $(LIB_OBJ)
+update_build_number:
+	@echo "$(VERSION_MAJOR) $(VERSION_MINOR) $(NEW_BUILD)" > version.info
+
+$(TARGET).elf: $(CORE_LIB) $(USR_OBJ) $(LIB_OBJ) update_build_number
 
 # Core library ----------------------------------------------------------------
 $(CORE_BIN)/%.o: $(CORE_SRC)/%.S $(CORE_HEADERS)
@@ -145,6 +155,10 @@ $(USR_BIN)/%.o: $(USR_SRC)/%.c $(USR_HEADERS) $(CORE_HEADERS) $(LIB_HEADERS)
 	@"$(CC)" $(C_FLAGS) $(INCLUDE) -o "$@" -c $<
 
 $(USR_BIN)/%.o: $(USR_SRC)/%.cpp $(USR_HEADERS) $(CORE_HEADERS) $(LIB_HEADERS)
+	@echo [compile] $(CXX) $(CPP_FLAGS) $(INCLUDE) -o "$@" -c $<
+	@"$(CXX)" $(CPP_FLAGS) $(INCLUDE) -o "$@" -c $<
+
+$(USR_BIN)/main.o: $(USR_SRC)/main.cpp $(USR_HEADERS) $(CORE_HEADERS) $(LIB_HEADERS) version.info
 	@echo [compile] $(CXX) $(CPP_FLAGS) $(INCLUDE) -o "$@" -c $<
 	@"$(CXX)" $(CPP_FLAGS) $(INCLUDE) -o "$@" -c $<
 

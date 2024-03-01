@@ -210,11 +210,11 @@ void DisplaySSD1331::redraw()
             {
                 display->setCursor(3, 19);
                 // in the first cycle generate the string
-                float ttc = 0.001*(float)FC_max_task_time_to_completion;
-                num_cycles = snprintf(buffer, 16, "%8s %4.1fms", FC_max_task_time_module.c_str(), ttc);
+                float ttc = 0.001*(float)FC_max_task_runtime;
+                num_cycles = snprintf(buffer, 16, "%8s %4.1fms", FC_max_task_runtime_module.c_str(), ttc);
                 // clear the stored value once it is diaplayed
                 // TODO: if exceedingly large generate a warning message
-                FC_max_task_time_to_completion = 0;
+                FC_max_task_runtime = 0;
             } else {
                 // in all subsequent cycles each display one character
                 display->print(buffer[cycle_count-1]);

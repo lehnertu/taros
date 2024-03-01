@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <string>
 #include <list>
+#include <sstream>
 
 // the main program is independent from the Arduino core system and libraries
 // TODO: it comes in idirectly via display.h -> Adafruit_SSD1331.h
@@ -17,6 +18,19 @@
 #include "message.h"
 #include "system.h"
 
+#ifndef VERSION_MAJOR
+#define VERSION_MAJOR 0
+#endif
+
+#ifndef VERSION_MINOR
+#define VERSION_MINOR 0
+#endif
+
+#ifndef VERSION_BUILD
+#define VERSION_BUILD 0
+#endif
+
+
 bool SD_card_OK;
 int SD_file_No;
 Logger *system_log;
@@ -29,8 +43,11 @@ extern "C" int main(void)
     system_log = new Logger("SYSLOG");
     module_list.push_back(system_log);
     // the logger can queue messages even before its setup() is run
+    std::stringstream msg;
+    msg << "Teensy Flight Controller - Version ";
+    msg << VERSION_MAJOR << "." << VERSION_MINOR << " - Build #" << VERSION_BUILD;
     system_log->in.receive(
-        Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE,"Teensy Flight Controller - Version 1.0") );
+        Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, msg.str()) );
     
     // we initialize the SD card here as some modules may want to read or
     // write data during setup
@@ -92,87 +109,8 @@ extern "C" int main(void)
     delayMicroseconds(100);
     
 	// infinite system loop
-	while(true)
-	{
+	kernel_loop();
 	
-	    // delayMicroseconds(10);
-	    
-        // TODO: removing this watchdog code breaks the system -- why ???
-        // maybe some litte delay is necessary before we can check the tasklist again,
-        // otherwise overrunning it ?
-        // the delay for 10 us did not improve it
-        // or could we be finding something in the tasklist, befoer the task definition is actually complete ?
-    
-        // watchdog - once per second
-        if (FC_systick_millis_count % 1000 == 837)
-        {
-            float delay = 1.0e6 * (float)FC_max_isr_spacing / (float)F_CPU_ACTUAL;
-            // FC_max_isr_spacing = 0;
-            if (delay>1100.0)
-            {
-                char numStr[20];
-                sprintf(numStr,"%7.1f", delay);
-                std::string text("delayed systick (spacing "+std::string(numStr)+" us)!");
-                system_log->in.receive(
-                    Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_CRITICAL, text) );
-            }
-            
-        }
-
-	    // TASKMANAGER:
-	    // All scheduled tasks get executed based on priority (list position).
-	    // It should be guaranteed that any scheduled task is executed within 10 ms.
-        // No task should run longer than 5ms.
-        // Both constraints are not actively inforced, but any violations are reported.
-        
-        if (task_list.empty())
-        {
-            // this is a busy wait for 10us determined by the number of CPU cycles elapsed
-            delayMicroseconds(10);
-        }
-        else
-        {
-            // get the first entry in the task list
-            Task task = task_list.front();
-            // remove it from the list
-            task_list.pop_front();
-            // check how much time has elapsed from the request of the task
-            uint32_t start_delay = FC_systick_millis_count-task.request_time;
-            // report anything exceeding 10 ms
-            if (start_delay>10000)
-            {
-                char numStr[20];
-                sprintf(numStr,"%5.1f",0.001*(float)start_delay);
-                std::string text(task.module->id+" task start delayed by  "+std::string(numStr)+" ms");
-                system_log->in.receive(
-                    Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_CRITICAL, text) );;
-            };
-            // execute the task
-            uint32_t start = micros();
-            task.funct();
-            uint32_t stop = micros();
-            // the difference automaticall wraps around
-            uint32_t runtime = stop - start;
-            // check the runtime of the task
-            if (runtime>FC_max_task_time_to_completion)
-            {
-                // the max is reset when an output is created (either log or display)
-                FC_max_task_time_module = task.module->id;
-                FC_max_task_time_to_completion = runtime;
-            };
-            // if execution time exceeds 5ms the offending module is reported
-            if (runtime>5000)
-            {
-                char numStr[20];
-                sprintf(numStr,"%d",(int)(stop-start));
-                std::string text(task.module->id+" task runtime "+std::string(numStr)+" us");
-                system_log->in.receive(
-                    Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_CRITICAL, text) );;
-            };
-        };
-
-	}; // infinite system loop
-
     // we will never get here, except when limiting the task-loop for testing
     FC_destroy_system(&module_list);
     
