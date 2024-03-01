@@ -96,7 +96,20 @@ DWT - data watchpoint and trace unit
     0xE0001000 - DWT_CTRL - Control Register
     0xE0001004 - DWT_CYCCNT - Cycle Count Register
     DWT registers are described in the Arm®v7-M Architecture Reference Manual.
-ARM_DWT_CYCCNT is a 32-bit unsigned counter for processor cycles (600 MHz), defined in imxrt.h
+    ARM_DWT_CYCCNT is a 32-bit unsigned counter for processor cycles (600 MHz), defined in imxrt.h
+
+Interrupts:
+    0 = highest priority, 255 = lowest
+    core/startup.c:
+        for (i=0; i < NVIC_NUM_INTERRUPTS + 16; i++) _VectorsRam[i] = &unused_interrupt_vector;
+        for (i=0; i < NVIC_NUM_INTERRUPTS; i++) NVIC_SET_PRIORITY(i, 128);
+    core/imxrt.h:
+        attachInterruptVector(IRQ_NUMBER_t irq, void (*function)(void)) { _VectorsRam[irq + 16] = function; asm volatile("": : :"memory"); }
+    kernel.cpp:
+        _VectorsRam[15] = &FC_systick_isr;
+    hardware serial : PRIORITY=64
+        Serial1 : IRQ_LPUART6 = 25 (+16) 
+
 
 
  testing with USB serial
@@ -106,8 +119,4 @@ ARM_DWT_CYCCNT is a 32-bit unsigned counter for processor cycles (600 MHz), defi
 minicom -D /dev/ttyACM0 -b 9600
 # for USB serial
 minicom -D /dev/ttyACM0 -b 115200
-
-gdb ./DemoSystem
-(gdb) handle SIG34 noprint
-(gdb) run
 
