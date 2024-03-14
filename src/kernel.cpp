@@ -1,15 +1,12 @@
 #include "kernel.h"
 #include "module.h"
 
-// temporary includes needed before cleaning up the kernel_loop()
-#include "system.h"
-#include <cstdlib>
-
-
-/***** the core timing/interrupt system *****/
+// this is needed to have ARM_DWT_CYCCNT and F_CPU_ACTUAL
+#include "../core/core_pins.h"
 
 volatile uint32_t FC_systick_millis_count;
 volatile uint32_t FC_systick_cycle_count;
+bool FC_module_interrupts_active;
 volatile uint32_t FC_max_isr_spacing;
 volatile uint32_t FC_isr_duration;
 volatile uint32_t FC_max_isr_time_to_completion;
@@ -43,9 +40,9 @@ uint32_t FC_elapsed_millis(uint32_t timestamp)
 
 void FC_systick_isr(void)
 {
-    // __disable_irq();
     // we keep the original code in place
     // in order not to break functionality of the core
+    // this was originally in core/delay.c and has moved to core/EventResponder.cpp
     // --- begin original code
     systick_cycle_count = ARM_DWT_CYCCNT;
     systick_millis_count++;
@@ -58,27 +55,29 @@ void FC_systick_isr(void)
     if (spacing > FC_max_isr_spacing) FC_max_isr_spacing=spacing;
     // call all module interrupts - record timing
     std::list<Module*>::iterator it;
-    for (it = module_list.begin(); it != module_list.end(); it++)
-    {
-        Module* mod = *it;
-        // we check timing for every module call
-        uint32_t isr_start = ARM_DWT_CYCCNT;
-        // call the modules interrupt procedure
-        mod->interrupt();
-        uint32_t isr_stop = ARM_DWT_CYCCNT;
-        // the difference automaticall wraps around
-        uint32_t cycles = isr_stop - isr_start;
-        // the worst module ist stored for reporting by the watchdog
-        // the watchdog periodically resets the max value to 0
-        if (cycles>FC_max_isr_time_to_completion)
-        {
-            FC_max_isr_time_module = mod->id;
-            FC_max_isr_time_to_completion = cycles;
-        };
-    };
+    // TODO: this should be only enabled by a flag that is initially disabled
+    // calling the module interrups should only be enabled when all setup is complete
+    if (FC_module_interrupts_active)
+		for (it = module_list.begin(); it != module_list.end(); it++)
+		{
+		    Module* mod = *it;
+		    // we check timing for every module call
+		    uint32_t isr_start = ARM_DWT_CYCCNT;
+		    // call the modules interrupt procedure
+		    mod->interrupt();
+		    uint32_t isr_stop = ARM_DWT_CYCCNT;
+		    // the difference automaticall wraps around
+		    uint32_t cycles = isr_stop - isr_start;
+		    // the worst module ist stored for reporting by the watchdog
+		    // the watchdog periodically resets the max value to 0
+		    if (cycles>FC_max_isr_time_to_completion)
+		    {
+		        FC_max_isr_time_module = mod->id;
+		        FC_max_isr_time_to_completion = cycles;
+		    };
+		};
     // record the total time the interrupt took
     FC_isr_duration = ARM_DWT_CYCCNT - FC_systick_cycle_count;
-    // __enable_irq();
 }
 
 void setup_core_system()
@@ -87,6 +86,7 @@ void setup_core_system()
     FC_systick_cycle_count = ARM_DWT_CYCCNT;
     FC_max_isr_spacing = 0;
     FC_max_isr_time_to_completion = 0;
+    FC_module_interrupts_active = false;
     // bend the systick ISR to our own
     _VectorsRam[15] = &FC_systick_isr;
 }
@@ -108,7 +108,7 @@ void kernel_loop()
 	
 	    // delayMicroseconds(10);
 	    
-        // TODO: removing this watchdog code breaks the system -- why ???
+        // TODO: removing this old watchdog code breaks the system -- why ???
         
         // maybe some litte delay is necessary before we can check the tasklist again,
         // otherwise overrunning it ?
@@ -120,16 +120,26 @@ void kernel_loop()
         {
             float delay = 1.0e6 * (float)FC_max_isr_spacing / (float)F_CPU_ACTUAL;
             // FC_max_isr_spacing = 0;
+
             if (delay>1100.0)
+            // if the compiler can optimize this away, the code breaks
+            // if (0)
             {
                 // even deleting just this fraction of code (that is never executed ?!)
                 // breaks the system !!!
                 
-                char numStr[20];
-                sprintf(numStr,"%7.1f", delay);
-                std::string text("delayed systick (spacing "+std::string(numStr)+" us)!");
-                system_log->in.receive(
-                    Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_CRITICAL, text) );
+                // this is the only place left where we call C (not C++) standard libraries
+                // main is declared extern "C" - don't know if it matters
+                // diabling this code breaks the system even when declared extern "C"
+                
+                // char numStr[20];
+                // sprintf(numStr,"%7.1f", delay);
+                
+                // TODO: this line can't be removed
+                std::string text("old watchdogn code");
+                
+                // removing this message is OK
+                // system_log->in.receive(Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_CRITICAL, text) );
             }
         }
 

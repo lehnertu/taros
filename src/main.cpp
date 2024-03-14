@@ -1,5 +1,3 @@
-#include <cstdlib>
-#include <cstdint>
 #include <string>
 #include <list>
 #include <sstream>
@@ -83,13 +81,12 @@ extern "C" int main(void)
     
     // Here the core hardware is initialized.
     // The millisecond systick interrupt is bent to our own ISR.
-    // TODO: this should be done only just before entering the event loop
     // the interrupt shouldn't be active during the setup stage
     // for some (unclear) reason this needs to be done before the module setup.
-    // If that's true, we should introduce a flag that indicates whether our own
-    // systick interrupt can actually call modules.
+    // We have introduced a flag that is initially false
+    // indicating whether our own systick interrupt can actually call modules.
     setup_core_system();
-
+	
 	// Now we create all modules
 	FC_init_system();
     // Call the setup() method for all modules.
@@ -99,15 +96,13 @@ extern "C" int main(void)
     FC_build_system();
     // Complete system ready to go
     
-    // now is the time to hand the flow control to the commander
-    // TODO: the commander should do that himself when he gets a chance to work
-    // commander.activate();
-    
     system_log->in.receive(
         Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, "entering event loop.") );
         
-    delayMicroseconds(100);
+    // delayMicroseconds(100);
     
+    // only now should our systick_ISR be allowed to call module interrupts
+    FC_module_interrupts_active = true;
 	// infinite system loop
 	kernel_loop();
 	

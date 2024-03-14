@@ -31,6 +31,11 @@ void Commander::activate()
 
 void Commander::interrupt()
 {
+	if (runlevel_ == MODULE_RUNLEVEL_OPERATIONAL)
+	{
+		// upon the first interrupt call we take command
+		schedule_task(this, std::bind(&Commander::activate, this));
+	}
     if (runlevel_ == MODULE_RUNLEVEL_COMMANDER_PIC)
     {
         // If there is something received in one of the input ports we have to handle it.

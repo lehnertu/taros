@@ -12,9 +12,11 @@
 #include "modem.h"
 #include "motion.h"
 #include "servo.h"
+#include "watchdog.h"
 
 // all modules that will be included during the system build
 extern Commander *commander;
+extern Watchdog *watchdog;
 extern DisplaySSD1331 *display;
 extern StreamFileWriter* fast_log_file_writer;
 extern DummyGPS *gps;

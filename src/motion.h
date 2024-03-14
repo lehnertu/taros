@@ -27,6 +27,8 @@
         y: pitch (positive nose up, zero is level flight, range +/- 180 deg)
         z: heading (positive to the right, zero is north, range 0...360 deg)
 
+	TODO: there is a fatal bug in this module
+	when it reaches a fully calibrated state it blocks the whole system leading to a restart
 */
 class MotionSensor : public Module
 {

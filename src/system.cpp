@@ -2,6 +2,7 @@
 #include "system.h"
 
 Commander *commander;
+Watchdog *watchdog;
 DisplaySSD1331 *display;
 StreamFileWriter* fast_log_file_writer;
 DummyGPS *gps;
@@ -14,7 +15,11 @@ void FC_init_system()
     // usb = new USB_Serial(std::string("USB_1"), 115200);
 	// system_log->text_out.set_receiver(&(usb->in));
 
-    commander = new Commander(std::string("CMD"));
+    // create a watchdog generating health analyzes every 5 seconds
+    watchdog = new Watchdog(std::string("WATCHDOG"), 5000);
+    watchdog->status_out.set_receiver(&(system_log->in));
+
+    commander = new Commander(std::string("COMMAND"));
     commander->status_out.set_receiver(&(system_log->in));
     
     // create a display with 2Hz update
@@ -27,7 +32,7 @@ void FC_init_system()
     // fast_log_file_writer = new StreamFileWriter("FASTLOG",std::string(log_filename));
 
     // create a modem for communication with a ground station
-    modem = new Modem(std::string("MODEM_1"), 9600);
+    modem = new Modem(std::string("MODEM_1"));
     modem->status_out.set_receiver(&(system_log->in));
 
     // create a simulated GPS module
@@ -59,6 +64,10 @@ void FC_setup_system(
     // if (usb->state() >= MODULE_RUNLEVEL_SETUP_OK)
     //  	module_list->push_back(usb);
     
+    watchdog->setup();
+    if (watchdog->state() >= MODULE_RUNLEVEL_SETUP_OK)
+        module_list->push_back(watchdog);
+
     commander->setup();
     if (commander->state() >= MODULE_RUNLEVEL_SETUP_OK)
         module_list->push_back(commander);

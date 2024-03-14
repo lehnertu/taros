@@ -10,8 +10,7 @@
 #define MODEM_AUX 23
 
 Modem::Modem(
-    std::string name,
-    uint32_t baud_rate ) :
+    std::string name ) :
     Module(name)
 {
     runlevel_= MODULE_RUNLEVEL_STOP;

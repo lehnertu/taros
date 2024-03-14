@@ -24,13 +24,9 @@
 #pragma once
 
 #include <cstdint>
-#include <cstdlib>
 #include <list>
 #include <functional>
 #include <string>
-
-// this is needed to have ARM_DWT_CYCCNT and F_CPU_ACTUAL
-#include "../core/core_pins.h"
 
 class Module;
 
@@ -71,9 +67,12 @@ extern volatile uint32_t FC_max_task_runtime;
 extern std::string FC_max_task_runtime_module;
 
 // we use our own ISR for the systick interrupt
-// it is copied from EventRecorder.cpp (previously startup.c)
+// it is copied from EventResponder.cpp (previously delay.c)
 // and added with our own functionality
 extern "C" void FC_systick_isr(void);
+
+// we use a flag to indicate if it is allowed to call module interrupts
+extern "C" bool FC_module_interrupts_active;
 
 // Here are the main initializations that are needed to access the processor hardware.
 // 1) bend the interrupt vector to our own ISR
@@ -108,5 +107,5 @@ void schedule_task(Module *mod, TaskFunct f);
 // After setup the main program calls this function which then runs in foreground forever.
 // All system modules are regularly call by the interrupt system and
 // may schedule tasks to be run by the kernel.
-void kernel_loop();
+extern "C" void kernel_loop();
 

@@ -59,7 +59,7 @@ void Watchdog::analyze_health()
         std::stringstream report2;
         report2 << "delayed systick (spacing ";
         report2 << std::fixed << std::setprecision(1);
-        report2 << delay << " us";
+        report2 << delay << " us)";
         status_out.transmit(
             Message::SystemMessage(id, FC_time_now(), MSG_LEVEL_CRITICAL, report2.str()) );
     }

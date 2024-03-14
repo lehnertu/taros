@@ -56,8 +56,7 @@ public:
 
     // constructor
     Modem(
-        std::string name,
-        uint32_t baud_rate);
+        std::string name);
     
     // initialization of the modem
     // the modem gets configured for 115200,8N1 serial communication
