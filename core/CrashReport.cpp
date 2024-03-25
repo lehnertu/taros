@@ -65,20 +65,20 @@ size_t CrashReportClass::printTo(Print& p) const
       }
       if (((_CFSR & (0x80)) >> 7) == 1) {
         p.print("\t(MMARVALID) Accessed Address: 0x");
-        p.print(info->mmfar, HEX);
+        p.println(info->mmfar, HEX);
         if (info->mmfar < 32) {
-          p.print(" (nullptr)\n\t  Check code at 0x");
+          p.print("\t(nullptr) - Check code at 0x");
           p.print(info->ret, HEX);
-          p.print(" - very likely a bug!\n\t  Run \"addr2line -e mysketch.ino.elf 0x");
+          p.println(" - very likely a bug!");
+          p.print("\t  Run \"addr2line -e mysketch.ino.elf 0x");
           p.print(info->ret, HEX);
-          p.print("\" for filename & line number.");
+          p.println("\" for filename & line number.");
             // TODO: in some perfect future, maybe we'll build part of the ELF debug_line
             // section (maybe just the .ino files) into CrashReport and be able to report
             // the actual filename and line number.  Wouldn't that be awesome?!
         } else if ((info->mmfar >= (uint32_t)&_ebss) && (info->mmfar < (uint32_t)&_ebss + 32)) {
-          p.print(" (Stack problem)\n\t  Check for stack overflows, array bounds, etc.");
+          p.println(" (Stack problem)\n\t  Check for stack overflows, array bounds, etc.");
         }
-        p.println();
       }
       //Bus Fault Status Register BFSR
       if (((_CFSR & 0x100) >> 8) == 1) {
@@ -130,12 +130,12 @@ size_t CrashReportClass::printTo(Print& p) const
 
     p.print("  Temperature inside the chip was ");
     p.print(info->temp);
-    p.print(" °C\n");
+    p.println(" °C\n");
 
     // TODO: fault handler should read the CCM & PLL registers to log actual speed at crash
     p.print("  Startup CPU clock speed is ");
     p.print( F_CPU_ACTUAL/1000000);
-    p.print( "MHz\n");
+    p.println( "MHz\n");
 
 
     //p.print("  MMFAR: ");

@@ -7,6 +7,13 @@
 #include "logger.h"
 #include "file_writer.h"
 
+#ifdef USE_USB_SERIAL
+# include "usb_serial.h"
+// we declare an alias of the Serial port
+// the actual definition is in main.cpp
+extern usb_serial_class usb_serial_debug;
+#endif
+
 // This is a system-wide available logger for system messages.
 // It can be used by all modules to log system information.
 // Depending on the setup the messages will be written to a file 

@@ -25,16 +25,21 @@ public:
     
     virtual void interrupt();
     
+    // this will be called with the above defined repetition rate
+    // the runtime spent in interrupt routines and module tasks is analyzed
+    // the general interrupt timing and the longest module runtime are reported
+    // timing violations are reported separately
     void analyze_health();
-    
-    // port over which status messages are sent
-    SenderPort status_out;
+	
+    // this will be called with the above defined repetition rate
+    // the stack and heap memory used by the application are reported
+	void analyze_memory();
 
 private:
 
-    uint32_t health_delay_ms;
+	// the time in ms between two reports
+    uint32_t rate_ms;
     uint32_t health_delay_counter;
-
-    uint32_t max_isr_duration;
+	uint32_t memory_delay_counter;
     
 };

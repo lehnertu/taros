@@ -8,8 +8,10 @@
 #include "modem.h"
 #include "commander.h"
 #include "watchdog.h"
+#include "blink.h"
 
 // all modules that will be included during the system build
+extern Blink *blink;
 extern Commander *commander;
 extern Watchdog *watchdog;
 extern Modem *modem;

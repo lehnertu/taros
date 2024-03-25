@@ -110,8 +110,13 @@ Interrupts:
     hardware serial : PRIORITY=64
         Serial1 : IRQ_LPUART6 = 25 (+16) 
 
-
-
+Memory:
+	ITCM (rwx):  ORIGIN = 0x00000000, LENGTH = 512K
+	DTCM (rwx):  ORIGIN = 0x20000000, LENGTH = 512K
+	RAM (rwx):   ORIGIN = 0x20200000, LENGTH = 512K
+	_heap_end = ORIGIN(RAM) + LENGTH(RAM);  --> should be 0x2027ffff
+	_estack = ORIGIN(DTCM) + ((16 - _itcm_block_count) << 15);
+	
  testing with USB serial
  -----------------------
 

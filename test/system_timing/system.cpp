@@ -1,12 +1,16 @@
 #include "global.h"
 #include "system.h"
 
+Blink *blink;
 Commander *commander;
 Watchdog *watchdog;
 Modem *modem;
 
 void FC_init_system()
 {
+    blink = new Blink(std::string("BLINK"), 2.0);
+    blink->status_out.set_receiver(&(system_log->in));
+
     // create a watchdog generating health analyzes every 5 seconds
     watchdog = new Watchdog(std::string("WATCHDOG"), 5000);
     watchdog->status_out.set_receiver(&(system_log->in));
@@ -28,6 +32,10 @@ void FC_setup_system(
     std::list<Module*> *module_list
 )
 {
+    blink->setup();
+    if (blink->state() >= MODULE_RUNLEVEL_SETUP_OK)
+        module_list->push_back(blink);
+
     watchdog->setup();
     if (watchdog->state() >= MODULE_RUNLEVEL_SETUP_OK)
         module_list->push_back(watchdog);

@@ -28,6 +28,12 @@
 #define VERSION_BUILD 0
 #endif
 
+#ifdef USE_USB_SERIAL
+# include "usb_serial.h"
+// we declare an alias of the Serial port
+// the actual definition is in main.cpp
+usb_serial_class usb_serial_debug;
+#endif
 
 bool SD_card_OK;
 int SD_file_No;
@@ -37,6 +43,17 @@ FileWriter* system_log_file_writer = 0;
 extern "C" int main(void)
 {
 
+	// use the USB serial connection to send debugging information from a possible system crash
+	// during the previous run of the system
+	// this is for debugging purpuse and should be disabled for production systems
+	// How comes this is known, anyway ?
+#ifdef USE_USB_SERIAL
+	usb_serial_debug = Serial;
+	usb_serial_debug.begin(115200);
+	usb_serial_debug.print(CrashReport);
+    usb_serial_debug.print('\n');
+# endif
+	
     // the logger has to be added to the list of modules so it will be scheduled for execution
     system_log = new Logger("SYSLOG");
     module_list.push_back(system_log);
@@ -44,6 +61,11 @@ extern "C" int main(void)
     std::stringstream msg;
     msg << "Teensy Flight Controller - Version ";
     msg << VERSION_MAJOR << "." << VERSION_MINOR << " - Build #" << VERSION_BUILD;
+#ifdef USE_USB_SERIAL
+	std::string buffer = msg.str();
+    buffer += std::string("\r\n");
+    usb_serial_debug.write(buffer.c_str(), buffer.size());
+#endif
     system_log->in.receive(
         Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_MILESTONE, msg.str()) );
     
@@ -102,7 +124,8 @@ extern "C" int main(void)
     // delayMicroseconds(100);
     
     // only now should our systick_ISR be allowed to call module interrupts
-    FC_module_interrupts_active = true;
+    FC_module_interrupts_activate();
+    
 	// infinite system loop
 	kernel_loop();
 	

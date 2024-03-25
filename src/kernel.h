@@ -19,6 +19,9 @@
     the internal state of the module (but could send messages for instance).
     This task list is sequentially processed by the main program.
     
+    TODO:
+        - remove dynamic variables (e.g. String)
+        - no variables modifiable from the outside (only access functions)
 */
 
 #pragma once
@@ -30,10 +33,6 @@
 
 class Module;
 
-// uint32_t systick_millis_count is used as timestamp
-// miliseconds since program start (about 50 days capacity)
-extern volatile uint32_t FC_systick_millis_count;
-
 // miliseconds since program start (about 50 days capacity)
 uint32_t FC_time_now();
 
@@ -41,42 +40,45 @@ uint32_t FC_time_now();
 // if current FC_systick_millis_count is small than timestamp wrap-around
 uint32_t FC_elapsed_millis(uint32_t timestamp);
 
-// ARM_DWT_CYCCNT is a 32-bit unsigned counter for processor cycles (600 MHz)
-// we store its value with every systick to procide sub-millisecond timing
-extern volatile uint32_t FC_systick_cycle_count;
-
 // we record the maximum number of CPU cycles between 2 interrupts
 // (should be about 600000)
-extern volatile uint32_t FC_max_isr_spacing;
-
-// we record the total time the systick interrupt routine needs for completion
-// this is updated with every interrupt
-// the watchdog can use these values
-extern volatile uint32_t FC_isr_duration;
-
-// we record the longest time it took to complete an interrupt request
-extern volatile uint32_t FC_max_isr_time_to_completion;
-extern std::string FC_max_isr_time_module;
+// we can read the latest value or reset it to zero (used by the watchdog)
+uint32_t FC_get_max_isr_spacing();
+void FC_reset_max_isr_spacing();
 
 // we record the longest time it takes from scheduling a task
 // until the task execution is actually started in CPU cycles
-extern volatile uint32_t FC_max_task_delay;
+// we can read the latest value or reset it to zero (used by the watchdog)
+uint32_t FC_get_max_task_delay();
+void FC_reset_max_task_delay();
+
+// we record the total time the systick interrupt routine needs for completion
+// this is updated with every interrupt
+// we can read the latest value or reset it to zero (used by the watchdog)
+uint32_t FC_get_max_isr_duration();
+void FC_reset_max_isr_duration();
+
+// we record the longest time it took to complete an interrupt request
+// we can read the latest value or reset it to zero (used by the watchdog)
+// the identifier of the slowest module is stored
+uint32_t FC_get_max_isr_time_to_completion();
+void FC_reset_max_isr_time_to_completion();
+std::string FC_max_isr_time_module_ID();
 
 // we record the longest time it takes to complete a task (in CPU cycles)
-extern volatile uint32_t FC_max_task_runtime;
-extern std::string FC_max_task_runtime_module;
-
-// we use our own ISR for the systick interrupt
-// it is copied from EventResponder.cpp (previously delay.c)
-// and added with our own functionality
-extern "C" void FC_systick_isr(void);
-
-// we use a flag to indicate if it is allowed to call module interrupts
-extern "C" bool FC_module_interrupts_active;
+// we can read the latest value or reset it to zero (used by the watchdog)
+// the identifier of the slowest module is stored
+uint32_t FC_get_max_task_runtime();
+void FC_reset_max_task_runtime();
+std::string FC_max_task_runtime_module_ID();
 
 // Here are the main initializations that are needed to access the processor hardware.
 // 1) bend the interrupt vector to our own ISR
 void setup_core_system();
+
+// When initially started, our systick interrupt does not call module interrupts
+// After initializing all of the system, the module interrupts can be activated using this function.
+void FC_module_interrupts_activate();
 
 /*
     This is a task descriptor
@@ -99,7 +101,7 @@ extern std::list<Module*> module_list;
 // all tasks that have been scheduled for execution
 extern std::list<Task> task_list;
 
-// this function can be called by the interrupt routine of any modeul
+// this function can be called by the interrupt routine of any module
 // to request one of the module functions to be scheduled for execution
 void schedule_task(Module *mod, TaskFunct f);
 
@@ -107,5 +109,5 @@ void schedule_task(Module *mod, TaskFunct f);
 // After setup the main program calls this function which then runs in foreground forever.
 // All system modules are regularly call by the interrupt system and
 // may schedule tasks to be run by the kernel.
-extern "C" void kernel_loop();
+void kernel_loop();
 

@@ -48,8 +48,10 @@ MCU         = IMXRT1062
 MCU_LD      = $(CORE_SRC)/imxrt1062_t41.ld
 # options needed by many Arduino libraries to configure for Teensy model
 MCU_DEF     = -DTEENSYDUINO=147 -DARDUINO=10807 -DARDUINO_TEENSY41 -DF_CPU=600000000
+# one should remove USB_SERIAL unless it is really used - many dependencies
 DEFINES     = -D__$(MCU)__ $(MCU_DEF) -DUSB_SERIAL -DLAYOUT_US_ENGLISH -DUSING_MAKEFILE
-
+# wether we use USB in our own system (for debugging only)
+DEFINES     += -DUSE_USB_SERIAL
 # for Cortex M7 with single & double precision FPU
 FLAGS_CPU   = -mthumb -mcpu=cortex-m7 -mfloat-abi=hard -mfpu=fpv5-d16
 FLAGS_OPT   = -O2

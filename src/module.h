@@ -105,7 +105,9 @@ protected:
     // See definitions above
     // Modules may define their own mappings
     int8_t runlevel_;
-    
+
+public:
+
     // All modules have a port over which status messages are sent.
     // This is usually wired to the system log but that's handled during system setup.
     SenderPort status_out;

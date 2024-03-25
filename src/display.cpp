@@ -185,11 +185,8 @@ void DisplaySSD1331::redraw()
             {
                 display->setCursor(3, 11);
                 // in the first cycle generate the string
-                float ttc = 1.0e6 * (float)FC_max_isr_time_to_completion / (float)F_CPU_ACTUAL;
-                num_cycles = snprintf(buffer, 16, "%8s %4.1fus", FC_max_isr_time_module.c_str(), ttc);
-                // clear the stored value once it is diaplayed
-                // TODO: if exceedingly large generate a warning message
-                FC_max_isr_time_to_completion = 0;
+                float ttc = 1.0e6 * (float)FC_get_max_isr_time_to_completion() / (float)F_CPU_ACTUAL;
+                num_cycles = snprintf(buffer, 16, "%8s %4.1fus", FC_max_isr_time_module_ID().c_str(), ttc);
             } else {
                 // in all subsequent cycles each display one character
                 display->print(buffer[cycle_count-1]);
@@ -210,11 +207,8 @@ void DisplaySSD1331::redraw()
             {
                 display->setCursor(3, 19);
                 // in the first cycle generate the string
-                float ttc = 0.001*(float)FC_max_task_runtime;
-                num_cycles = snprintf(buffer, 16, "%8s %4.1fms", FC_max_task_runtime_module.c_str(), ttc);
-                // clear the stored value once it is diaplayed
-                // TODO: if exceedingly large generate a warning message
-                FC_max_task_runtime = 0;
+                float ttc = 0.001*(float)FC_get_max_task_runtime();
+                num_cycles = snprintf(buffer, 16, "%8s %4.1fms", FC_max_task_runtime_module_ID().c_str(), ttc);
             } else {
                 // in all subsequent cycles each display one character
                 display->print(buffer[cycle_count-1]);

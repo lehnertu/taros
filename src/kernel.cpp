@@ -4,29 +4,15 @@
 // this is needed to have ARM_DWT_CYCCNT and F_CPU_ACTUAL
 #include "../core/core_pins.h"
 
-volatile uint32_t FC_systick_millis_count;
-volatile uint32_t FC_systick_cycle_count;
-bool FC_module_interrupts_active;
-volatile uint32_t FC_max_isr_spacing;
-volatile uint32_t FC_isr_duration;
-volatile uint32_t FC_max_isr_time_to_completion;
-std::string FC_max_isr_time_module;
-volatile uint32_t FC_max_task_runtime;
-std::string FC_max_task_runtime_module;
-volatile uint32_t FC_max_task_delay;
-
-std::list<Module*> module_list;
-std::list<Task> task_list;
-
 // These 2 variables are part of the Teensyduino core.
 // They are only included for the systick interupt service routine.
 extern "C" volatile uint32_t systick_cycle_count;
 extern "C" volatile uint32_t systick_millis_count;
 
-uint32_t FC_time_now()
-{
-    return FC_systick_millis_count;
-}
+// uint32_t FC_systick_millis_count is used as timestamp
+// miliseconds since program start (about 50 days capacity)
+static volatile uint32_t FC_systick_millis_count;
+uint32_t FC_time_now() { return FC_systick_millis_count; };
 
 uint32_t FC_elapsed_millis(uint32_t timestamp)
 {
@@ -37,7 +23,55 @@ uint32_t FC_elapsed_millis(uint32_t timestamp)
         // wrap around
         return (0xFFFFFFFF - timestamp) + now + 1;
 }
+// ARM_DWT_CYCCNT is a 32-bit unsigned counter for processor cycles (600 MHz)
+// we store its value with every systick to procide sub-millisecond timing
+static volatile uint32_t FC_systick_cycle_count;
 
+// we use a flag to indicate if it is allowed to call module interrupts
+static volatile bool FC_module_interrupts_active;
+
+// we record the maximum number of CPU cycles between 2 interrupts
+// (should be about 600000)
+static volatile uint32_t FC_max_isr_spacing;
+uint32_t FC_get_max_isr_spacing() { return FC_max_isr_spacing; };
+void FC_reset_max_isr_spacing() { FC_max_isr_spacing=0; };
+
+// we record the longest time it takes from scheduling a task
+// until the task execution is actually started in CPU cycles
+static volatile uint32_t FC_max_task_delay;
+uint32_t FC_get_max_task_delay() { return FC_max_task_delay; };
+void FC_reset_max_task_delay() { FC_max_task_delay=0; };
+
+// we record the total time the systick interrupt routine needs for completion
+// this is updated with every interrupt
+static volatile uint32_t FC_max_isr_duration;
+uint32_t FC_get_max_isr_duration() { return FC_max_isr_duration; };
+void FC_reset_max_isr_duration() { FC_max_isr_duration=0; };
+
+// we record the longest time it took to complete an interrupt request
+// we can read the latest value or reset it to zero (used by the watchdog)
+// apointer to the slowest module is stored and can be used to report its ID.
+static volatile uint32_t FC_max_isr_time_to_completion;
+static Module* FC_max_isr_time_module;
+uint32_t FC_get_max_isr_time_to_completion() { return FC_max_isr_time_to_completion; };
+void FC_reset_max_isr_time_to_completion() { FC_max_isr_time_to_completion=0; };
+std::string FC_max_isr_time_module_ID() { return FC_max_isr_time_module->id; };
+
+// we record the longest time it takes to complete a task (in CPU cycles)
+// we can read the latest value or reset it to zero (used by the watchdog)
+// the identifier of the slowest module is stored
+static volatile uint32_t FC_max_task_runtime;
+static Module* FC_max_task_runtime_module;
+uint32_t FC_get_max_task_runtime() { return FC_max_task_runtime; };
+void FC_reset_max_task_runtime() { FC_max_task_runtime=0; };
+std::string FC_max_task_runtime_module_ID() { return FC_max_task_runtime_module->id; };
+
+std::list<Module*> module_list;
+std::list<Task> task_list;
+
+// we use our own ISR for the systick interrupt
+// it is copied from EventResponder.cpp (previously delay.c)
+// and added with our own functionality
 void FC_systick_isr(void)
 {
     // we keep the original code in place
@@ -72,12 +106,13 @@ void FC_systick_isr(void)
 		    // the watchdog periodically resets the max value to 0
 		    if (cycles>FC_max_isr_time_to_completion)
 		    {
-		        FC_max_isr_time_module = mod->id;
+		        FC_max_isr_time_module = mod;
 		        FC_max_isr_time_to_completion = cycles;
 		    };
 		};
     // record the total time the interrupt took
-    FC_isr_duration = ARM_DWT_CYCCNT - FC_systick_cycle_count;
+    uint32_t isr_duration = ARM_DWT_CYCCNT - FC_systick_cycle_count;
+    if (isr_duration>FC_max_isr_duration) FC_max_isr_duration=isr_duration;
 }
 
 void setup_core_system()
@@ -89,6 +124,11 @@ void setup_core_system()
     FC_module_interrupts_active = false;
     // bend the systick ISR to our own
     _VectorsRam[15] = &FC_systick_isr;
+}
+
+void FC_module_interrupts_activate()
+{
+    FC_module_interrupts_active = true;
 }
 
 void schedule_task(Module *mod, TaskFunct f)
@@ -106,42 +146,30 @@ void kernel_loop()
 	while(true)
 	{
 	
-	    // delayMicroseconds(10);
-	    
         // TODO: removing this old watchdog code breaks the system -- why ???
+        // this line can't be removed
+        std::string dummy("old watchdogn code");
         
-        // maybe some litte delay is necessary before we can check the tasklist again,
-        // otherwise overrunning it ?
-        // the delay for 10 us did not improve it
-        // or could we be finding something in the tasklist, befoer the task definition is actually complete ?
-    
-        // watchdog - once per second
-        if (FC_systick_millis_count % 1000 == 837)
-        {
-            float delay = 1.0e6 * (float)FC_max_isr_spacing / (float)F_CPU_ACTUAL;
-            // FC_max_isr_spacing = 0;
+    	// seems we get a zero pointer dereferenced
+    	
+		/* TODO: when std::string dummy was removed:            
+		CrashReport:
+		  A problem occurred at (system time) 0:0:25
+		  Code was executing from address 0xD8
+		  CFSR: 82
+				(DACCVIOL) Data Access Violation
+				(MMARVALID) Accessed Address: 0x0 (nullptr)
+		  Check code at 0xD8 - very likely a bug!
+		  Run "addr2line -e mysketch.ino.elf 0xD8" for filen.
+		  		--> /home/ulf/Programming/arduino-1.8.19/hardware/tools/arm/arm-none-eabi/include/c++/5.4.1/bits/char_traits.h:243
+		  Temperature inside the chip was 50.28 °C
+		  Startup CPU clock speed is 600MHz
+		  Reboot was caused by auto reboot after fault or bad interrupt detected
+		*/
 
-            if (delay>1100.0)
-            // if the compiler can optimize this away, the code breaks
-            // if (0)
-            {
-                // even deleting just this fraction of code (that is never executed ?!)
-                // breaks the system !!!
-                
-                // this is the only place left where we call C (not C++) standard libraries
-                // main is declared extern "C" - don't know if it matters
-                // diabling this code breaks the system even when declared extern "C"
-                
-                // char numStr[20];
-                // sprintf(numStr,"%7.1f", delay);
-                
-                // TODO: this line can't be removed
-                std::string text("old watchdogn code");
-                
-                // removing this message is OK
-                // system_log->in.receive(Message::SystemMessage("SYSTEM", FC_time_now(), MSG_LEVEL_CRITICAL, text) );
-            }
-        }
+		// in another case we get a nullptr related to the Task struct in the kernel
+        // the variable declared outside the loop does not help - we nedd the access
+
 
 	    // TASKMANAGER:
 	    // All scheduled tasks get executed based on priority (list position).
@@ -175,7 +203,7 @@ void kernel_loop()
             if (runtime>FC_max_task_runtime)
             {
                 // the max is reset when an output is created (either log or display)
-                FC_max_task_runtime_module = task.module->id;
+                FC_max_task_runtime_module = task.module;
                 FC_max_task_runtime = runtime;
             };
             // if execution time exceeds 5ms the offending module is reported
