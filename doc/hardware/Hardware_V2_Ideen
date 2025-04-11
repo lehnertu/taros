@@ -1,0 +1,40 @@
+Ideen für neue Hardware Version
+===============================
+
+1) kein BNO-055 - der lässt sich nicht bewegungsfrei kalibrieren
+    Alternativen:
+        IMU9250
+        Invensense/TDK ICM-20602 (6DOF)
+        Invensense/TDK ICM-20948 (9DOF)
+        Bosch BMI085 (6DOF) (internally vibration dampened)
+    Ardupilot supports:
+        ADIS1647x BMI055 BMI088 BMI160 BMI270 L3G4200D LSM9DS0 LSM9DS1 SHA63T
+        Invensense: MPU6000 MPU6500 MPU9250 ICM20608 ICM20602 ICM20601 ICM20789 ICM20689 ICM20948 ICM20648 ICM20649
+        ICM40609 ICM42688 (HiRes 19bit) ICM42605 ICM40605 IIM42652 (HiRes 19bit) ICM42670 (HiRes 19bit) ICM45686 (HiRes 20bit)
+    Boards verfügbar:
+        BMI160 BMI270
+        MPU6050
+        MPU9250
+        LSM9DS0
+        Adafruit LSM6DSOX + LIS3MDL
+        ICM20948 9DoF Bewegungs Sensor Breakout | berrybase.de
+        
+2) 3x Stromversorgung:
+    2 Servobänke (je 4 Servos) über Spannungsregler 5V (Servos bis 8.4V), besser Hochstrom-Stecker
+    1 extra Versorgung über ideale Diode (5V Regler vom Matek), bessere Hochstrom-Stecker
+    
+3) on-board ADC: ADS1115
+    für Akku-Spannung und Strom -  potentialfrei ?!
+  
+4) anderes Display mit SPI Schnittstelle ?! - eigentlich überflüssig
+
+5) extra Port für TF-Mini ?!
+
+6) extra Port für zusätzlichen abgesetzten Kompass
+
+7) RGB-Led zum Testen
+
+8) Bus-System für kommunikation mit anderen CPUs (multi-Master ?!) - I²C !!
+    send messages to broker (like MQTT) - broker is always master
+    request messages from broker - broker sends broadcast
+    need additional interrupt line, client pulls low, broker initiates transfer
